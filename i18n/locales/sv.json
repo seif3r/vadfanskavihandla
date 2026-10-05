@@ -1,0 +1,69 @@
+{
+  "login": {
+    "title": "Logga in",
+    "email": "E-post",
+    "password": "Lösenord",
+    "submit": "Logga in",
+    "failed": "Inloggningen misslyckades",
+    "testAccountHint": "Testkonto: {{email}} (valfritt lösenord)"
+  },
+  "list": {
+    "title": "Inköpslista",
+    "addPlaceholder": "Vad behöver du köpa?",
+    "add": "Lägg till",
+    "checkAll": "Markera alla",
+    "uncheckAll": "Avmarkera alla",
+    "removeChecked": "Ta bort",
+    "moreOptions": "Fler alternativ",
+    "amount": "Mängd",
+    "amountPlaceholder": "t.ex. 2 l",
+    "category": "Kategori",
+    "empty": "Ni har inga inköpslistor än.",
+    "createFirst": "Skapa en lista"
+  },
+  "categories": {
+    "produce": "Frukt & grönt",
+    "dairy": "Mejeri",
+    "meat": "Kött & fisk",
+    "bread": "Bröd",
+    "pantry": "Skafferi",
+    "frozen": "Fryst",
+    "drinks": "Dryck",
+    "household": "Hushåll",
+    "other": "Övrigt"
+  },
+  "lists": {
+    "title": "Listor",
+    "manage": "Hantera listor",
+    "newPlaceholder": "Namn på ny lista",
+    "add": "Lägg till",
+    "delete": "Ta bort",
+    "confirmDelete": "Ta bort?"
+  },
+  "userMenu": {
+    "settings": "Inställningar",
+    "logout": "Logga ut"
+  },
+  "settings": {
+    "title": "Inställningar",
+    "language": "Språk",
+    "appearance": "Utseende",
+    "themeSystem": "Samma som enheten",
+    "themeLight": "Ljust",
+    "themeDark": "Mörkt",
+    "notifications": "Notiser",
+    "notifyItemAdded": "När någon lägger till en vara",
+    "notifyItemCompleted": "När någon bockar av en vara",
+    "notificationsBlocked": "Notiser är blockerade. Tillåt dem i enhetens eller webbläsarens inställningar."
+  },
+  "notifications": {
+    "itemAdded": "{{user}} lade till {{item}}",
+    "itemCompleted": "{{user}} bockade av {{item}}"
+  },
+  "errors": {
+    "unknownEmail": "Okänd e-postadress",
+    "invalidSession": "Ogiltig session",
+    "itemNotFound": "Varan hittades inte",
+    "listNotFound": "Listan hittades inte"
+  }
+}

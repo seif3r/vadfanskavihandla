@@ -1,0 +1,69 @@
+{
+  "login": {
+    "title": "Log in",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "failed": "Login failed",
+    "testAccountHint": "Test account: {{email}} (any password)"
+  },
+  "list": {
+    "title": "Shopping list",
+    "addPlaceholder": "What do you need to buy?",
+    "add": "Add",
+    "checkAll": "Check all",
+    "uncheckAll": "Uncheck all",
+    "removeChecked": "Remove", 
+    "moreOptions": "More options",
+    "amount": "Amount",
+    "amountPlaceholder": "e.g. 2 l",
+    "category": "Category",
+    "empty": "You have no shopping lists yet.",
+    "createFirst": "Create a list"
+  },
+  "categories": {
+    "produce": "Fruit & veg",
+    "dairy": "Dairy",
+    "meat": "Meat & fish",
+    "bread": "Bread",
+    "pantry": "Pantry",
+    "frozen": "Frozen",
+    "drinks": "Drinks",
+    "household": "Household",
+    "other": "Other"
+  },
+  "lists": {
+    "title": "Lists",
+    "manage": "Manage lists",
+    "newPlaceholder": "Name of new list",
+    "add": "Add",
+    "delete": "Delete",
+    "confirmDelete": "Delete?"
+  },
+  "userMenu": {
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "appearance": "Appearance",
+    "themeSystem": "Same as device",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "notifications": "Notifications",
+    "notifyItemAdded": "When someone adds an item",
+    "notifyItemCompleted": "When someone checks off an item",
+    "notificationsBlocked": "Notifications are blocked. Allow them in your device or browser settings."
+  },
+  "notifications": {
+    "itemAdded": "{{user}} added {{item}}",
+    "itemCompleted": "{{user}} checked off {{item}}"
+  },
+  "errors": {
+    "unknownEmail": "Unknown email address",
+    "invalidSession": "Invalid session",
+    "itemNotFound": "Item not found",
+    "listNotFound": "List not found"
+  }
+}
