@@ -1,8 +1,9 @@
 {
   "name": "functions",
   "scripts": {
-    "lint": "eslint --ext .js,.ts .",
-    "build": "tsc",
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint --ext .js,.ts .",
+    "copy-locales": "mkdir -p locales && cp ../i18n/locales/*.json locales/",
+    "build": "npm run copy-locales && tsc",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",

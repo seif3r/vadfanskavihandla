@@ -7,11 +7,12 @@ import { subscribeToLists } from "@/api/lists";
 import { getUsers } from "@/api/users";
 import { useAuth } from "@/context/AuthContext";
 import { useLists } from "@/context/ListsContext";
-import { showNotification } from "@/helpers/notifications";
+import { canReceivePush, showNotification } from "@/helpers/notifications";
 import { ItemChange } from "@/types/models";
 
 // Keeps lists and items live for every list the user is in, and turns other people's
 // changes into notifications if the user has turned them on. Mount once.
+// Installed builds get those as push notifications from the server instead, so they aren't shown twice.
 export function useLiveUpdates() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -23,7 +24,7 @@ export function useLiveUpdates() {
 
   // Reads the latest settings, names and translations without re-subscribing.
   const notify = useEffectEvent((change: ItemChange) => {
-    if (!user?.settings.notifications[change.type]) return;
+    if (canReceivePush || !user?.settings.notifications[change.type]) return;
     // Someone who just joined isn't in the cached members yet.
     if (!members?.some((m) => m.id === change.userId)) queryClient.invalidateQueries({ queryKey: ["users"] });
     const who = members?.find((m) => m.id === change.userId)?.name ?? "";

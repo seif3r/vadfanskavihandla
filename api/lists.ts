@@ -1,6 +1,6 @@
 // The shopping lists the logged-in user is a member of.
 import { ApiError } from "@/api/ApiError";
-import { currentUid, db } from "@/api/firebase";
+import { currentUid, db, toApiError } from "@/api/firebase";
 import { ShoppingList } from "@/types/models";
 import {
     addDoc, arrayUnion, collection, doc, getDoc, getDocs,
@@ -34,28 +34,44 @@ export async function deleteList(listId: string): Promise<void> {
 }
 // New: creates a code others can use to join the list. The document id is the code.
 export async function createInvite(listId: string, listName: string): Promise<string> {
-    const ref = await addDoc(collection(db, "invites"), {
-        listId,
-        listName,
-        createdBy: currentUid(),
-        createdAt: serverTimestamp(),
-    });
-    return ref.id;
+    try {
+        const ref = await addDoc(collection(db, "invites"), {
+            listId,
+            listName,
+            createdBy: currentUid(),
+            createdAt: serverTimestamp(),
+        });
+        return ref.id;
+    } catch (error) {
+        throw toApiError(error);
+    }
 }
 // New: joins the list an invite code points to.
 export async function acceptInvite(code: string): Promise<ShoppingList> {
-    const invite = await getDoc(doc(db, "invites", code.trim()));
-    if (!invite.exists()) throw new ApiError("errors.inviteNotFound");
-    const { listId, listName } = invite.data();
-    // The rules check that this adds exactly me, with a valid invite for this list.
-    await updateDoc(doc(db, "lists", listId), { members: arrayUnion(currentUid()), invite: invite.id });
-    return { id: listId, name: listName };
+    try {
+        const invite = await getDoc(doc(db, "invites", code.trim()));
+        if (!invite.exists()) throw new ApiError("errors.inviteNotFound");
+        const { listId, listName } = invite.data();
+        const list: ShoppingList = { id: listId, name: listName };
+        // Readable only by members: if this works, I'm already in the list. Joining again would
+        // be rejected by the rules, since it wouldn't add anyone.
+        const existing = await getDoc(doc(db, "lists", listId)).catch(() => null);
+        if (existing?.exists()) return list;
+        // The rules check that this adds exactly me, with a valid invite for this list.
+        await updateDoc(doc(db, "lists", listId), { members: arrayUnion(currentUid()), invite: invite.id });
+        return list;
+    } catch (error) {
+        throw toApiError(error);
+    }
 }
 
 // Calls onChange with my lists whenever one is created, renamed, deleted, or I'm added to one.
 // Returns a function that stops listening.
 export function subscribeToLists(userId: string, onChange: (lists: ShoppingList[]) => void): () => void {
-    return onSnapshot(myListsQuery(userId), (snap) =>
-        onChange(snap.docs.map((d) => ({ id: d.id, name: d.data().name }))),
+    return onSnapshot(
+        myListsQuery(userId),
+        (snap) => onChange(snap.docs.map((d) => ({ id: d.id, name: d.data().name }))),
+        // Denied for a moment while logging out; the listener is stopped right after.
+        () => {},
     );
 }

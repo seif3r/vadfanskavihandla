@@ -39,7 +39,13 @@
       ],
       "expo-secure-store",
       "expo-font",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-notifications",
+        {
+          "color": "#4CAF7A"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

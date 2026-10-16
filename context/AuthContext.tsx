@@ -2,7 +2,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 import * as authApi from "@/api/auth";
+import { removePushToken } from "@/api/push";
 import * as settingsApi from "@/api/settings";
+import { getPushToken } from "@/helpers/notifications";
 import { clearToken, getToken, setToken } from "@/helpers/storage";
 import i18n from "@/i18n";
 import { AuthContextValue } from "@/types/context";
@@ -49,6 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      // Stop push to this device. Before signing out, while the rules still know who we are.
+      const pushToken = await getPushToken().catch(() => null);
+      if (user && pushToken) await removePushToken(user.id, pushToken).catch(() => {});
       await authApi.logout();
     } finally {
       // Log out locally even if Firebase can't be reached.

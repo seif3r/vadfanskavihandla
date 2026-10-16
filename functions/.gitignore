@@ -8,3 +8,5 @@ typings/
 # Node.js dependency directory
 node_modules/
 *.local
+# Copied from ../i18n/locales by the build script
+locales/

@@ -11,6 +11,7 @@ import UserMenu from "@/components/UserMenu";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ListsProvider } from "@/context/ListsContext";
 import { useLiveUpdates } from "@/hooks/useLiveUpdates";
+import { usePushRegistration } from "@/hooks/usePushRegistration";
 import { useActiveColorScheme, useColors } from "@/hooks/useTheme";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ function RootStack() {
   const { user, isLoading } = useAuth();
   const colors = useColors();
   useLiveUpdates();
+  usePushRegistration();
 
   // Wait until the saved session is checked, so the login screen doesn't flash.
   if (isLoading) return null;

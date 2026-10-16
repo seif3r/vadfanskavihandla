@@ -1,4 +1,4 @@
-// api/users.ts
+// The people the user shares lists with.
 import { currentUid, db } from "@/api/firebase";
 import { Member } from "@/types/models";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";

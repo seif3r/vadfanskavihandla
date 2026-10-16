@@ -1,5 +1,6 @@
 // Shows system notifications: expo-notifications on phones, the browser's Notification API on web.
 import { isRunningInExpoGo } from "expo";
+import Constants from "expo-constants";
 import { Platform, ToastAndroid } from "react-native";
 
 const isWeb = Platform.OS === "web";
@@ -9,6 +10,13 @@ const hasWebNotifications = () => typeof Notification !== "undefined";
 // there. So it is only loaded where it works, and Expo Go on Android falls back to a toast.
 // A development build (npx expo run:android) gets real notifications.
 const isExpoGoAndroid = Platform.OS === "android" && isRunningInExpoGo();
+
+// Set by `eas init`. Expo's push service needs it to issue tokens.
+const projectId: string | undefined = Constants.expoConfig?.extra?.eas?.projectId;
+
+// Push needs an installed build (not Expo Go) linked to EAS. Elsewhere (web, Expo Go)
+// the app shows notifications itself while it's open.
+export const canReceivePush = !isWeb && !isRunningInExpoGo() && !!projectId;
 
 let notificationsModule: Promise<typeof import("expo-notifications")> | null = null;
 
@@ -63,4 +71,12 @@ export async function showNotification(title: string, body: string): Promise<voi
   const Notifications = await loadNotifications();
   // trigger: null = show right away.
   await Notifications.scheduleNotificationAsync({ content: { title, body }, trigger: null });
+}
+
+// This device's Expo push token, or null where push isn't available or allowed.
+export async function getPushToken(): Promise<string | null> {
+  if (!canReceivePush) return null;
+  const Notifications = await loadNotifications();
+  if (!(await Notifications.getPermissionsAsync()).granted) return null;
+  return (await Notifications.getExpoPushTokenAsync({ projectId })).data;
 }

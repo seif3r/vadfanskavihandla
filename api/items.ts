@@ -84,5 +84,8 @@ export function subscribeToItems(
             });
         isFirstSnapshot = false;
         onChange(snap.docs.map(toItem), changes);
-    });
+    },
+    // Denied once the list is deleted or I log out. The lists listener drops the list
+    // and this listener is stopped, so there is nothing to do.
+    () => {});
 }
