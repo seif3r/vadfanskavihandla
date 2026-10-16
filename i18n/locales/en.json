@@ -5,7 +5,11 @@
     "password": "Password",
     "submit": "Log in",
     "failed": "Login failed",
-    "testAccountHint": "Test account: {{email}} (any password)"
+    "name": "Name",
+    "register": "Create account",
+    "switchToRegister": "No account? Create one",
+    "switchToLogin": "Already have an account? Log in",
+    "nameRequired": "Enter your name"
   },
   "list": {
     "title": "Shopping list",
@@ -13,7 +17,7 @@
     "add": "Add",
     "checkAll": "Check all",
     "uncheckAll": "Uncheck all",
-    "removeChecked": "Remove", 
+    "removeChecked": "Remove",
     "moreOptions": "More options",
     "amount": "Amount",
     "amountPlaceholder": "e.g. 2 l",
@@ -38,7 +42,16 @@
     "newPlaceholder": "Name of new list",
     "add": "Add",
     "delete": "Delete",
-    "confirmDelete": "Delete?"
+    "confirmDelete": "Delete?",
+    "share": "Share",
+    "shareMessage": "Join my shopping list \"{{list}}\" in Vad fan ska vi handla. Invite code: {{code}}",
+    "inviteCode": "Invite code for {{list}}: {{code}}",
+    "join": "Join a list"
+  },
+  "join": {
+    "title": "Join a list",
+    "codePlaceholder": "Invite code",
+    "submit": "Join"
   },
   "userMenu": {
     "settings": "Settings",
@@ -61,9 +74,15 @@
     "itemCompleted": "{{user}} checked off {{item}}"
   },
   "errors": {
-    "unknownEmail": "Unknown email address",
     "invalidSession": "Invalid session",
     "itemNotFound": "Item not found",
-    "listNotFound": "List not found"
+    "listNotFound": "List not found",
+    "invalidCredentials": "Wrong email or password",
+    "emailInUse": "There is already an account with this email",
+    "weakPassword": "The password is too weak. Use at least 6 characters",
+    "notAllowed": "You don't have access to this",
+    "offline": "No connection. Check your internet and try again",
+    "unknown": "Something went wrong. Try again",
+    "inviteNotFound": "The invite code is not valid"
   }
 }

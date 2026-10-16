@@ -84,6 +84,7 @@ export interface SettingSwitchProps {
 
 export interface ListRowProps {
   list: ShoppingList;
+  onShare: () => void;
   onDelete: () => void;
   isFirst?: boolean;
 }

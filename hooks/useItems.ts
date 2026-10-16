@@ -5,7 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { NewItem } from "@/types/api";
 import { Item } from "@/types/models";
 
-// Items for one list. Mutations refetch the list so everyone sees fresh data.
+// Items for one list. No refetch after changes: useLiveUpdates writes every change
+// (ours, the moment it is made, and everyone else's) into the cache.
 export function useItems(listId: string | undefined) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -17,11 +18,8 @@ export function useItems(listId: string | undefined) {
     enabled: !!listId,
   });
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey });
-
   const addMutation = useMutation({
     mutationFn: (newItem: NewItem) => addItem({ ...newItem, listId: listId! }, user!.id),
-    onSuccess: refresh,
   });
 
   // Optimistic: flips the checkbox on screen right away instead of waiting for the server,
@@ -40,18 +38,14 @@ export function useItems(listId: string | undefined) {
     onError: (_error, _itemId, context) => {
       queryClient.setQueryData(queryKey, context?.previous);
     },
-    // Sync with the server either way, in case someone else changed the list meanwhile.
-    onSettled: refresh,
   });
 
   const setAllDoneMutation = useMutation({
     mutationFn: (done: boolean) => setAllDone(listId!, done, user!.id),
-    onSuccess: refresh,
   });
 
   const removeDoneMutation = useMutation({
     mutationFn: () => removeDone(listId!),
-    onSuccess: refresh,
   });
 
   return {

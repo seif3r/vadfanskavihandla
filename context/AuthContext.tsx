@@ -41,11 +41,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(user);
   };
 
+  const register = async (name: string, email: string, password: string) => {
+    const { token, user } = await authApi.register(name, email, password);
+    await setToken(token);
+    setUser(user);
+  };
+
   const logout = async () => {
-    await clearToken();
-    setUser(null);
-    // Drop cached data so the next user doesn't see it.
-    queryClient.clear();
+    try {
+      await authApi.logout();
+    } finally {
+      // Log out locally even if Firebase can't be reached.
+      await clearToken();
+      setUser(null);
+      // Drop cached data so the next user doesn't see it.
+      queryClient.clear();
+    }
   };
 
   const updateSettings = async (settings: Partial<UserSettings>) => {
@@ -54,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, updateSettings }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateSettings }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, ReactNode, useContext, useState } from "react";
 
-import { createList, deleteList, getLists } from "@/api/lists";
+import { acceptInvite, createInvite, createList, deleteList, getLists } from "@/api/lists";
 import { useAuth } from "@/context/AuthContext";
 import { ListsContextValue } from "@/types/context";
 
@@ -20,19 +20,21 @@ export function ListsProvider({ children }: { children: ReactNode }) {
     enabled: !!user,
   });
 
-  const refreshLists = () => queryClient.invalidateQueries({ queryKey: listsKey });
-
+  // No refetch after changes: useLiveUpdates writes every change to the lists into the cache.
   const createMutation = useMutation({
     mutationFn: createList,
-    onSuccess: refreshLists,
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteList,
     onSuccess: (_result, listId) => {
       queryClient.removeQueries({ queryKey: ["items", listId] });
-      return refreshLists();
     },
+  });
+
+  const joinMutation = useMutation({
+    mutationFn: acceptInvite,
+    onSuccess: (list) => setActiveListId(list.id),
   });
 
   const lists = listsQuery.data ?? [];
@@ -49,6 +51,10 @@ export function ListsProvider({ children }: { children: ReactNode }) {
         createList: createMutation.mutate,
         isCreatingList: createMutation.isPending,
         deleteList: deleteMutation.mutate,
+        createInvite: (list) => createInvite(list.id, list.name),
+        joinList: async (code) => {
+          await joinMutation.mutateAsync(code);
+        },
       }}
     >
       {children}

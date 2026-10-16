@@ -48,14 +48,17 @@ export interface Item {
   category?: Category;
 }
 
+// Someone who shares at least one list with the user. Only the name is visible to others.
+export interface Member {
+  id: string;
+  name: string;
+}
+
 export type ActivityType = "itemAdded" | "itemCompleted";
 
-// Something a user did to a list. Notifications are made from these.
-export interface ActivityEvent {
-  // Increasing number, so "everything after event N" is easy to ask for.
-  id: number;
+// Something another member just did to an item, seen through a live listener.
+export interface ItemChange {
   type: ActivityType;
-  listId: string;
-  itemName: string;
+  item: Item;
   userId: string;
 }

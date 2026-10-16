@@ -9,9 +9,9 @@ import { ThemeColors } from "@/types/theme";
 
 const CONFIRM_TIMEOUT_MS = 3000;
 
-// A list with a delete button. Deleting also removes the list's items, so it takes two taps:
+// A list with share and delete buttons. Deleting also removes the list's items, so it takes two taps:
 // the first turns the button into "Delete?", the second deletes. Works the same on web and phones.
-export default function ListRow({ list, onDelete, isFirst }: ListRowProps) {
+export default function ListRow({ list, onShare, onDelete, isFirst }: ListRowProps) {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
   const [isConfirming, setIsConfirming] = useState(false);
@@ -31,6 +31,9 @@ export default function ListRow({ list, onDelete, isFirst }: ListRowProps) {
   return (
     <View style={[styles.row, !isFirst && styles.divider]}>
       <Text style={styles.name}>{list.name}</Text>
+      <Pressable onPress={onShare} hitSlop={8} style={styles.share}>
+        <Text style={styles.shareText}>{t("lists.share")}</Text>
+      </Pressable>
       <Pressable onPress={handleDelete} hitSlop={8} style={[styles.delete, isConfirming && styles.confirm]}>
         <Text style={[styles.deleteText, isConfirming && styles.confirmText]}>
           {isConfirming ? t("lists.confirmDelete") : t("lists.delete")}
@@ -55,9 +58,20 @@ const createStyles = (colors: ThemeColors) =>
       borderColor: colors.divider,
     },
     name: {
+      flex: 1,
       flexShrink: 1,
       fontSize: 16,
       color: colors.text,
+    },
+    share: {
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: radius.small,
+      borderWidth: 1,
+      borderColor: colors.primary,
+    },
+    shareText: {
+      color: colors.primaryText,
     },
     delete: {
       paddingHorizontal: 10,

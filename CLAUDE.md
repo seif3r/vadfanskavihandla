@@ -16,10 +16,10 @@ people they shop with. It is not hard-coded for one family.
 **How it is delivered:**
 - Web: static export (`npx expo export --platform web`) hosted on GitHub Pages.
 - Android (and iOS later): builds made with EAS.
-- Backend: Supabase (auth, Postgres, realtime, edge functions for push).
+- Backend: Firebase (Authentication, Cloud Firestore with realtime listeners, Cloud Functions for push).
 
 **Current state:** every screen works, but against an in-memory mock backend in `mock/`. The next
-step is replacing the mock with Supabase, following `docs/backend-and-hosting-guide.pdf`.
+step is replacing the mock with Firebase, following `docs/backend-and-hosting-guide.pdf`.
 
 ## Tech stack and why
 
@@ -29,14 +29,15 @@ step is replacing the mock with Supabase, following `docs/backend-and-hosting-gu
 | Expo Router | File-based routing in `app/`, same model on web and mobile. |
 | TanStack Query | Server state: caching, refetching, optimistic updates, and later offline support. |
 | i18next / react-i18next | The app is in Swedish and English from the start. |
-| Supabase | Hosted Postgres with auth, row-level security and realtime. No server to run. |
+| Firebase (JavaScript SDK) | Auth, Firestore, realtime listeners and Cloud Functions in one project. No server to run. The JS SDK (`firebase`), not `@react-native-firebase`, so Expo Go and web keep working. |
 | expo-notifications | Local and push notifications. |
 
 ## Architecture principles
 
 - **`api/` is the only seam to the backend.** Screens, hooks and contexts call functions in
-  `api/` and nothing else. Swapping the mock for Supabase means rewriting `api/` while keeping the
-  same function names and types. No Supabase client calls outside `api/`.
+  `api/` and nothing else. Swapping the mock for Firebase means rewriting `api/` while keeping the
+  same function names and types. Nothing outside `api/` imports from `firebase/*`; live updates are
+  exposed as subscribe functions in `api/`.
 - **All I/O happens in `api/` and `helpers/`.** Components only render and call hooks.
 - **Server data goes through TanStack Query hooks** in `hooks/`. Contexts hold app state (logged-in
   user, current list), not copies of server data.
@@ -45,8 +46,9 @@ step is replacing the mock with Supabase, following `docs/backend-and-hosting-gu
 - **All UI text goes through `t("...")`.** `i18n/locales/en.json` is the reference; every locale
   has the same keys. Errors carry a translation key (`ApiError`), not a finished sentence.
 - **Colours and spacing come from the theme** (`constants/theme.ts`, `useTheme`), never hard-coded.
-- **Security lives in the database.** Every Supabase table has RLS so users only see lists they are
-  members of. The client is never trusted.
+- **Security lives in the database.** Firestore Security Rules (`firestore.rules`, in the repo and
+  deployed with the Firebase CLI) make sure users only see lists they are members of. The Firebase
+  config in the app is public by design; the client is never trusted.
 - **Expo Go must keep working.** Native-only modules (like `expo-notifications`) are loaded through
   a helper that falls back gracefully, never imported at the top level of a screen or hook.
 - Imports use the `@/` alias. Comments explain *why*, briefly.
@@ -60,14 +62,15 @@ step is replacing the mock with Supabase, following `docs/backend-and-hosting-gu
 
 ## Things the agent must NOT do
 
-- Don't switch away from Supabase, Expo or TanStack Query, or add another state library.
+- Don't switch away from Firebase, Expo or TanStack Query, or add another state library.
 - Don't add npm dependencies without asking first. Use `npx expo install` for Expo packages so
   versions match the SDK.
 - Don't call the backend from components, contexts or hooks directly; go through `api/`.
 - Don't change function names or signatures in `api/` without updating every caller and asking first.
-- Don't commit secrets. Supabase keys go in `.env.local`, which is git-ignored. Never put the
-  service role key in the app.
-- Don't disable RLS or loosen policies to make something work.
-- Don't delete `mock/` until every `api/` file has been moved to Supabase.
+- Don't commit secrets. The Firebase config goes in `.env.local` (git-ignored) as `EXPO_PUBLIC_FIREBASE_*`.
+  Never put a service account key in the app or the repo; it belongs only in EAS / Cloud Functions.
+- Don't loosen Security Rules (e.g. `allow read, write: if true`) or use Firestore test mode to make
+  something work.
+- Don't delete `mock/` until every `api/` file has been moved to Firebase.
 - Don't push, open PRs or deploy without being asked.
 - Don't hard-code text in one language.

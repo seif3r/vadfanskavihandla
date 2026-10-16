@@ -5,7 +5,11 @@
     "password": "Lösenord",
     "submit": "Logga in",
     "failed": "Inloggningen misslyckades",
-    "testAccountHint": "Testkonto: {{email}} (valfritt lösenord)"
+    "name": "Namn",
+    "register": "Skapa konto",
+    "switchToRegister": "Inget konto? Skapa ett",
+    "switchToLogin": "Har du redan ett konto? Logga in",
+    "nameRequired": "Skriv ditt namn"
   },
   "list": {
     "title": "Inköpslista",
@@ -38,7 +42,16 @@
     "newPlaceholder": "Namn på ny lista",
     "add": "Lägg till",
     "delete": "Ta bort",
-    "confirmDelete": "Ta bort?"
+    "confirmDelete": "Ta bort?",
+    "share": "Dela",
+    "shareMessage": "Gå med i min inköpslista \"{{list}}\" i Vad fan ska vi handla. Inbjudningskod: {{code}}",
+    "inviteCode": "Inbjudningskod för {{list}}: {{code}}",
+    "join": "Gå med i en lista"
+  },
+  "join": {
+    "title": "Gå med i en lista",
+    "codePlaceholder": "Inbjudningskod",
+    "submit": "Gå med"
   },
   "userMenu": {
     "settings": "Inställningar",
@@ -61,9 +74,15 @@
     "itemCompleted": "{{user}} bockade av {{item}}"
   },
   "errors": {
-    "unknownEmail": "Okänd e-postadress",
     "invalidSession": "Ogiltig session",
     "itemNotFound": "Varan hittades inte",
-    "listNotFound": "Listan hittades inte"
+    "listNotFound": "Listan hittades inte",
+    "invalidCredentials": "Fel e-postadress eller lösenord",
+    "emailInUse": "Det finns redan ett konto med den här e-postadressen",
+    "weakPassword": "Lösenordet är för svagt. Använd minst 6 tecken",
+    "notAllowed": "Du har inte behörighet till det här",
+    "offline": "Ingen anslutning. Kontrollera internet och försök igen",
+    "unknown": "Något gick fel. Försök igen",
+    "inviteNotFound": "Inbjudningskoden är inte giltig"
   }
 }

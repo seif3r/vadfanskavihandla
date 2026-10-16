@@ -10,7 +10,7 @@ import "@/i18n";
 import UserMenu from "@/components/UserMenu";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ListsProvider } from "@/context/ListsContext";
-import { useActivityNotifications } from "@/hooks/useActivityNotifications";
+import { useLiveUpdates } from "@/hooks/useLiveUpdates";
 import { useActiveColorScheme, useColors } from "@/hooks/useTheme";
 
 const queryClient = new QueryClient();
@@ -19,7 +19,7 @@ function RootStack() {
   const { t } = useTranslation();
   const { user, isLoading } = useAuth();
   const colors = useColors();
-  useActivityNotifications();
+  useLiveUpdates();
 
   // Wait until the saved session is checked, so the login screen doesn't flash.
   if (isLoading) return null;
@@ -41,6 +41,7 @@ function RootStack() {
         />
         <Stack.Screen name="settings" options={{ title: t("settings.title") }} />
         <Stack.Screen name="lists" options={{ title: t("lists.title") }} />
+        <Stack.Screen name="join" options={{ title: t("join.title") }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>
         <Stack.Screen name="login" options={{ title: t("login.title") }} />
