@@ -21,14 +21,16 @@ export async function createList(name: string): Promise<ShoppingList> {
     });
     return { id: ref.id, name };
 }
-// Deletes the list together with all its items. Firestore has no cascading
-// deletes, so the items go in the same batch (max 500 writes: plenty for a list).
+// Deletes the list together with all its items and remembered categories. Firestore has
+// no cascading deletes, so they go in the same batch (max 500 writes: plenty for a list).
 export async function deleteList(listId: string): Promise<void> {
     const list = await getDoc(doc(db, "lists", listId));
     if (!list.exists()) throw new ApiError("errors.listNotFound");
     const items = await getDocs(query(collection(db, "items"), where("listId", "==", listId)));
+    const knownItems = await getDocs(collection(db, "lists", listId, "knownItems"));
     const batch = writeBatch(db);
     items.docs.forEach((item) => batch.delete(item.ref));
+    knownItems.docs.forEach((known) => batch.delete(known.ref));
     batch.delete(list.ref);
     await batch.commit();
 }

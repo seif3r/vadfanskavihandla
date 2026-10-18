@@ -5,7 +5,7 @@ import { useColors, useThemedStyles } from "@/hooks/useTheme";
 import { InputProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
 
-export default function Input({ value, onChangeText, onSubmit, placeholder, secureTextEntry, style }: InputProps) {
+export default function Input({ value, onChangeText, onSubmit, placeholder, secureTextEntry, maxLength, style }: InputProps) {
   const styles = useThemedStyles(createStyles);
   const colors = useColors();
   return (
@@ -16,6 +16,7 @@ export default function Input({ value, onChangeText, onSubmit, placeholder, secu
       placeholder={placeholder}
       placeholderTextColor={colors.textMuted}
       secureTextEntry={secureTextEntry}
+      maxLength={maxLength}
       autoCapitalize="none"
       style={[styles.input, style]}
     />

@@ -11,16 +11,27 @@ npm run android   # in an Android emulator
 npm start         # QR code for Expo Go on your phone
 ```
 
-The backend is Firebase (Authentication and Cloud Firestore). Put the project's web config in
+The backend is Firebase (Authentication, Cloud Firestore, and Cloud Functions for push). Put the project's web config in
 `.env.local` as `EXPO_PUBLIC_FIREBASE_*` variables (see `api/firebase.ts`), then create an account
 in the app. Lists are shared with an invite code from the Lists screen. Changes show up live on
 every device that has the list open.
 
-Security Rules and indexes live in `firestore.rules` and `firestore.indexes.json`:
+Each list remembers the category an item name last had (`lists/{listId}/knownItems`), so adding
+"Äpple" again picks "Fruit & veg" by itself. Picking another category replaces what's remembered.
+
+Members can be notified when someone adds or removes items (checking items off is personal and
+notifies nobody). Each person's changes are bundled into one notification, sent 60 seconds after
+their last change. See [docs/notifications.md](docs/notifications.md).
+
+Security Rules and indexes live in `firestore.rules` and `firestore.indexes.json`. Besides
+membership, the rules validate what's written: allowed fields, text lengths for items, amounts,
+lists and people's names (matching `constants/limits.ts`), allowed categories, and that items can only be checked or unchecked after
+they're added:
 
 ```bash
 firebase deploy --only firestore   # rules + indexes
 firebase emulators:start           # local Auth/Firestore, set EXPO_PUBLIC_FIREBASE_EMULATOR_HOST
+firebase deploy --only functions   # push notifications (needs the Blaze plan)
 ```
 
 ## Project structure
@@ -45,4 +56,5 @@ All UI text goes through `t("...")` from `react-i18next`. Keys are type-checked 
 ## Backend
 
 See `docs/backend-and-hosting-guide.pdf` for the Firebase setup, push notifications, EAS builds
-and hosting the web version on GitHub Pages.
+and hosting the web version on GitHub Pages. Its push chapter predates bundled notifications;
+`docs/notifications.md` describes how they work now.

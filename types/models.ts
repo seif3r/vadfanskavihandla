@@ -4,7 +4,7 @@ import { ThemePreference } from "@/types/theme";
 // Which changes made by the other user you get notified about.
 export interface NotificationSettings {
   itemAdded: boolean;
-  itemCompleted: boolean;
+  itemRemoved: boolean;
 }
 
 export interface UserSettings {
@@ -37,6 +37,12 @@ export type Category =
   | "household"
   | "other";
 
+// What a list remembers about an item name, so the next "Äpple" gets the same category.
+export interface KnownItem {
+  name: string;
+  category: Category;
+}
+
 export interface Item {
   id: string;
   listId: string;
@@ -54,11 +60,21 @@ export interface Member {
   name: string;
 }
 
-export type ActivityType = "itemAdded" | "itemCompleted";
+export type ActivityType = "itemAdded" | "itemRemoved";
 
 // Something another member just did to an item, seen through a live listener.
 export interface ItemChange {
   type: ActivityType;
   item: Item;
   userId: string;
+}
+
+// One person's changes to one list, collected before they're shown as a single notification.
+export interface PendingNotification {
+  listId: string;
+  userId: string;
+  type: ActivityType;
+  // Item id to name, so the same item changed twice counts once.
+  items: Map<string, string>;
+  timer: ReturnType<typeof setTimeout> | undefined;
 }

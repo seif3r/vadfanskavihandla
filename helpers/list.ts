@@ -7,6 +7,12 @@ export function cleanName(text: string): string | null {
   return trimmed ? trimmed : null;
 }
 
+// The same key for "Äpple", "äpple " and "ÄPPLE", usable as a Firestore document id
+// ("/" and "." are escaped, since ids can't contain "/" or be "." or "..").
+export function itemKey(name: string): string {
+  return encodeURIComponent(name.trim().toLocaleLowerCase()).replace(/\./g, "%2E");
+}
+
 // Position of an item's category in the picker order; items without a category go last.
 function categoryRank(item: Item): number {
   return item.category ? categories.indexOf(item.category) : categories.length;

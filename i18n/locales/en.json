@@ -66,12 +66,14 @@
     "themeDark": "Dark",
     "notifications": "Notifications",
     "notifyItemAdded": "When someone adds an item",
-    "notifyItemCompleted": "When someone checks off an item",
+    "notifyItemRemoved": "When someone removes an item",
     "notificationsBlocked": "Notifications are blocked. Allow them in your device or browser settings."
   },
   "notifications": {
     "itemAdded": "{{user}} added {{item}}",
-    "itemCompleted": "{{user}} checked off {{item}}"
+    "itemRemoved": "{{user}} removed {{item}}",
+    "itemAddedMany": "{{user}} added {{count}} items: {{items}}",
+    "itemRemovedMany": "{{user}} removed {{count}} items: {{items}}"
   },
   "errors": {
     "invalidSession": "Invalid session",

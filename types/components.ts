@@ -17,6 +17,7 @@ export interface InputProps {
   onSubmit?: () => void;
   placeholder?: string;
   secureTextEntry?: boolean;
+  maxLength?: number;
   style?: StyleProp<TextStyle>;
 }
 

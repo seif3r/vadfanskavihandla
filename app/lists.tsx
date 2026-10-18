@@ -8,6 +8,7 @@ import { ApiError } from "@/api/ApiError";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import ListRow from "@/components/ListRow";
+import { MAX_LIST_NAME_LENGTH } from "@/constants/limits";
 import { radius } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { useLists } from "@/context/ListsContext";
@@ -52,6 +53,7 @@ export default function Lists() {
           onChangeText={setName}
           onSubmit={handleCreate}
           placeholder={t("lists.newPlaceholder")}
+          maxLength={MAX_LIST_NAME_LENGTH}
           style={styles.input}
         />
         <Button value={t("lists.add")} onPress={handleCreate} disabled={isCreatingList} />

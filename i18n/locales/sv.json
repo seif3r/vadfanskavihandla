@@ -66,12 +66,14 @@
     "themeDark": "Mörkt",
     "notifications": "Notiser",
     "notifyItemAdded": "När någon lägger till en vara",
-    "notifyItemCompleted": "När någon bockar av en vara",
+    "notifyItemRemoved": "När någon tar bort en vara",
     "notificationsBlocked": "Notiser är blockerade. Tillåt dem i enhetens eller webbläsarens inställningar."
   },
   "notifications": {
     "itemAdded": "{{user}} lade till {{item}}",
-    "itemCompleted": "{{user}} bockade av {{item}}"
+    "itemRemoved": "{{user}} tog bort {{item}}",
+    "itemAddedMany": "{{user}} lade till {{count}} varor: {{items}}",
+    "itemRemovedMany": "{{user}} tog bort {{count}} varor: {{items}}"
   },
   "errors": {
     "invalidSession": "Ogiltig session",

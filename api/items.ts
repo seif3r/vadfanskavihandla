@@ -1,10 +1,11 @@
 // Items on a shopping list.
 import { ApiError } from "@/api/ApiError";
 import { db } from "@/api/firebase";
+import { itemKey } from "@/helpers/list";
 import { AddItemRequest } from "@/types/api";
-import { Item, ItemChange } from "@/types/models";
+import { Item, ItemChange, KnownItem } from "@/types/models";
 import {
-    addDoc, collection, doc, DocumentSnapshot, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where, writeBatch,
+    collection, doc, DocumentSnapshot, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where, writeBatch,
 } from "firebase/firestore";
 export const toItem = (snap: DocumentSnapshot): Item => {
     const data = snap.data()!;
@@ -25,15 +26,29 @@ export async function getItems(listId: string): Promise<Item[]> {
     const snap = await getDocs(itemsQuery(listId));
     return snap.docs.map(toItem);
 }
+// Also remembers the item's category for the list, in the same batch, so adding the
+// same name later can suggest it. Adding without a category leaves what's remembered.
 export async function addItem(request: AddItemRequest, userId: string): Promise<Item> {
-    const ref = await addDoc(collection(db, "items"), {
+    const ref = doc(collection(db, "items"));
+    const batch = writeBatch(db);
+    batch.set(ref, {
         ...request,
         done: false,
         addedBy: userId,
         updatedBy: userId,
         createdAt: serverTimestamp(),
     });
+    if (request.category) {
+        const known: KnownItem = { name: request.name, category: request.category };
+        batch.set(doc(db, "lists", request.listId, "knownItems", itemKey(request.name)), known);
+    }
+    await batch.commit();
     return { ...request, id: ref.id, done: false, addedBy: userId };
+}
+// Every item name the list has a remembered category for.
+export async function getKnownItems(listId: string): Promise<KnownItem[]> {
+    const snap = await getDocs(collection(db, "lists", listId, "knownItems"));
+    return snap.docs.map((d) => ({ name: d.data().name, category: d.data().category }));
 }
 export async function toggleItem(itemId: string, userId: string): Promise<Item> {
     const ref = doc(db, "items", itemId);
@@ -71,15 +86,18 @@ export function subscribeToItems(
     let isFirstSnapshot = true;
     return onSnapshot(itemsQuery(listId), (snap) => {
         // The first snapshot is everything already on the list, not news.
+        // Checking items off is personal, so only adding and removing count.
         const changes = isFirstSnapshot
             ? []
             : snap.docChanges().flatMap((change): ItemChange[] => {
                 const data = change.doc.data();
-                if (data.updatedBy === userId) return [];
                 const item = toItem(change.doc);
-                if (change.type === "added") return [{ type: "itemAdded", item, userId: data.updatedBy }];
-                if (change.type === "modified" && data.done)
-                    return [{ type: "itemCompleted", item, userId: data.updatedBy }];
+                if (change.type === "added" && data.updatedBy !== userId)
+                    return [{ type: "itemAdded", item, userId: data.updatedBy }];
+                // A delete doesn't say who did it. My own deletes show up while still pending;
+                // for others', whoever last touched the item is the best guess.
+                if (change.type === "removed" && !snap.metadata.hasPendingWrites && data.updatedBy !== userId)
+                    return [{ type: "itemRemoved", item, userId: data.updatedBy }];
                 return [];
             });
         isFirstSnapshot = false;

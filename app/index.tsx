@@ -14,8 +14,10 @@ import ListActions from "@/components/ListActions";
 import ListTabs from "@/components/ListTabs";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { useLists } from "@/context/ListsContext";
+import { MAX_NAME_LENGTH } from "@/constants/limits";
 import { cleanName, sortItems } from "@/helpers/list";
 import { useItems } from "@/hooks/useItems";
+import { useKnownItems } from "@/hooks/useKnownItems";
 import { Category } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
 
@@ -29,6 +31,9 @@ export default function Index() {
   const [text, setText] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category>();
+  // Once the user picks a category themselves, typing no longer replaces it with a remembered one.
+  const [isCategoryPicked, setIsCategoryPicked] = useState(false);
+  const { categoryFor } = useKnownItems(activeList?.id);
   const [showOptions, setShowOptions] = useState(false);
   const sortedItems = sortItems(items);
   const headerHeight = useHeaderHeight();
@@ -41,6 +46,17 @@ export default function Index() {
     setText("");
     setAmount("");
     setCategory(undefined);
+    setIsCategoryPicked(false);
+  };
+
+  const handleTextChange = (value: string) => {
+    setText(value);
+    if (!isCategoryPicked) setCategory(categoryFor(value));
+  };
+
+  const handleCategoryChange = (value: Category | undefined) => {
+    setCategory(value);
+    setIsCategoryPicked(true);
   };
 
   if (isLoading) {
@@ -91,16 +107,17 @@ export default function Index() {
           amount={amount}
           onAmountChange={setAmount}
           category={category}
-          onCategoryChange={setCategory}
+          onCategoryChange={handleCategoryChange}
         />
       )}
       {/* Bottom inset keeps the bar clear of the home indicator / navigation bar. */}
       <View style={[styles.inputBar, !showOptions && styles.inputBarBorder, { paddingBottom: 12 + insets.bottom }]}>
         <Input
           value={text}
-          onChangeText={setText}
+          onChangeText={handleTextChange}
           onSubmit={handleAdd}
           placeholder={t("list.addPlaceholder")}
+          maxLength={MAX_NAME_LENGTH}
           style={styles.input}
         />
         <IconButton

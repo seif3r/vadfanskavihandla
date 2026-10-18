@@ -11,6 +11,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "se.seif3r.vadfanskavihandla",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#4CAF7A",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -50,6 +52,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fa18fa98-6490-4048-850f-43025d86f804"
+      }
+    },
+    "owner": "seif3r"
   }
 }

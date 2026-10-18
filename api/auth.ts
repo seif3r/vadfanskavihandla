@@ -13,11 +13,17 @@ import { doc, DocumentSnapshot, getDoc, writeBatch } from "firebase/firestore";
 const defaultSettings: UserSettings = {
     language: "sv",
     theme: "system",
-    notifications: { itemAdded: false, itemCompleted: false },
+    notifications: { itemAdded: false, itemRemoved: false },
 };
 export const toUser = (snap: DocumentSnapshot): User => {
     const data = snap.data()!;
-    return { id: snap.id, name: data.name, email: data.email, settings: data.settings };
+    // Spelled out so accounts saved before a setting existed get it as off, and old keys are dropped.
+    const notifications = data.settings?.notifications ?? {};
+    const settings: UserSettings = {
+        ...data.settings,
+        notifications: { itemAdded: !!notifications.itemAdded, itemRemoved: !!notifications.itemRemoved },
+    };
+    return { id: snap.id, name: data.name, email: data.email, settings };
 };
 async function loadUser(uid: string): Promise<User> {
     const snap = await getDoc(doc(db, "users", uid));

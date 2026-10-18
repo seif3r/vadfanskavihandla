@@ -10,7 +10,7 @@ export function usePushRegistration() {
   const { user } = useAuth();
   const userId = user?.id;
   const notifications = user?.settings.notifications;
-  const wantsPush = !!notifications && (notifications.itemAdded || notifications.itemCompleted);
+  const wantsPush = !!notifications && (notifications.itemAdded || notifications.itemRemoved);
 
   useEffect(() => {
     if (!userId || !wantsPush || !canReceivePush) return;

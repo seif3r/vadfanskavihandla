@@ -75,9 +75,9 @@ export default function Settings() {
           isFirst
         />
         <SettingSwitch
-          label={t("settings.notifyItemCompleted")}
-          value={notifications.itemCompleted}
-          onChange={(value) => handleNotificationChange("itemCompleted", value)}
+          label={t("settings.notifyItemRemoved")}
+          value={notifications.itemRemoved}
+          onChange={(value) => handleNotificationChange("itemRemoved", value)}
           disabled={isSaving}
         />
       </View>

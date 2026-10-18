@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ApiError } from "@/api/ApiError";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
+import { MAX_PERSON_NAME_LENGTH } from "@/constants/limits";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { useAuth } from "@/context/AuthContext";
 import { cleanName } from "@/helpers/list";
@@ -47,7 +48,9 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      {isRegistering && <Input value={name} onChangeText={setName} placeholder={t("login.name")} />}
+      {isRegistering && (
+        <Input value={name} onChangeText={setName} placeholder={t("login.name")} maxLength={MAX_PERSON_NAME_LENGTH} />
+      )}
       <Input value={email} onChangeText={setEmail} placeholder={t("login.email")} />
       <Input
         value={password}

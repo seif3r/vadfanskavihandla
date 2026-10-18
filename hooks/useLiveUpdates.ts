@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useEffectEvent } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { subscribeToItems } from "@/api/items";
@@ -8,7 +8,11 @@ import { getUsers } from "@/api/users";
 import { useAuth } from "@/context/AuthContext";
 import { useLists } from "@/context/ListsContext";
 import { canReceivePush, showNotification } from "@/helpers/notifications";
-import { ItemChange } from "@/types/models";
+import { ItemChange, PendingNotification } from "@/types/models";
+
+// Same as the server: a person's changes to a list are collected until they've been quiet for a minute,
+// then shown as one notification.
+const DELAY_MS = 60 * 1000;
 
 // Keeps lists and items live for every list the user is in, and turns other people's
 // changes into notifications if the user has turned them on. Mount once.
@@ -22,15 +26,50 @@ export function useLiveUpdates() {
 
   const { data: members } = useQuery({ queryKey: ["users"], queryFn: getUsers, enabled: !!userId });
 
+  const pending = useRef(new Map<string, PendingNotification>());
+
   // Reads the latest settings, names and translations without re-subscribing.
+  const show = useEffectEvent((batch: PendingNotification) => {
+    const who = members?.find((m) => m.id === batch.userId)?.name ?? "";
+    const listName = lists.find((l) => l.id === batch.listId)?.name ?? "";
+    const names = [...batch.items.values()];
+    const body =
+      names.length === 1
+        ? t(`notifications.${batch.type}`, { user: who, item: names[0] })
+        : t(`notifications.${batch.type}Many`, { user: who, count: names.length, items: names.join(", ") });
+    showNotification(listName, body);
+  });
+
   const notify = useEffectEvent((change: ItemChange) => {
     if (canReceivePush || !user?.settings.notifications[change.type]) return;
     // Someone who just joined isn't in the cached members yet.
     if (!members?.some((m) => m.id === change.userId)) queryClient.invalidateQueries({ queryKey: ["users"] });
-    const who = members?.find((m) => m.id === change.userId)?.name ?? "";
-    const listName = lists.find((l) => l.id === change.item.listId)?.name ?? "";
-    showNotification(listName, t(`notifications.${change.type}`, { user: who, item: change.item.name }));
+    const key = `${change.item.listId}_${change.userId}_${change.type}`;
+    const batch: PendingNotification = pending.current.get(key) ?? {
+      listId: change.item.listId,
+      userId: change.userId,
+      type: change.type,
+      items: new Map(),
+      timer: undefined,
+    };
+    batch.items.set(change.item.id, change.item.name);
+    // Every change restarts the minute.
+    clearTimeout(batch.timer);
+    batch.timer = setTimeout(() => {
+      pending.current.delete(key);
+      show(batch);
+    }, DELAY_MS);
+    pending.current.set(key, batch);
   });
+
+  // Drop unsent batches on logout or unmount; they belong to that session.
+  useEffect(() => {
+    const batches = pending.current;
+    return () => {
+      batches.forEach((batch) => clearTimeout(batch.timer));
+      batches.clear();
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;

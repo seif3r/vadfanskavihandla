@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import Input from "@/components/Input";
+import { MAX_AMOUNT_LENGTH } from "@/constants/limits";
 import { radius } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { categories } from "@/helpers/categories";
@@ -17,7 +18,13 @@ export default function AddItemOptions({ amount, onAmountChange, category, onCat
     <View style={styles.panel}>
       <View style={styles.field}>
         <Text style={styles.label}>{t("list.amount")}</Text>
-        <Input value={amount} onChangeText={onAmountChange} placeholder={t("list.amountPlaceholder")} style={styles.amount} />
+        <Input
+          value={amount}
+          onChangeText={onAmountChange}
+          placeholder={t("list.amountPlaceholder")}
+          maxLength={MAX_AMOUNT_LENGTH}
+          style={styles.amount}
+        />
       </View>
       <View style={styles.field}>
         <Text style={styles.label}>{t("list.category")}</Text>

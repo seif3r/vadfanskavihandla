@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addItem, getItems, removeDone, setAllDone, toggleItem } from "@/api/items";
 import { useAuth } from "@/context/AuthContext";
 import { NewItem } from "@/types/api";
-import { Item } from "@/types/models";
+import { itemKey } from "@/helpers/list";
+import { Item, KnownItem } from "@/types/models";
 
 // Items for one list. No refetch after changes: useLiveUpdates writes every change
 // (ours, the moment it is made, and everyone else's) into the cache.
@@ -20,6 +21,14 @@ export function useItems(listId: string | undefined) {
 
   const addMutation = useMutation({
     mutationFn: (newItem: NewItem) => addItem({ ...newItem, listId: listId! }, user!.id),
+    // Remember the category locally too, so the next add of the same name suggests it.
+    onSuccess: ({ name, category }) => {
+      if (!category) return;
+      queryClient.setQueryData<KnownItem[]>(["knownItems", listId], (old = []) => [
+        ...old.filter((known) => itemKey(known.name) !== itemKey(name)),
+        { name, category },
+      ]);
+    },
   });
 
   // Optimistic: flips the checkbox on screen right away instead of waiting for the server,

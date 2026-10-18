@@ -13,10 +13,32 @@ service cloud.firestore {
     function changes() {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
+    // Limits and categories match constants/limits.ts and the Category type.
+    function validText(text, max) {
+      return text is string && text.size() > 0 && text.size() <= max;
+    }
+    function validName(name) { return validText(name, 100); }
+    function validListName(name) { return validText(name, 50); }
+    function validPersonName(name) { return validText(name, 50); }
+    function validCategory(category) {
+      return category in ['produce', 'dairy', 'meat', 'bread', 'pantry',
+                          'frozen', 'drinks', 'household', 'other'];
+    }
+    function validNewItem(item) {
+      return item.keys().hasOnly(['listId', 'name', 'amount', 'category', 'done',
+                                  'addedBy', 'updatedBy', 'createdAt'])
+        && validName(item.name)
+        && item.done == false
+        && item.createdAt == request.time
+        && (!('amount' in item) || (item.amount is string && item.amount.size() <= 30))
+        && (!('category' in item) || validCategory(item.category));
+    }
 
     // Private: email and settings.
     match /users/{userId} {
-      allow read, write: if signedIn() && uid() == userId;
+      allow read, delete: if signedIn() && uid() == userId;
+      allow create, update: if signedIn() && uid() == userId
+        && validPersonName(request.resource.data.name);
       match /pushTokens/{token} {
         allow read, write: if signedIn() && uid() == userId;
       }
@@ -27,17 +49,22 @@ service cloud.firestore {
     match /profiles/{userId} {
       allow get: if signedIn();
       allow create, update: if signedIn() && uid() == userId
-        && request.resource.data.keys().hasOnly(['name']);
+        && request.resource.data.keys().hasOnly(['name'])
+        && validPersonName(request.resource.data.name);
     }
 
     match /lists/{listId} {
       allow read: if signedIn() && uid() in resource.data.members;
       allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name', 'ownerId', 'members', 'createdAt'])
+        && validListName(request.resource.data.name)
+        && request.resource.data.createdAt == request.time
         && request.resource.data.ownerId == uid()
         && request.resource.data.members == [uid()];
       allow update: if signedIn() && (
         // Members may rename the list.
-        (uid() in resource.data.members && changes().hasOnly(['name']))
+        (uid() in resource.data.members && changes().hasOnly(['name'])
+            && validListName(request.resource.data.name))
         // Anyone with a valid invite may add themselves, and only themselves.
         || (changes().hasOnly(['members', 'invite'])
             && request.resource.data.members == resource.data.members.concat([uid()])
@@ -48,15 +75,28 @@ service cloud.firestore {
             && request.resource.data.members == resource.data.members.removeAll([uid()]))
       );
       allow delete: if signedIn() && resource.data.ownerId == uid();
+
+      // The category each item name last had on this list, to suggest it next time.
+      match /knownItems/{key} {
+        allow read, delete: if isMember(listId);
+        allow create, update: if isMember(listId)
+          && request.resource.data.keys().hasOnly(['name', 'category'])
+          && validName(request.resource.data.name)
+          && validCategory(request.resource.data.category);
+      }
     }
 
     match /items/{itemId} {
       allow read, delete: if isMember(resource.data.listId);
       allow create: if isMember(request.resource.data.listId)
+        && validNewItem(request.resource.data)
         && request.resource.data.addedBy == uid()
         && request.resource.data.updatedBy == uid();
+      // The app only checks and unchecks items, so nothing else may change: not the
+      // name, and not addedBy (no making it look like someone else added it).
       allow update: if isMember(resource.data.listId)
-        && request.resource.data.listId == resource.data.listId
+        && changes().hasOnly(['done', 'updatedBy'])
+        && request.resource.data.done is bool
         && request.resource.data.updatedBy == uid();
     }
 
@@ -64,6 +104,8 @@ service cloud.firestore {
     match /invites/{code} {
       allow get: if signedIn();
       allow create: if isMember(request.resource.data.listId)
+        && request.resource.data.keys().hasOnly(['listId', 'listName', 'createdBy', 'createdAt'])
+        && validListName(request.resource.data.listName)
         && request.resource.data.createdBy == uid();
       allow delete: if signedIn() && resource.data.createdBy == uid();
     }
