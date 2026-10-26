@@ -96,7 +96,6 @@
   "errors": {
     "invalidSession": "Invalid session",
     "itemNotFound": "Item not found",
-    "listNotFound": "List not found",
     "invalidCredentials": "Wrong email or password",
     "emailInUse": "There is already an account with this email",
     "weakPassword": "The password is too weak. Use at least 6 characters",

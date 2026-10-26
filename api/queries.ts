@@ -1,4 +1,4 @@
-// Queries shared by groups.ts and lists.ts, kept here so the two don't import each other.
+// Queries used by more than one file in api/.
 import { db } from "@/api/firebase";
 import { collection, orderBy, query, where } from "firebase/firestore";
 

@@ -96,7 +96,6 @@
   "errors": {
     "invalidSession": "Ogiltig session",
     "itemNotFound": "Varan hittades inte",
-    "listNotFound": "Listan hittades inte",
     "invalidCredentials": "Fel e-postadress eller lösenord",
     "emailInUse": "Det finns redan ett konto med den här e-postadressen",
     "weakPassword": "Lösenordet är för svagt. Använd minst 6 tecken",

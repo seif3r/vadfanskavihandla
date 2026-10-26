@@ -1,11 +1,9 @@
 // The shopping lists in the logged-in user's groups.
-import { ApiError } from "@/api/ApiError";
 import { currentUid, db, toApiError } from "@/api/firebase";
 import { groupListsQuery, myGroupsQuery } from "@/api/queries";
 import { ShoppingList } from "@/types/models";
 import {
-    addDoc, collection, doc, DocumentData, getDoc, getDocs,
-    onSnapshot, query, QueryDocumentSnapshot, serverTimestamp, where, writeBatch,
+    addDoc, collection, deleteDoc, doc, DocumentData, getDocs, onSnapshot, QueryDocumentSnapshot, serverTimestamp,
 } from "firebase/firestore";
 function toList(snap: QueryDocumentSnapshot<DocumentData>): ShoppingList {
     const data = snap.data();
@@ -31,19 +29,11 @@ export async function createList(groupId: string, name: string): Promise<Shoppin
         throw toApiError(error);
     }
 }
-// Deletes the list together with all its items and remembered categories. Firestore has
-// no cascading deletes, so they go in the same batch (max 500 writes: plenty for a list).
+// Deletes the list. Its items and remembered categories are deleted by a Cloud Function
+// (cleanUpList); until then the rules already hide them, since they look the list up.
 export async function deleteList(listId: string): Promise<void> {
     try {
-        const list = await getDoc(doc(db, "lists", listId));
-        if (!list.exists()) throw new ApiError("errors.listNotFound");
-        const items = await getDocs(query(collection(db, "items"), where("listId", "==", listId)));
-        const knownItems = await getDocs(collection(db, "lists", listId, "knownItems"));
-        const batch = writeBatch(db);
-        items.docs.forEach((item) => batch.delete(item.ref));
-        knownItems.docs.forEach((known) => batch.delete(known.ref));
-        batch.delete(list.ref);
-        await batch.commit();
+        await deleteDoc(doc(db, "lists", listId));
     } catch (error) {
         throw toApiError(error);
     }

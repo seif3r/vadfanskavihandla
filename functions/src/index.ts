@@ -7,14 +7,18 @@
  * collected until they've been quiet for a minute and sent as one
  * notification ("Anna added 3 items: ..."), so a shopping trip doesn't
  * buzz everyone's phone per item.
+ *
+ * Also cleans up after deletes: the app only deletes a group or list
+ * document, and everything under it is deleted here, with no limit on how
+ * much there is.
  */
 import {initializeApp} from "firebase-admin/app";
-import {FieldValue, getFirestore} from "firebase-admin/firestore";
+import {FieldValue, getFirestore, Query} from "firebase-admin/firestore";
 import {getFunctions} from "firebase-admin/functions";
 import {setGlobalOptions} from "firebase-functions";
 import * as logger from "firebase-functions/logger";
 import {
-  onDocumentWrittenWithAuthContext,
+  onDocumentDeleted, onDocumentWrittenWithAuthContext,
 } from "firebase-functions/v2/firestore";
 import {onTaskDispatched} from "firebase-functions/v2/tasks";
 import {readFileSync} from "fs";
@@ -72,11 +76,14 @@ export const notifyOnItemChange = onDocumentWrittenWithAuthContext(
       return; // Edits and checking off aren't news.
     }
 
-    // Adds carry updatedBy (the rules make it the author). For deletes, the
-    // auth context names the signed-in user who did it.
+    // The server only deletes items while cleaning up a deleted list, and
+    // nobody is left to tell about those.
     const byServer =
       event.authType === "service_account" || event.authType === "system";
-    const actorId: string | undefined = type === "itemRemoved" && !byServer ?
+    if (type === "itemRemoved" && byServer) return;
+    // Adds carry updatedBy (the rules make it the author). For deletes, the
+    // auth context names the signed-in user who did it.
+    const actorId: string | undefined = type === "itemRemoved" ?
       event.authId ?? item.updatedBy : item.updatedBy;
     if (!actorId) return;
     const batchId = `${item.listId}_${actorId}_${type}`;
@@ -196,3 +203,45 @@ async function sendPush(batch: PendingBatch): Promise<void> {
         db.doc(`users/${userId}/pushTokens/${message.to}`).delete()),
   );
 }
+
+/**
+ * Deletes every document a query matches. BulkWriter batches and retries
+ * the deletes, without the 500-writes limit of a single batch.
+ * @param {Query} query Which documents to delete.
+ */
+async function deleteWhere(query: Query): Promise<void> {
+  // select() with no fields: only the ids are needed.
+  const snap = await query.select().get();
+  const writer = db.bulkWriter();
+  snap.docs.forEach((doc) => writer.delete(doc.ref));
+  await writer.close();
+}
+
+// Triggers can fire more than once and are retried on failure; deleting
+// what is already gone does nothing, so running twice is harmless.
+
+// A list is gone: delete its items, remembered categories and notification
+// batches.
+export const cleanUpList = onDocumentDeleted(
+  {document: "lists/{listId}", retry: true},
+  async (event) => {
+    const {listId} = event.params;
+    await db.recursiveDelete(db.collection(`lists/${listId}/knownItems`));
+    await deleteWhere(db.collection("items").where("listId", "==", listId));
+    await deleteWhere(
+      db.collection("pendingNotifications").where("listId", "==", listId));
+  },
+);
+
+// A group is gone: delete its lists (each of which then triggers
+// cleanUpList) and the invite codes to it.
+export const cleanUpGroup = onDocumentDeleted(
+  {document: "groups/{groupId}", retry: true},
+  async (event) => {
+    const {groupId} = event.params;
+    await deleteWhere(
+      db.collection("lists").where("groupId", "==", groupId));
+    await deleteWhere(
+      db.collection("invites").where("groupId", "==", groupId));
+  },
+);

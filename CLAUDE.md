@@ -20,7 +20,7 @@ It is not hard-coded for one family.
 - Web: static export (`npx expo export --platform web`) hosted on GitHub Pages.
 - Android (and iOS later): builds made with EAS.
 - Backend: Firebase (Authentication, Cloud Firestore with realtime listeners, Cloud Functions +
-  Cloud Tasks for bundled push via Expo's push service).
+  Cloud Tasks for bundled push via Expo's push service, and cleanup after deletes).
 
 **Current state:** the app runs on Firebase; the mock backend is gone. `docs/backend-and-hosting-guide.pdf`
 describes the setup, but parts are outdated: its push chapter (8) is replaced by `docs/notifications.md`,
@@ -34,6 +34,12 @@ any member can invite, create lists and leave (an owner who leaves hands the gro
 member; the last member can only delete). A list can be deleted by its creator or the group's owner.
 A user can be in several groups and sees all their lists at once: lists are loaded with one query
 per group, since Firestore can't join.
+
+**Deleting:** the app deletes only the group or list document. Cloud Functions (`cleanUpGroup`,
+`cleanUpList` in `functions/`) delete everything under it: a group's lists and invites, a list's
+items, `knownItems` and `pendingNotifications`. Until they've run, the rules already hide the
+leftovers, since they look up the parent. Anything new that hangs off a group or list must be
+added to that cleanup.
 
 ## Tech stack and why
 

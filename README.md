@@ -27,6 +27,9 @@ Members can be notified when someone adds or removes items (checking items off i
 notifies nobody). Each person's changes are bundled into one notification, sent 60 seconds after
 their last change. See [docs/notifications.md](docs/notifications.md).
 
+Deleting a group or list only deletes that document in the app; Cloud Functions delete what's
+under it (lists, items, remembered categories, invites, pending notifications).
+
 Security Rules and indexes live in `firestore.rules` and `firestore.indexes.json`. Besides
 membership, the rules validate what's written: allowed fields, text lengths for items, amounts,
 groups, lists and people's names (matching `constants/limits.ts`), allowed categories, and that items can only be checked or unchecked after

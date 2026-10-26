@@ -91,7 +91,7 @@ service cloud.firestore {
             && resource.data.members.hasAll(request.resource.data.members)
             && uid() in request.resource.data.members)
       );
-      // The app deletes the group's lists first; the rules can't check that.
+      // Its lists and invites are deleted by a Cloud Function (cleanUpGroup).
       allow delete: if signedIn() && resource.data.ownerId == uid();
     }
 
@@ -107,7 +107,8 @@ service cloud.firestore {
       allow update: if isGroupMember(resource.data.groupId)
         && changes().hasOnly(['name'])
         && validListName(request.resource.data.name);
-      // Whoever created the list, or the group's owner.
+      // Whoever created the list, or the group's owner. Its items are deleted by a Cloud
+      // Function (cleanUpList).
       allow delete: if isGroupMember(resource.data.groupId)
         && (resource.data.ownerId == uid() || group(resource.data.groupId).data.ownerId == uid());
 

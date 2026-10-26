@@ -33,7 +33,8 @@ files (copied into `functions/locales/` at build time), so there is one place to
 
 1. `notifyOnItemChange` (Firestore trigger with auth context on `items/{itemId}`) sees an item
    created or deleted. The person is `updatedBy` for adds and the trigger's `authId` for deletes,
-   since a deleted document can't say who deleted it.
+   since a deleted document can't say who deleted it. Deletes made by the server are skipped: those
+   are `cleanUpList` removing the items of a deleted list, and there's no one to tell.
 2. It adds the item to `pendingNotifications/{listId}_{personId}_{type}` in a transaction and bumps
    that doc's `seq`. No Security Rule matches this collection, so only the server can touch it.
 3. It enqueues a Cloud Task for `sendBatchedNotification` with `{batchId, seq}`, 60 s out.

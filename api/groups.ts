@@ -1,8 +1,7 @@
 // Groups: the people who shop together. Every member sees all of the group's lists.
 import { ApiError } from "@/api/ApiError";
 import { currentUid, db, toApiError } from "@/api/firebase";
-import { deleteList } from "@/api/lists";
-import { groupListsQuery, myGroupsQuery } from "@/api/queries";
+import { myGroupsQuery } from "@/api/queries";
 import { Group } from "@/types/models";
 import {
     addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, DocumentData, getDoc, getDocs,
@@ -53,14 +52,10 @@ export async function leaveGroup(group: Group): Promise<void> {
 export async function removeMember(groupId: string, userId: string): Promise<void> {
     await withApiError(() => updateDoc(doc(db, "groups", groupId), { members: arrayRemove(userId) }));
 }
-// Owner only. Deletes the group's lists (with their items) first: the rules for those
-// look up the group, so it has to exist until they're gone.
+// Owner only. Its lists, their items and its invite codes are deleted by a Cloud Function
+// (cleanUpGroup); until then the rules already hide them, since they look the group up.
 export async function deleteGroup(groupId: string): Promise<void> {
-    await withApiError(async () => {
-        const lists = await getDocs(groupListsQuery(groupId));
-        for (const list of lists.docs) await deleteList(list.id);
-        await deleteDoc(doc(db, "groups", groupId));
-    });
+    await withApiError(() => deleteDoc(doc(db, "groups", groupId)));
 }
 // Creates a code others can use to join the group. The document id is the code.
 export async function createInvite(groupId: string, groupName: string): Promise<string> {
