@@ -38,23 +38,41 @@
   },
   "lists": {
     "title": "Listor",
-    "manage": "Hantera listor",
     "newPlaceholder": "Namn på ny lista",
     "add": "Lägg till",
     "delete": "Ta bort",
     "confirmDelete": "Ta bort?",
-    "share": "Dela",
-    "shareMessage": "Gå med i min inköpslista \"{{list}}\" i Vad fan ska vi handla. Inbjudningskod: {{code}}",
-    "inviteCode": "Inbjudningskod för {{list}}: {{code}}",
-    "join": "Gå med i en lista"
+    "noGroups": "Listor hör till en grupp: skapa eller gå med i en först.",
+    "manageGroups": "Grupper"
   },
   "join": {
-    "title": "Gå med i en lista",
+    "title": "Gå med i en grupp",
     "codePlaceholder": "Inbjudningskod",
     "submit": "Gå med"
   },
+  "groups": {
+    "title": "Grupper",
+    "newPlaceholder": "Namn på ny grupp, t.ex. Hemma",
+    "create": "Skapa",
+    "empty": "Du är inte med i någon grupp än. Skapa en, eller gå med med en kod någon skickat till dig.",
+    "rename": "Byt namn",
+    "save": "Spara",
+    "owner": "ägare",
+    "you": "du",
+    "remove": "Ta bort",
+    "confirmRemove": "Ta bort?",
+    "invite": "Bjud in",
+    "leave": "Lämna",
+    "confirmLeave": "Lämna?",
+    "delete": "Ta bort",
+    "confirmDelete": "Ta bort gruppen och dess listor?",
+    "shareMessage": "Gå med i min grupp \"{{group}}\" i Vad fan ska vi handla och dela inköpslistor. Inbjudningskod: {{code}}",
+    "inviteCode": "Inbjudningskod för {{group}}: {{code}}",
+    "join": "Gå med i en grupp"
+  },
   "userMenu": {
     "settings": "Inställningar",
+    "groups": "Grupper",
     "logout": "Logga ut"
   },
   "settings": {
@@ -85,6 +103,7 @@
     "notAllowed": "Du har inte behörighet till det här",
     "offline": "Ingen anslutning. Kontrollera internet och försök igen",
     "unknown": "Något gick fel. Försök igen",
-    "inviteNotFound": "Inbjudningskoden är inte giltig"
+    "inviteNotFound": "Inbjudningskoden är inte giltig",
+    "lastMember": "Du är sista medlemmen. Ta bort gruppen i stället"
   }
 }

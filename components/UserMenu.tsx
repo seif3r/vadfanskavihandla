@@ -22,6 +22,11 @@ export default function UserMenu() {
     router.push("/settings");
   };
 
+  const handleGroups = () => {
+    setIsOpen(false);
+    router.push("/groups");
+  };
+
   const handleLogout = () => {
     setIsOpen(false);
     logout();
@@ -45,7 +50,10 @@ export default function UserMenu() {
               <Text style={styles.menuName}>{user.name}</Text>
               <Text style={styles.menuEmail}>{user.email}</Text>
             </View>
-            <Pressable onPress={handleSettings} style={styles.menuItem}>
+            <Pressable onPress={handleGroups} style={styles.menuItem}>
+              <Text style={styles.menuText}>{t("userMenu.groups")}</Text>
+            </Pressable>
+            <Pressable onPress={handleSettings} style={[styles.menuItem, styles.divider]}>
               <Text style={styles.menuText}>{t("userMenu.settings")}</Text>
             </Pressable>
             <Pressable onPress={handleLogout} style={[styles.menuItem, styles.divider]}>

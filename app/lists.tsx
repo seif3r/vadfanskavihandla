@@ -1,88 +1,57 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-
-import { ApiError } from "@/api/ApiError";
+import { ScrollView, StyleSheet, Text } from "react-native";
 
 import Button from "@/components/Button";
-import Input from "@/components/Input";
-import ListRow from "@/components/ListRow";
-import { MAX_LIST_NAME_LENGTH } from "@/constants/limits";
-import { radius } from "@/constants/theme";
-import { useThemedStyles } from "@/hooks/useTheme";
+import GroupLists from "@/components/GroupLists";
+import { useAuth } from "@/context/AuthContext";
 import { useLists } from "@/context/ListsContext";
-import { cleanName } from "@/helpers/list";
-import { shareText } from "@/helpers/share";
-import { ShoppingList } from "@/types/models";
+import { useGroups } from "@/hooks/useGroups";
+import { useThemedStyles } from "@/hooks/useTheme";
+import { Group, ShoppingList } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
 
+// All lists, grouped by the group they belong to; tapping one opens it. A list is shared with
+// everyone in its group.
 export default function Lists() {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
   const router = useRouter();
-  const { lists, createList, isCreatingList, deleteList, createInvite } = useLists();
-  const [name, setName] = useState("");
-  // The latest invite, also shown on screen: there's no share sheet in most desktop browsers.
-  const [invite, setInvite] = useState<{ list: string; code: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { lists, activeList, setActiveListId, createList, isCreatingList, deleteList, error } = useLists();
+  const { groups } = useGroups();
 
-  const handleShare = async (list: ShoppingList) => {
-    setError(null);
-    try {
-      const code = await createInvite(list);
-      setInvite({ list: list.name, code });
-      await shareText(t("lists.shareMessage", { list: list.name, code }));
-    } catch (e) {
-      setError(t(e instanceof ApiError ? e.key : "errors.unknown"));
-    }
-  };
+  // The list's creator and the group's owner may delete it; the rules check the same.
+  const canDelete = (group: Group) => (list: ShoppingList) => list.ownerId === user?.id || group.ownerId === user?.id;
 
-  const handleCreate = () => {
-    const cleaned = cleanName(name);
-    if (!cleaned) return;
-    createList(cleaned);
-    setName("");
+  // Opens the list on the home screen. Back if we came from there, so it isn't stacked twice.
+  const handleSelect = (list: ShoppingList) => {
+    setActiveListId(list.id);
+    if (router.canGoBack()) router.back();
+    else router.replace("/");
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      <View style={styles.addRow}>
-        <Input
-          value={name}
-          onChangeText={setName}
-          onSubmit={handleCreate}
-          placeholder={t("lists.newPlaceholder")}
-          maxLength={MAX_LIST_NAME_LENGTH}
-          style={styles.input}
+      {groups.length === 0 && <Text style={styles.empty}>{t("lists.noGroups")}</Text>}
+
+      {groups.map((group) => (
+        <GroupLists
+          key={group.id}
+          group={group}
+          lists={lists.filter((list) => list.groupId === group.id)}
+          activeListId={activeList?.id}
+          onSelect={handleSelect}
+          canDelete={canDelete(group)}
+          onCreate={(name) => createList(group.id, name)}
+          onDelete={(list) => deleteList(list.id)}
+          isCreating={isCreatingList}
         />
-        <Button value={t("lists.add")} onPress={handleCreate} disabled={isCreatingList} />
-      </View>
+      ))}
 
-      {lists.length > 0 ? (
-        <View style={styles.group}>
-          {lists.map((list, index) => (
-            <ListRow
-              key={list.id}
-              list={list}
-              onShare={() => handleShare(list)}
-              onDelete={() => deleteList(list.id)}
-              isFirst={index === 0}
-            />
-          ))}
-        </View>
-      ) : (
-        <Text style={styles.empty}>{t("list.empty")}</Text>
-      )}
+      {error && <Text style={styles.error}>{t(error.key)}</Text>}
 
-      {invite && (
-        <Text selectable style={styles.invite}>
-          {t("lists.inviteCode", { list: invite.list, code: invite.code })}
-        </Text>
-      )}
-      {error && <Text style={styles.error}>{error}</Text>}
-
-      <Button value={t("lists.join")} variant="secondary" onPress={() => router.push("/join")} />
+      <Button value={t("lists.manageGroups")} variant="secondary" onPress={() => router.push("/groups")} />
     </ScrollView>
   );
 }
@@ -91,30 +60,10 @@ const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
       padding: 16,
-      gap: 16,
-    },
-    addRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 8,
-    },
-    // Fills all width the button doesn't use.
-    input: {
-      flex: 1,
-      minWidth: 0,
-    },
-    group: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.large,
-      borderWidth: 1,
-      borderColor: colors.border,
+      gap: 24,
     },
     empty: {
       color: colors.textMuted,
-      textAlign: "center",
-    },
-    invite: {
-      color: colors.text,
       textAlign: "center",
     },
     error: {

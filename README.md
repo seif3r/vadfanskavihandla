@@ -13,8 +13,12 @@ npm start         # QR code for Expo Go on your phone
 
 The backend is Firebase (Authentication, Cloud Firestore, and Cloud Functions for push). Put the project's web config in
 `.env.local` as `EXPO_PUBLIC_FIREBASE_*` variables (see `api/firebase.ts`), then create an account
-in the app. Lists are shared with an invite code from the Lists screen. Changes show up live on
-every device that has the list open.
+in the app. Lists belong to a group (`groups/{groupId}`, e.g. a household): everyone in the group
+sees all its lists. Create a group or join one with an invite code from the Groups screen; a user
+can be in several groups and sees the lists of all of them. The group's owner can rename it, remove
+members and delete it. The button at the top of the home screen shows the open list; tapping it
+opens all lists, where you pick another one, add lists to a group or delete them. Changes show up
+live on every device that has the list open.
 
 Each list remembers the category an item name last had (`lists/{listId}/knownItems`), so adding
 "Äpple" again picks "Fruit & veg" by itself. Picking another category replaces what's remembered.
@@ -25,7 +29,7 @@ their last change. See [docs/notifications.md](docs/notifications.md).
 
 Security Rules and indexes live in `firestore.rules` and `firestore.indexes.json`. Besides
 membership, the rules validate what's written: allowed fields, text lengths for items, amounts,
-lists and people's names (matching `constants/limits.ts`), allowed categories, and that items can only be checked or unchecked after
+groups, lists and people's names (matching `constants/limits.ts`), allowed categories, and that items can only be checked or unchecked after
 they're added:
 
 ```bash

@@ -19,6 +19,17 @@ const shapes: Record<IconName, React.ReactNode> = {
     </>
   ),
   check: <Path d="M20 6 9 17l-5-5" />,
+  list: (
+    <>
+      <Path d="M3 5h.01" />
+      <Path d="M3 12h.01" />
+      <Path d="M3 19h.01" />
+      <Path d="M8 5h13" />
+      <Path d="M8 12h13" />
+      <Path d="M8 19h13" />
+    </>
+  ),
+  chevronRight: <Path d="m9 18 6-6-6-6" />,
 };
 
 export default function Icon({ name, color, size = 24, strokeWidth = 2 }: IconProps) {

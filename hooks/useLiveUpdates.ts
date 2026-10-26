@@ -2,19 +2,21 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useEffectEvent, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
+import { subscribeToGroups } from "@/api/groups";
 import { subscribeToItems } from "@/api/items";
 import { subscribeToLists } from "@/api/lists";
 import { getUsers } from "@/api/users";
 import { useAuth } from "@/context/AuthContext";
 import { useLists } from "@/context/ListsContext";
+import { memberKey } from "@/helpers/groups";
 import { canReceivePush, showNotification } from "@/helpers/notifications";
-import { ItemChange, PendingNotification } from "@/types/models";
+import { Group, ItemChange, PendingNotification } from "@/types/models";
 
 // Same as the server: a person's changes to a list are collected until they've been quiet for a minute,
 // then shown as one notification.
 const DELAY_MS = 60 * 1000;
 
-// Keeps lists and items live for every list the user is in, and turns other people's
+// Keeps groups, lists and items live for every group the user is in, and turns other people's
 // changes into notifications if the user has turned them on. Mount once.
 // Installed builds get those as push notifications from the server instead, so they aren't shown twice.
 export function useLiveUpdates() {
@@ -70,6 +72,16 @@ export function useLiveUpdates() {
       batches.clear();
     };
   }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    return subscribeToGroups(userId, (fresh) => {
+      const old = queryClient.getQueryData<Group[]>(["groups"]);
+      queryClient.setQueryData(["groups"], fresh);
+      // Someone joined or left: fetch names again, so new members aren't nameless.
+      if (memberKey(old) !== memberKey(fresh)) queryClient.invalidateQueries({ queryKey: ["users"] });
+    });
+  }, [userId, queryClient]);
 
   useEffect(() => {
     if (!userId) return;

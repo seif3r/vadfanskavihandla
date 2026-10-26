@@ -1,14 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, ReactNode, useContext, useState } from "react";
 
-import { acceptInvite, createInvite, createList, deleteList, getLists } from "@/api/lists";
+import { toApiError } from "@/api/firebase";
+import { createList, deleteList, getLists } from "@/api/lists";
 import { useAuth } from "@/context/AuthContext";
 import { ListsContextValue } from "@/types/context";
 
 const ListsContext = createContext<ListsContextValue | null>(null);
 const listsKey = ["lists"];
 
-// The shopping lists, which one is selected, and adding/removing lists.
+// The shopping lists of all the user's groups, which one is selected, and adding/removing lists.
 export function ListsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [activeListId, setActiveListId] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export function ListsProvider({ children }: { children: ReactNode }) {
 
   // No refetch after changes: useLiveUpdates writes every change to the lists into the cache.
   const createMutation = useMutation({
-    mutationFn: createList,
+    mutationFn: ({ groupId, name }: { groupId: string; name: string }) => createList(groupId, name),
   });
 
   const deleteMutation = useMutation({
@@ -32,11 +33,7 @@ export function ListsProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const joinMutation = useMutation({
-    mutationFn: acceptInvite,
-    onSuccess: (list) => setActiveListId(list.id),
-  });
-
+  const listError = createMutation.error ?? deleteMutation.error;
   const lists = listsQuery.data ?? [];
   // Falls back to the first list until the user picks one.
   const activeList = lists.find((l) => l.id === activeListId) ?? lists[0] ?? null;
@@ -48,13 +45,10 @@ export function ListsProvider({ children }: { children: ReactNode }) {
         activeList,
         setActiveListId,
         isLoading: listsQuery.isLoading,
-        createList: createMutation.mutate,
+        createList: (groupId, name) => createMutation.mutate({ groupId, name }),
         isCreatingList: createMutation.isPending,
         deleteList: deleteMutation.mutate,
-        createInvite: (list) => createInvite(list.id, list.name),
-        joinList: async (code) => {
-          await joinMutation.mutateAsync(code);
-        },
+        error: listError && toApiError(listError),
       }}
     >
       {children}

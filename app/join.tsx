@@ -6,18 +6,18 @@ import { StyleSheet, Text, View } from "react-native";
 import { ApiError } from "@/api/ApiError";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
-import { useLists } from "@/context/ListsContext";
 import { cleanName } from "@/helpers/list";
+import { useGroups } from "@/hooks/useGroups";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { ThemeColors } from "@/types/theme";
 
-// Joins a list with an invite code. A link like /join?code=... fills the code in.
+// Joins a group with an invite code. A link like /join?code=... fills the code in.
 export default function Join() {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ code?: string }>();
-  const { joinList } = useLists();
+  const { joinGroup } = useGroups();
   const [code, setCode] = useState(params.code ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,8 +28,8 @@ export default function Join() {
     setError(null);
     setIsSubmitting(true);
     try {
-      await joinList(cleaned);
-      router.replace("/");
+      await joinGroup(cleaned);
+      router.replace("/groups");
     } catch (e) {
       setError(t(e instanceof ApiError ? e.key : "errors.unknown"));
     } finally {

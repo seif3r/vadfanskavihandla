@@ -20,9 +20,21 @@ export interface User {
   settings: UserSettings;
 }
 
+// People who shop together. Every member sees all of the group's lists.
+export interface Group {
+  id: string;
+  name: string;
+  // Can rename the group, remove members and delete it.
+  ownerId: string;
+  memberIds: string[];
+}
+
 export interface ShoppingList {
   id: string;
   name: string;
+  groupId: string;
+  // Whoever created it. They and the group's owner may delete it.
+  ownerId: string;
 }
 
 // Store sections. The labels come from the "categories" translations.
@@ -54,7 +66,7 @@ export interface Item {
   category?: Category;
 }
 
-// Someone who shares at least one list with the user. Only the name is visible to others.
+// Someone in at least one of the user's groups. Only the name is visible to others.
 export interface Member {
   id: string;
   name: string;

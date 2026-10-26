@@ -1,44 +1,23 @@
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { radius } from "@/constants/theme";
+import ConfirmButton from "@/components/ConfirmButton";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { ListRowProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
 
-const CONFIRM_TIMEOUT_MS = 3000;
-
-// A list with share and delete buttons. Deleting also removes the list's items, so it takes two taps:
-// the first turns the button into "Delete?", the second deletes. Works the same on web and phones.
-export default function ListRow({ list, onShare, onDelete, isFirst }: ListRowProps) {
+// A list, tapped to open it, with a delete button if the user may delete it.
+// Deleting also removes the list's items.
+export default function ListRow({ list, isActive, onPress, onDelete, isFirst }: ListRowProps) {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
-  const [isConfirming, setIsConfirming] = useState(false);
-
-  // Goes back to plain "Delete" if the second tap doesn't come.
-  useEffect(() => {
-    if (!isConfirming) return;
-    const timer = setTimeout(() => setIsConfirming(false), CONFIRM_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [isConfirming]);
-
-  const handleDelete = () => {
-    if (isConfirming) onDelete();
-    else setIsConfirming(true);
-  };
 
   return (
     <View style={[styles.row, !isFirst && styles.divider]}>
-      <Text style={styles.name}>{list.name}</Text>
-      <Pressable onPress={onShare} hitSlop={8} style={styles.share}>
-        <Text style={styles.shareText}>{t("lists.share")}</Text>
+      <Pressable onPress={onPress} accessibilityRole="button" style={styles.open}>
+        <Text style={[styles.name, isActive && styles.active]}>{list.name}</Text>
       </Pressable>
-      <Pressable onPress={handleDelete} hitSlop={8} style={[styles.delete, isConfirming && styles.confirm]}>
-        <Text style={[styles.deleteText, isConfirming && styles.confirmText]}>
-          {isConfirming ? t("lists.confirmDelete") : t("lists.delete")}
-        </Text>
-      </Pressable>
+      {onDelete && <ConfirmButton label={t("lists.delete")} confirmLabel={t("lists.confirmDelete")} onConfirm={onDelete} />}
     </View>
   );
 }
@@ -52,42 +31,24 @@ const createStyles = (colors: ThemeColors) =>
       gap: 12,
       paddingHorizontal: 16,
       paddingVertical: 10,
+      minHeight: 50,
     },
     divider: {
       borderTopWidth: 1,
       borderColor: colors.divider,
     },
-    name: {
+    // The whole row left of the delete button opens the list.
+    open: {
       flex: 1,
-      flexShrink: 1,
+      alignSelf: "stretch",
+      justifyContent: "center",
+    },
+    name: {
       fontSize: 16,
       color: colors.text,
     },
-    share: {
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-      borderRadius: radius.small,
-      borderWidth: 1,
-      borderColor: colors.primary,
-    },
-    shareText: {
+    active: {
       color: colors.primaryText,
-    },
-    delete: {
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-      borderRadius: radius.small,
-      borderWidth: 1,
-      borderColor: colors.danger,
-    },
-    confirm: {
-      backgroundColor: colors.danger,
-    },
-    deleteText: {
-      color: colors.danger,
-    },
-    confirmText: {
-      color: colors.textOnDanger,
       fontWeight: "600",
     },
   });

@@ -12,8 +12,9 @@ head, or on a note on the fridge. Whoever is in the store doesn't know what the 
 added, and things get bought twice or forgotten. This app gives a household one list that is
 always up to date on every phone.
 
-**Who can use it:** any household. Someone creates an account, creates a list and invites the
-people they shop with. It is not hard-coded for one family.
+**Who can use it:** any household. Someone creates an account, creates a group and invites the
+people they shop with; everyone in a group sees all its lists. A user can be in several groups.
+It is not hard-coded for one family.
 
 **How it is delivered:**
 - Web: static export (`npx expo export --platform web`) hosted on GitHub Pages.
@@ -22,8 +23,17 @@ people they shop with. It is not hard-coded for one family.
   Cloud Tasks for bundled push via Expo's push service).
 
 **Current state:** the app runs on Firebase; the mock backend is gone. `docs/backend-and-hosting-guide.pdf`
-describes the setup, but its push chapter (8) is outdated: `docs/notifications.md` describes how
-notifications work now.
+describes the setup, but parts are outdated: its push chapter (8) is replaced by `docs/notifications.md`,
+and its data model shares lists per list, while lists now belong to groups (below).
+
+**Data model:** `groups/{groupId}` (`name`, `ownerId`, `members`) is the one place membership lives.
+`lists/{listId}` has a `groupId` and an `ownerId` (its creator); items point to their list with
+`listId`. Rules, `api/` and the Cloud Function all go list → group → members. Invite codes
+(`invites/{code}`) point to a group. The group's owner can rename it, remove members and delete it;
+any member can invite, create lists and leave (an owner who leaves hands the group to the next
+member; the last member can only delete). A list can be deleted by its creator or the group's owner.
+A user can be in several groups and sees all their lists at once: lists are loaded with one query
+per group, since Firestore can't join.
 
 ## Tech stack and why
 
@@ -51,18 +61,20 @@ notifications work now.
   has the same keys. Errors carry a translation key (`ApiError`), not a finished sentence.
 - **Colours and spacing come from the theme** (`constants/theme.ts`, `useTheme`), never hard-coded.
 - **Security lives in the database.** Firestore Security Rules (`firestore.rules`, in the repo and
-  deployed with the Firebase CLI) make sure users only see lists they are members of. The Firebase
+  deployed with the Firebase CLI) make sure users only see lists of groups they are members of. The Firebase
   config in the app is public by design; the client is never trusted.
-- **The rules also validate data.** Text lengths (item names 100, amounts 30, list names 50, person
-  names 50; all non-empty), allowed fields, and categories (the `Category` values) are checked in
+- **The rules also validate data.** Text lengths (item names 100, amounts 30, list and group names 50,
+  person names 50; all non-empty), allowed fields, and categories (the `Category` values) are checked in
   `firestore.rules`; the same limits live in `constants/limits.ts` for the inputs' `maxLength`. Changing a limit or adding a category means changing both.
   Items can only have `done`/`updatedBy` updated after creation, so a feature that edits items
-  (rename, change category) needs a rule change first.
+  (rename, change category) needs a rule change first. A list can't move to another group.
 - **Expo Go must keep working.** Native-only modules (like `expo-notifications`) are loaded through
   a helper that falls back gracefully, never imported at the top level of a screen or hook.
 - **Notifications have two paths that must behave the same.** Installed builds get push from the
   Cloud Function in `functions/`; web and Expo Go show them in-app from `hooks/useLiveUpdates.ts`.
   A change to what triggers a notification, its text or its timing goes in both.
+- **New queries may need an index** in `firestore.indexes.json`. Deployed indexes take minutes to
+  build; until then the query fails (list listeners treat a failed group as empty).
 - **`functions/` is a separate Node project** with Google-style lint (2-space indent, 80 columns,
   JSDoc). It reads notification texts from the app's locale files (copied in by its build script),
   so they are only translated in `i18n/locales/`.
@@ -70,7 +82,8 @@ notifications work now.
 
 ## Before calling something done
 
-- `npx tsc --noEmit` passes.
+- `npx tsc --noEmit` passes. After adding a screen in `app/`, run `npx expo start` once so the typed
+  routes (`.expo/types/router.d.ts`) include it.
 - `npm run lint` passes.
 - If `functions/` changed: `npm run build` and `npm run lint` pass in `functions/`.
 - New UI text exists in both `en.json` and `sv.json`.
@@ -87,5 +100,6 @@ notifications work now.
   Never put a service account key in the app or the repo; it belongs only in EAS / Cloud Functions.
 - Don't loosen Security Rules (e.g. `allow read, write: if true`) or use Firestore test mode to make
   something work.
-- Don't push, open PRs or deploy without being asked.
+- Don't push, open PRs or deploy without being asked. Rules, indexes and functions only take effect
+  after `firebase deploy --only firestore,functions`, so say when a change needs one.
 - Don't hard-code text in one language.

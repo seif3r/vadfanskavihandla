@@ -11,12 +11,13 @@ import IconButton from "@/components/IconButton";
 import Input from "@/components/Input";
 import ItemSection from "@/components/ItemSection";
 import ListActions from "@/components/ListActions";
-import ListTabs from "@/components/ListTabs";
+import ListButton from "@/components/ListButton";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { useLists } from "@/context/ListsContext";
 import { MAX_NAME_LENGTH } from "@/constants/limits";
 import { cleanName, sortItems } from "@/helpers/list";
 import { useItems } from "@/hooks/useItems";
+import { useGroups } from "@/hooks/useGroups";
 import { useKnownItems } from "@/hooks/useKnownItems";
 import { Category } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
@@ -25,7 +26,8 @@ export default function Index() {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
   const router = useRouter();
-  const { lists, activeList, setActiveListId, isLoading } = useLists();
+  const { activeList, isLoading } = useLists();
+  const { groups } = useGroups();
   const { items, isLoading: isLoadingItems, addItem, isAdding, toggleItem, checkAll, uncheckAll, removeChecked } =
     useItems(activeList?.id);
   const [text, setText] = useState("");
@@ -67,7 +69,7 @@ export default function Index() {
     );
   }
 
-  if (lists.length === 0) {
+  if (!activeList) {
     return (
       <View style={[styles.container, styles.empty]}>
         <Text style={styles.emptyText}>{t("list.empty")}</Text>
@@ -83,11 +85,10 @@ export default function Index() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={headerHeight}
     >
-      <ListTabs
-        lists={lists}
-        activeId={activeList?.id}
-        onSelect={setActiveListId}
-        onManage={() => router.push("/lists")}
+      <ListButton
+        list={activeList}
+        groupName={groups.find((group) => group.id === activeList.groupId)?.name}
+        onPress={() => router.push("/lists")}
       />
       <ListActions
         items={items}

@@ -1,10 +1,18 @@
 {
   "indexes": [
     {
-      "collectionGroup": "lists",
+      "collectionGroup": "groups",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "members", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "lists",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "groupId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
     },

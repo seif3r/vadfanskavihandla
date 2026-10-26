@@ -1,3 +1,4 @@
+import { ApiError } from "@/api/ApiError";
 import { ShoppingList, User, UserSettings } from "@/types/models";
 
 export interface AuthContextValue {
@@ -14,11 +15,9 @@ export interface ListsContextValue {
   activeList: ShoppingList | null;
   setActiveListId: (id: string) => void;
   isLoading: boolean;
-  createList: (name: string) => void;
+  createList: (groupId: string, name: string) => void;
   isCreatingList: boolean;
   deleteList: (listId: string) => void;
-  // Returns an invite code others can use to join the list.
-  createInvite: (list: ShoppingList) => Promise<string>;
-  // Joins the list the code points to and makes it the active list.
-  joinList: (code: string) => Promise<void>;
+  // From the latest failed create or delete, until the next one succeeds.
+  error: ApiError | null;
 }

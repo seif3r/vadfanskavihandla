@@ -1,7 +1,7 @@
 /**
  * Sends push notifications when someone adds or removes items, to the
- * list's other members who have that notification switched on. Checking
- * items off is personal and sends nothing.
+ * other members of the list's group who have that notification switched
+ * on. Checking items off is personal and sends nothing.
  *
  * Changes are not pushed one by one: a person's changes to a list are
  * collected until they've been quiet for a minute and sent as one
@@ -30,6 +30,10 @@ initializeApp();
 // trigger itself still lives with the database. Few instances: this only
 // reacts to a household's taps.
 const region = "europe-north1";
+// Cloud Tasks isn't offered in either Nordic region, so the queue and the
+// function it calls live in Belgium. A push that waits a minute anyway
+// doesn't notice the extra distance.
+const tasksRegion = "europe-west1";
 setGlobalOptions({region, maxInstances: 5});
 const db = getFirestore();
 
@@ -94,13 +98,16 @@ export const notifyOnItemChange = onDocumentWrittenWithAuthContext(
     // Every change schedules a send a minute out. Earlier tasks see a newer
     // seq and do nothing, so it goes out a minute after the last change.
     const queue = getFunctions().taskQueue<BatchTask>(
-      `locations/${region}/functions/sendBatchedNotification`);
+      `locations/${tasksRegion}/functions/sendBatchedNotification`);
     await queue.enqueue({batchId, seq}, {scheduleDelaySeconds: DELAY_SECONDS});
   },
 );
 
 export const sendBatchedNotification = onTaskDispatched<BatchTask>(
-  {retryConfig: {maxAttempts: 3, minBackoffSeconds: 30}},
+  {
+    region: tasksRegion,
+    retryConfig: {maxAttempts: 3, minBackoffSeconds: 30},
+  },
   async (request) => {
     const {batchId, seq} = request.data;
     const ref = db.doc(`pendingNotifications/${batchId}`);
@@ -121,7 +128,7 @@ export const sendBatchedNotification = onTaskDispatched<BatchTask>(
 
 /**
  * Sends one notification about a batch of changes to every other member
- * of the list who wants it.
+ * of the list's group who wants it.
  * @param {PendingBatch} batch The collected changes.
  */
 async function sendPush(batch: PendingBatch): Promise<void> {
@@ -132,7 +139,9 @@ async function sendPush(batch: PendingBatch): Promise<void> {
   const list = await db.doc(`lists/${listId}`).get();
   if (!list.exists) return;
   const actor = await db.doc(`profiles/${actorId}`).get();
-  const members: string[] = list.get("members") ?? [];
+  // Everyone in the list's group sees it, so they're the ones to tell.
+  const group = await db.doc(`groups/${list.get("groupId")}`).get();
+  const members: string[] = group.get("members") ?? [];
   const recipients = members.filter((id) => id !== actorId);
 
   // Each message remembers whose token it is, so dead tokens can be removed.

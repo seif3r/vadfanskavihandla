@@ -1,6 +1,6 @@
 # Notifications
 
-How "Anna added 3 items: milk, eggs, bread" reaches the other people on a list. This replaces
+How "Anna added 3 items: milk, eggs, bread" reaches the other members of the list's group. This replaces
 chapter 8.1 and 8.3 of `backend-and-hosting-guide.pdf`; the rest of that chapter (push tokens,
 `expo-notifications` setup, region, EAS credentials) still applies.
 
@@ -13,7 +13,8 @@ chapter 8.1 and 8.3 of `backend-and-hosting-guide.pdf`; the rest of that chapter
 | Someone checks or unchecks an item | nothing: checking off is personal | none |
 | Someone edits an item | nothing | none |
 
-The person who made the change is never notified. The list name is the notification title. Both
+Everyone in the list's group is a recipient, except the person who made the change. The list
+name is the notification title. Both
 settings are off for new accounts; turning one on asks for permission.
 
 ## Bundling and the 60-second delay
@@ -39,7 +40,7 @@ files (copied into `functions/locales/` at build time), so there is one place to
 4. When a task runs, it only sends if its `seq` is still the latest. Otherwise a newer change has
    its own task coming. The sender empties the batch's items in the same transaction (the doc stays,
    so `seq` never repeats), then sends via Expo's push service and removes tokens Expo reports as
-   `DeviceNotRegistered`.
+   `DeviceNotRegistered`. Recipients are the `members` of the group named by the list's `groupId`.
 
 **Web and Expo Go (in-app, only while the app is open)** — `hooks/useLiveUpdates.ts` gets changes
 from `subscribeToItems` in `api/items.ts` and batches them with timers in the same way. Installed
@@ -54,6 +55,12 @@ When changing what triggers a notification, its text or its timing, change both 
 ```bash
 firebase deploy --only functions
 ```
+
+Regions: `notifyOnItemChange` runs in `europe-north1` (Cloud Functions isn't offered in
+`europe-north2`, where the database is). Cloud Tasks isn't offered in either Nordic region, so the
+queue and `sendBatchedNotification` run in `europe-west1`. Both are set at the top of
+`functions/src/index.ts`. Moving a task function to another region leaves the old one behind; if
+the CLI can't delete it, delete its Cloud Run service in the Google Cloud console.
 
 The first deploy turns on the Cloud Tasks API. If the trigger then fails with a permission error
 when it enqueues, give the functions' service account (by default

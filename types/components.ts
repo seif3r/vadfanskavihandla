@@ -1,6 +1,6 @@
 import { StyleProp, TextStyle } from "react-native";
 
-import { Category, Item, ShoppingList } from "@/types/models";
+import { Category, Group, Item, Member, ShoppingList } from "@/types/models";
 
 export interface ButtonProps {
   value: string;
@@ -28,11 +28,10 @@ export interface ItemRowProps {
   isFirst?: boolean;
 }
 
-export interface ListTabsProps {
-  lists: ShoppingList[];
-  activeId: string | undefined;
-  onSelect: (id: string) => void;
-  onManage: () => void;
+export interface ListButtonProps {
+  list: ShoppingList;
+  groupName?: string;
+  onPress: () => void;
 }
 
 export interface ItemSectionProps {
@@ -85,12 +84,45 @@ export interface SettingSwitchProps {
 
 export interface ListRowProps {
   list: ShoppingList;
-  onShare: () => void;
-  onDelete: () => void;
+  // The list that's open on the home screen.
+  isActive?: boolean;
+  onPress?: () => void;
+  // Left out when the user may not delete the list.
+  onDelete?: () => void;
   isFirst?: boolean;
 }
 
-export type IconName = "edit" | "more" | "check";
+export interface ConfirmButtonProps {
+  label: string;
+  // Shown after the first tap, e.g. "Delete?".
+  confirmLabel: string;
+  onConfirm: () => void;
+}
+
+export interface GroupListsProps {
+  group: Group;
+  lists: ShoppingList[];
+  activeListId: string | undefined;
+  onSelect: (list: ShoppingList) => void;
+  // Whether the user may delete this list.
+  canDelete: (list: ShoppingList) => boolean;
+  onCreate: (name: string) => void;
+  onDelete: (list: ShoppingList) => void;
+  isCreating: boolean;
+}
+
+export interface GroupCardProps {
+  group: Group;
+  members: Member[];
+  userId: string;
+  onRename: (name: string) => void;
+  onInvite: () => void;
+  onRemoveMember: (userId: string) => void;
+  onLeave: () => void;
+  onDelete: () => void;
+}
+
+export type IconName = "edit" | "more" | "check" | "list" | "chevronRight";
 
 export interface IconProps {
   name: IconName;

@@ -43,6 +43,7 @@ function RootStack() {
         />
         <Stack.Screen name="settings" options={{ title: t("settings.title") }} />
         <Stack.Screen name="lists" options={{ title: t("lists.title") }} />
+        <Stack.Screen name="groups" options={{ title: t("groups.title") }} />
         <Stack.Screen name="join" options={{ title: t("join.title") }} />
       </Stack.Protected>
       <Stack.Protected guard={!user}>

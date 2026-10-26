@@ -38,23 +38,41 @@
   },
   "lists": {
     "title": "Lists",
-    "manage": "Manage lists",
     "newPlaceholder": "Name of new list",
     "add": "Add",
     "delete": "Delete",
     "confirmDelete": "Delete?",
-    "share": "Share",
-    "shareMessage": "Join my shopping list \"{{list}}\" in Vad fan ska vi handla. Invite code: {{code}}",
-    "inviteCode": "Invite code for {{list}}: {{code}}",
-    "join": "Join a list"
+    "noGroups": "Lists belong to a group: create or join one first.",
+    "manageGroups": "Groups"
   },
   "join": {
-    "title": "Join a list",
+    "title": "Join a group",
     "codePlaceholder": "Invite code",
     "submit": "Join"
   },
+  "groups": {
+    "title": "Groups",
+    "newPlaceholder": "Name of new group, e.g. Home",
+    "create": "Create",
+    "empty": "You're not in a group yet. Create one, or join with a code someone sent you.",
+    "rename": "Rename",
+    "save": "Save",
+    "owner": "owner",
+    "you": "you",
+    "remove": "Remove",
+    "confirmRemove": "Remove?",
+    "invite": "Invite",
+    "leave": "Leave",
+    "confirmLeave": "Leave?",
+    "delete": "Delete",
+    "confirmDelete": "Delete group and its lists?",
+    "shareMessage": "Join my group \"{{group}}\" in Vad fan ska vi handla to share shopping lists. Invite code: {{code}}",
+    "inviteCode": "Invite code for {{group}}: {{code}}",
+    "join": "Join a group"
+  },
   "userMenu": {
     "settings": "Settings",
+    "groups": "Groups",
     "logout": "Log out"
   },
   "settings": {
@@ -85,6 +103,7 @@
     "notAllowed": "You don't have access to this",
     "offline": "No connection. Check your internet and try again",
     "unknown": "Something went wrong. Try again",
-    "inviteNotFound": "The invite code is not valid"
+    "inviteNotFound": "The invite code is not valid",
+    "lastMember": "You're the last member. Delete the group instead"
   }
 }
