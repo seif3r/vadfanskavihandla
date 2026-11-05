@@ -8,6 +8,7 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { cleanName } from "@/helpers/list";
 import { useGroups } from "@/hooks/useGroups";
+import { spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { ThemeColors } from "@/types/theme";
 
@@ -52,8 +53,8 @@ const createStyles = (colors: ThemeColors) =>
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      gap: 10,
-      padding: 16,
+      gap: spacing.md,
+      padding: spacing.xl,
     },
     error: {
       color: colors.danger,

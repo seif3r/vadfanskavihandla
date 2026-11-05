@@ -7,11 +7,12 @@ import { ApiError } from "@/api/ApiError";
 import Button from "@/components/Button";
 import GroupCard from "@/components/GroupCard";
 import Input from "@/components/Input";
-import { MAX_GROUP_NAME_LENGTH } from "@/constants/limits";
+import { INVITE_LIFETIME_DAYS, MAX_GROUP_NAME_LENGTH } from "@/constants/limits";
 import { useAuth } from "@/context/AuthContext";
 import { cleanName } from "@/helpers/list";
 import { shareText } from "@/helpers/share";
 import { useGroups } from "@/hooks/useGroups";
+import { spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { Group } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
@@ -23,7 +24,8 @@ export default function Groups() {
   const router = useRouter();
   const { user } = useAuth();
   const {
-    groups, membersOf, createGroup, isCreating, renameGroup, leaveGroup, removeMember, deleteGroup, createInvite,
+    groups, membersOf, removedMembersOf, createGroup, isCreating, renameGroup, leaveGroup, removeMember,
+    allowRemovedMember, deleteGroup, createInvite, revokeInvite,
   } = useGroups();
   const [name, setName] = useState("");
   // The latest invite, also shown on screen: there's no share sheet in most desktop browsers.
@@ -51,7 +53,14 @@ export default function Groups() {
     run(async () => {
       const code = await createInvite(group);
       setInvite({ group: group.name, code });
-      await shareText(t("groups.shareMessage", { group: group.name, code }));
+      await shareText(t("groups.shareMessage", { group: group.name, code, days: INVITE_LIFETIME_DAYS }));
+    });
+
+  const handleRevokeInvite = (code: string) =>
+    run(async () => {
+      await revokeInvite(code);
+      // The code on screen no longer works.
+      if (invite?.code === code) setInvite(null);
     });
 
   if (!user) return null;
@@ -77,10 +86,13 @@ export default function Groups() {
           key={group.id}
           group={group}
           members={membersOf(group)}
+          removedMembers={removedMembersOf(group)}
           userId={user.id}
           onRename={(newName) => run(() => renameGroup(group, newName))}
           onInvite={() => handleInvite(group)}
+          onRevokeInvite={handleRevokeInvite}
           onRemoveMember={(userId) => run(() => removeMember(group, userId))}
+          onAllowRemovedMember={(userId) => run(() => allowRemovedMember(group, userId))}
           onLeave={() => run(() => leaveGroup(group))}
           onDelete={() => run(() => deleteGroup(group))}
         />
@@ -88,7 +100,7 @@ export default function Groups() {
 
       {invite && (
         <Text selectable style={styles.invite}>
-          {t("groups.inviteCode", { group: invite.group, code: invite.code })}
+          {t("groups.inviteCode", { group: invite.group, code: invite.code, days: INVITE_LIFETIME_DAYS })}
         </Text>
       )}
       {error && <Text style={styles.error}>{error}</Text>}
@@ -101,13 +113,13 @@ export default function Groups() {
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
-      padding: 16,
-      gap: 16,
+      padding: spacing.xl,
+      gap: spacing.xl,
     },
     addRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      gap: spacing.sm,
     },
     // Fills all width the button doesn't use.
     input: {

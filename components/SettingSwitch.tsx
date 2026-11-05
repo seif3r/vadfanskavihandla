@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Switch, Text } from "react-native";
 
+import { spacing, textSize } from "@/constants/theme";
 import { useColors, useThemedStyles } from "@/hooks/useTheme";
 import { SettingSwitchProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
@@ -35,9 +36,9 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      gap: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      gap: spacing.lg,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.md,
     },
     divider: {
       borderTopWidth: 1,
@@ -45,7 +46,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     label: {
       flexShrink: 1,
-      fontSize: 16,
+      fontSize: textSize.body,
       color: colors.text,
     },
   });

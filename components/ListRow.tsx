@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import ConfirmButton from "@/components/ConfirmButton";
+import { spacing, textSize } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { ListRowProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
@@ -28,9 +29,9 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      gap: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      gap: spacing.lg,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.md,
       minHeight: 50,
     },
     divider: {
@@ -44,7 +45,7 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: "center",
     },
     name: {
-      fontSize: 16,
+      fontSize: textSize.body,
       color: colors.text,
     },
     active: {

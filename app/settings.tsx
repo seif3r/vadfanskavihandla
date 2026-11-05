@@ -4,13 +4,14 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import OptionPicker from "@/components/OptionPicker";
 import SettingSwitch from "@/components/SettingSwitch";
-import { radius } from "@/constants/theme";
+import { radius, spacing, textSize } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { requestNotificationPermission } from "@/helpers/notifications";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { languages } from "@/i18n";
 import { Language } from "@/types/i18n";
-import { NotificationSettings } from "@/types/models";
+import { PickerOption } from "@/types/components";
+import { NotificationSettings, UserSettings } from "@/types/models";
 import { ThemeColors, ThemePreference } from "@/types/theme";
 
 export default function Settings() {
@@ -23,7 +24,7 @@ export default function Settings() {
   if (!user) return null;
   const notifications = user.settings.notifications;
 
-  const save = async (settings: Parameters<typeof updateSettings>[0]) => {
+  const save = async (settings: Partial<UserSettings>) => {
     setIsSaving(true);
     try {
       await updateSettings(settings);
@@ -36,7 +37,7 @@ export default function Settings() {
   const handleThemeChange = (theme: ThemePreference) => save({ theme });
 
   const languageOptions = languages.map((l) => ({ value: l.code, label: l.name }));
-  const themeOptions: { value: ThemePreference; label: string }[] = [
+  const themeOptions: PickerOption<ThemePreference>[] = [
     { value: "system", label: t("settings.themeSystem") },
     { value: "light", label: t("settings.themeLight") },
     { value: "dark", label: t("settings.themeDark") },
@@ -89,18 +90,18 @@ export default function Settings() {
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
-      padding: 16,
-      gap: 8,
+      padding: spacing.xl,
+      gap: spacing.sm,
     },
     sectionTitle: {
       color: colors.textMuted,
-      fontSize: 13,
+      fontSize: textSize.small,
       fontWeight: "600",
       textTransform: "uppercase",
-      paddingHorizontal: 4,
+      paddingHorizontal: spacing.xxs,
     },
     section: {
-      marginTop: 16,
+      marginTop: spacing.xl,
     },
     group: {
       backgroundColor: colors.surface,
@@ -110,7 +111,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     blocked: {
       color: colors.danger,
-      fontSize: 13,
-      paddingHorizontal: 4,
+      fontSize: textSize.small,
+      paddingHorizontal: spacing.xxs,
     },
   });

@@ -1,3 +1,4 @@
+import { spacing, textSize } from "@/constants/theme";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -34,9 +35,9 @@ const createStyles = (colors: ThemeColors) =>
     bar: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      gap: spacing.lg,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.md,
       backgroundColor: colors.surface,
       borderBottomWidth: 1,
       borderColor: colors.border,
@@ -50,12 +51,12 @@ const createStyles = (colors: ThemeColors) =>
       minWidth: 0,
     },
     name: {
-      fontSize: 17,
+      fontSize: textSize.title,
       fontWeight: "600",
       color: colors.text,
     },
     group: {
-      fontSize: 13,
+      fontSize: textSize.small,
       color: colors.textMuted,
     },
   });

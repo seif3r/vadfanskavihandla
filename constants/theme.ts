@@ -55,3 +55,24 @@ export const radius = {
   large: 14,
   round: 999,
 };
+
+// Gaps, padding and margins. Components pick a step instead of writing a number.
+export const spacing = {
+  xxs: 4,
+  xs: 6,
+  sm: 8,
+  md: 10,
+  lg: 12,
+  xl: 16,
+  xxl: 24,
+};
+
+// Font sizes, named by where they are used.
+export const textSize = {
+  caption: 12,
+  small: 13,
+  medium: 14,
+  button: 15,
+  body: 16,
+  title: 17,
+};

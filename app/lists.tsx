@@ -5,8 +5,10 @@ import { ScrollView, StyleSheet, Text } from "react-native";
 import Button from "@/components/Button";
 import GroupLists from "@/components/GroupLists";
 import { useAuth } from "@/context/AuthContext";
-import { useLists } from "@/context/ListsContext";
+import { useActiveList } from "@/hooks/useActiveList";
 import { useGroups } from "@/hooks/useGroups";
+import { useLists } from "@/hooks/useLists";
+import { spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { Group, ShoppingList } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
@@ -18,7 +20,8 @@ export default function Lists() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
-  const { lists, activeList, setActiveListId, createList, isCreatingList, deleteList, error } = useLists();
+  const { lists, createList, isCreatingList, deleteList, error } = useLists();
+  const { activeList, setActiveListId } = useActiveList();
   const { groups } = useGroups();
 
   // The list's creator and the group's owner may delete it; the rules check the same.
@@ -59,8 +62,8 @@ export default function Lists() {
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
-      padding: 16,
-      gap: 24,
+      padding: spacing.xl,
+      gap: spacing.xxl,
     },
     empty: {
       color: colors.textMuted,

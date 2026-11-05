@@ -66,8 +66,14 @@
     "confirmLeave": "Lämna?",
     "delete": "Ta bort",
     "confirmDelete": "Ta bort gruppen och dess listor?",
-    "shareMessage": "Gå med i min grupp \"{{group}}\" i Vad fan ska vi handla och dela inköpslistor. Inbjudningskod: {{code}}",
-    "inviteCode": "Inbjudningskod för {{group}}: {{code}}",
+    "shareMessage": "Gå med i min grupp \"{{group}}\" i Vad fan ska vi handla och dela inköpslistor. Inbjudningskod: {{code}} (gäller i {{days}} dagar)",
+    "inviteCode": "Inbjudningskod för {{group}}: {{code}} (gäller i {{days}} dagar)",
+    "activeInvites": "Aktiva inbjudningskoder",
+    "inviteValidUntil": "Gäller till {{date}}",
+    "revokeInvite": "Återkalla",
+    "confirmRevokeInvite": "Återkalla?",
+    "removedMembers": "Borttagna medlemmar",
+    "allowRemovedMember": "Tillåt igen",
     "join": "Gå med i en grupp"
   },
   "userMenu": {
@@ -91,7 +97,8 @@
     "itemAdded": "{{user}} lade till {{item}}",
     "itemRemoved": "{{user}} tog bort {{item}}",
     "itemAddedMany": "{{user}} lade till {{count}} varor: {{items}}",
-    "itemRemovedMany": "{{user}} tog bort {{count}} varor: {{items}}"
+    "itemRemovedMany": "{{user}} tog bort {{count}} varor: {{items}}",
+    "channelName": "Ändringar i listor"
   },
   "errors": {
     "invalidSession": "Ogiltig session",
@@ -103,6 +110,8 @@
     "offline": "Ingen anslutning. Kontrollera internet och försök igen",
     "unknown": "Något gick fel. Försök igen",
     "inviteNotFound": "Inbjudningskoden är inte giltig",
+    "inviteExpired": "Inbjudningskoden fungerar inte längre. Be om en ny",
+    "removedFromGroup": "Du har tagits bort från den här gruppen. Be ägaren att tillåta dig igen",
     "lastMember": "Du är sista medlemmen. Ta bort gruppen i stället"
   }
 }

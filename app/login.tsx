@@ -5,7 +5,8 @@ import { useTranslation } from "react-i18next";
 import { ApiError } from "@/api/ApiError";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
-import { MAX_PERSON_NAME_LENGTH } from "@/constants/limits";
+import { MAX_EMAIL_LENGTH, MAX_PERSON_NAME_LENGTH } from "@/constants/limits";
+import { spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { useAuth } from "@/context/AuthContext";
 import { cleanName } from "@/helpers/list";
@@ -51,7 +52,7 @@ export default function Login() {
       {isRegistering && (
         <Input value={name} onChangeText={setName} placeholder={t("login.name")} maxLength={MAX_PERSON_NAME_LENGTH} />
       )}
-      <Input value={email} onChangeText={setEmail} placeholder={t("login.email")} />
+      <Input value={email} onChangeText={setEmail} placeholder={t("login.email")} maxLength={MAX_EMAIL_LENGTH} />
       <Input
         value={password}
         onChangeText={setPassword}
@@ -80,7 +81,7 @@ const createStyles = (colors: ThemeColors) =>
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      gap: 10,
+      gap: spacing.md,
     },
     error: {
       color: colors.danger,

@@ -4,18 +4,20 @@ import { StyleSheet, Text, View } from "react-native";
 
 import Button from "@/components/Button";
 import ConfirmButton from "@/components/ConfirmButton";
+import GroupInvites from "@/components/GroupInvites";
 import Input from "@/components/Input";
 import { MAX_GROUP_NAME_LENGTH } from "@/constants/limits";
-import { radius } from "@/constants/theme";
+import { radius, spacing, textSize } from "@/constants/theme";
 import { cleanName } from "@/helpers/list";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { GroupCardProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
 
 // A group with its members. Everyone can invite and leave; the owner can also rename
-// the group, remove members and delete it. The last member can only delete.
+// the group, remove members, revoke invites and delete it. The last member can only delete.
 export default function GroupCard({
-  group, members, userId, onRename, onInvite, onRemoveMember, onLeave, onDelete,
+  group, members, removedMembers, userId, onRename, onInvite, onRevokeInvite, onRemoveMember, onAllowRemovedMember,
+  onLeave, onDelete,
 }: GroupCardProps) {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
@@ -66,6 +68,25 @@ export default function GroupCard({
         </View>
       ))}
 
+      {isOwner && removedMembers.length > 0 && (
+        <>
+          <Text style={[styles.heading, styles.divider]}>{t("groups.removedMembers")}</Text>
+          {removedMembers.map((member) => (
+            <View key={member.id} style={styles.row}>
+              <Text style={styles.member}>{member.name}</Text>
+              <Button
+                value={t("groups.allowRemovedMember")}
+                variant="secondary"
+                compact
+                onPress={() => onAllowRemovedMember(member.id)}
+              />
+            </View>
+          ))}
+        </>
+      )}
+
+      {isOwner && <GroupInvites group={group} onRevoke={onRevokeInvite} />}
+
       <View style={[styles.actions, styles.divider]}>
         <Button value={t("groups.invite")} variant="secondary" compact onPress={onInvite} />
         {!isAlone && <ConfirmButton label={t("groups.leave")} confirmLabel={t("groups.confirmLeave")} onConfirm={onLeave} />}
@@ -87,14 +108,14 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      gap: 8,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      gap: spacing.sm,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.md,
       minHeight: 50,
     },
     name: {
       flex: 1,
-      fontSize: 17,
+      fontSize: textSize.title,
       fontWeight: "600",
       color: colors.text,
     },
@@ -107,29 +128,35 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      gap: 12,
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      gap: spacing.lg,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.md,
       minHeight: 46,
     },
     divider: {
       borderTopWidth: 1,
       borderColor: colors.divider,
     },
+    heading: {
+      paddingHorizontal: spacing.xl,
+      paddingTop: spacing.md,
+      fontSize: textSize.medium,
+      color: colors.textMuted,
+    },
     member: {
       flex: 1,
-      fontSize: 16,
+      fontSize: textSize.body,
       color: colors.text,
     },
     tag: {
       color: colors.textMuted,
-      fontSize: 14,
+      fontSize: textSize.medium,
     },
     actions: {
       flexDirection: "row",
       flexWrap: "wrap",
       alignItems: "center",
-      gap: 8,
-      padding: 12,
+      gap: spacing.sm,
+      padding: spacing.lg,
     },
   });

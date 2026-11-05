@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import Input from "@/components/Input";
 import { MAX_AMOUNT_LENGTH } from "@/constants/limits";
-import { radius } from "@/constants/theme";
+import { radius, spacing, textSize } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { categories } from "@/helpers/categories";
 import { AddItemOptionsProps } from "@/types/components";
@@ -52,18 +52,18 @@ const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     panel: {
       backgroundColor: colors.surface,
-      gap: 10,
-      paddingHorizontal: 12,
-      paddingTop: 12,
+      gap: spacing.md,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.lg,
       borderTopWidth: 1,
       borderColor: colors.border,
     },
     field: {
-      gap: 4,
+      gap: spacing.xxs,
     },
     label: {
       color: colors.textMuted,
-      fontSize: 12,
+      fontSize: textSize.caption,
       fontWeight: "600",
     },
     amount: {
@@ -71,11 +71,11 @@ const createStyles = (colors: ThemeColors) =>
       width: 140,
     },
     chips: {
-      gap: 6,
+      gap: spacing.xs,
     },
     chip: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.xs,
       borderRadius: radius.round,
       borderWidth: 1,
       borderColor: colors.border,

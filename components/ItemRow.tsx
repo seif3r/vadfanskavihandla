@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import Icon from "@/components/Icon";
-import { radius } from "@/constants/theme";
+import { radius, spacing, textSize } from "@/constants/theme";
 import { useColors, useThemedStyles } from "@/hooks/useTheme";
 import { ItemRowProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
@@ -44,10 +44,10 @@ const createStyles = (colors: ThemeColors) =>
     row: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 12,
+      gap: spacing.lg,
       minHeight: 48,
-      paddingVertical: 10,
-      paddingHorizontal: 16,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.xl,
       backgroundColor: colors.surface,
     },
     divider: {
@@ -79,11 +79,11 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      gap: 8,
+      gap: spacing.sm,
     },
     name: {
       flexShrink: 1,
-      fontSize: 16,
+      fontSize: textSize.body,
       color: colors.text,
     },
     amount: {
@@ -91,7 +91,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     category: {
       color: colors.textMuted,
-      fontSize: 12,
+      fontSize: textSize.caption,
     },
     doneText: {
       textDecorationLine: "line-through",

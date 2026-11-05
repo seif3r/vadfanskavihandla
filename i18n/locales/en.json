@@ -66,8 +66,14 @@
     "confirmLeave": "Leave?",
     "delete": "Delete",
     "confirmDelete": "Delete group and its lists?",
-    "shareMessage": "Join my group \"{{group}}\" in Vad fan ska vi handla to share shopping lists. Invite code: {{code}}",
-    "inviteCode": "Invite code for {{group}}: {{code}}",
+    "shareMessage": "Join my group \"{{group}}\" in Vad fan ska vi handla to share shopping lists. Invite code: {{code}} (valid for {{days}} days)",
+    "inviteCode": "Invite code for {{group}}: {{code}} (valid for {{days}} days)",
+    "activeInvites": "Active invite codes",
+    "inviteValidUntil": "Valid until {{date}}",
+    "revokeInvite": "Revoke",
+    "confirmRevokeInvite": "Revoke?",
+    "removedMembers": "Removed members",
+    "allowRemovedMember": "Allow again",
     "join": "Join a group"
   },
   "userMenu": {
@@ -91,7 +97,8 @@
     "itemAdded": "{{user}} added {{item}}",
     "itemRemoved": "{{user}} removed {{item}}",
     "itemAddedMany": "{{user}} added {{count}} items: {{items}}",
-    "itemRemovedMany": "{{user}} removed {{count}} items: {{items}}"
+    "itemRemovedMany": "{{user}} removed {{count}} items: {{items}}",
+    "channelName": "List changes"
   },
   "errors": {
     "invalidSession": "Invalid session",
@@ -103,6 +110,8 @@
     "offline": "No connection. Check your internet and try again",
     "unknown": "Something went wrong. Try again",
     "inviteNotFound": "The invite code is not valid",
+    "inviteExpired": "The invite code no longer works. Ask for a new one",
+    "removedFromGroup": "You were removed from this group. Ask its owner to allow you back",
     "lastMember": "You're the last member. Delete the group instead"
   }
 }

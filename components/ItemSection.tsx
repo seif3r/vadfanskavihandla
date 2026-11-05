@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 
 import ItemRow from "@/components/ItemRow";
-import { radius } from "@/constants/theme";
+import { radius, spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { ItemSectionProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
@@ -23,7 +23,7 @@ export default function ItemSection({ items, onToggle }: ItemSectionProps) {
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     card: {
-      marginHorizontal: 16,
+      marginHorizontal: spacing.xl,
       borderRadius: radius.large,
       borderWidth: 1,
       borderColor: colors.border,

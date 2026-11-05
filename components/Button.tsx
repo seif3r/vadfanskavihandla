@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text } from "react-native";
 
-import { radius } from "@/constants/theme";
+import { radius, spacing, textSize } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { ButtonProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
@@ -36,7 +36,7 @@ const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     button: {
       minHeight: 44,
-      paddingHorizontal: 16,
+      paddingHorizontal: spacing.xl,
       borderRadius: radius.medium,
       alignItems: "center",
       justifyContent: "center",
@@ -45,10 +45,10 @@ const createStyles = (colors: ThemeColors) =>
     compact: {
       flex: 1,
       minHeight: 40,
-      paddingHorizontal: 8,
+      paddingHorizontal: spacing.sm,
     },
     compactText: {
-      fontSize: 13,
+      fontSize: textSize.small,
     },
     primary: {
       backgroundColor: colors.primary,
@@ -66,7 +66,7 @@ const createStyles = (colors: ThemeColors) =>
       opacity: 0.45,
     },
     text: {
-      fontSize: 15,
+      fontSize: textSize.button,
       fontWeight: "600",
     },
     primaryText: {

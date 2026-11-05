@@ -114,12 +114,20 @@ export interface GroupListsProps {
 export interface GroupCardProps {
   group: Group;
   members: Member[];
+  removedMembers: Member[];
   userId: string;
   onRename: (name: string) => void;
   onInvite: () => void;
+  onRevokeInvite: (code: string) => void;
   onRemoveMember: (userId: string) => void;
+  onAllowRemovedMember: (userId: string) => void;
   onLeave: () => void;
   onDelete: () => void;
+}
+
+export interface GroupInvitesProps {
+  group: Group;
+  onRevoke: (code: string) => void;
 }
 
 export type IconName = "edit" | "more" | "check" | "list" | "chevronRight";

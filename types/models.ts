@@ -27,6 +27,16 @@ export interface Group {
   // Can rename the group, remove members and delete it.
   ownerId: string;
   memberIds: string[];
+  // Removed by the owner: can't join again until the owner allows it.
+  removedMemberIds: string[];
+}
+
+// A code that lets someone join a group.
+export interface Invite {
+  code: string;
+  createdBy: string;
+  // Milliseconds since 1970.
+  expiresAt: number;
 }
 
 export interface ShoppingList {

@@ -29,8 +29,10 @@ and its data model shares lists per list, while lists now belong to groups (belo
 **Data model:** `groups/{groupId}` (`name`, `ownerId`, `members`) is the one place membership lives.
 `lists/{listId}` has a `groupId` and an `ownerId` (its creator); items point to their list with
 `listId`. Rules, `api/` and the Cloud Function all go list → group → members. Invite codes
-(`invites/{code}`) point to a group. The group's owner can rename it, remove members and delete it;
-any member can invite, create lists and leave (an owner who leaves hands the group to the next
+(`invites/{code}`) point to a group, and only the `joinGroup` Cloud Function adds members: a code
+works for 7 days (`createdAt` + `INVITE_LIFETIME_DAYS`, also set in `functions/`) while its creator is a
+member, and not for anyone in the group's `removedMembers`. The group's owner can rename it, remove
+members, let removed members back, revoke invites and delete it; any member can invite, create lists and leave (an owner who leaves hands the group to the next
 member; the last member can only delete). A list can be deleted by its creator or the group's owner.
 A user can be in several groups and sees all their lists at once: lists are loaded with one query
 per group, since Firestore can't join.

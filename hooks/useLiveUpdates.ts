@@ -7,7 +7,7 @@ import { subscribeToItems } from "@/api/items";
 import { subscribeToLists } from "@/api/lists";
 import { getUsers } from "@/api/users";
 import { useAuth } from "@/context/AuthContext";
-import { useLists } from "@/context/ListsContext";
+import { useLists } from "@/hooks/useLists";
 import { memberKey } from "@/helpers/groups";
 import { canReceivePush, showNotification } from "@/helpers/notifications";
 import { Group, ItemChange, PendingNotification } from "@/types/models";

@@ -16,7 +16,8 @@ The backend is Firebase (Authentication, Cloud Firestore, and Cloud Functions fo
 in the app. Lists belong to a group (`groups/{groupId}`, e.g. a household): everyone in the group
 sees all its lists. Create a group or join one with an invite code from the Groups screen; a user
 can be in several groups and sees the lists of all of them. The group's owner can rename it, remove
-members and delete it. The button at the top of the home screen shows the open list; tapping it
+members, revoke invites and delete it. Joining goes through the `joinGroup` Cloud Function: a code works
+for 7 days, while its creator is still a member, and not for someone the owner removed. The button at the top of the home screen shows the open list; tapping it
 opens all lists, where you pick another one, add lists to a group or delete them. Changes show up
 live on every device that has the list open.
 
@@ -37,9 +38,13 @@ they're added:
 
 ```bash
 firebase deploy --only firestore   # rules + indexes
-firebase emulators:start           # local Auth/Firestore, set EXPO_PUBLIC_FIREBASE_EMULATOR_HOST
-firebase deploy --only functions   # push notifications (needs the Blaze plan)
+firebase emulators:start           # local backend, set EXPO_PUBLIC_FIREBASE_EMULATOR_HOST (development builds only)
+firebase deploy --only functions   # joining groups, push, cleanup (needs the Blaze plan)
 ```
+
+App Check runs on web when `EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY` holds a reCAPTCHA Enterprise site
+key registered in the Firebase console. Don't turn on enforcement yet: phones have no App Check
+provider (`api/appCheck.ts`), so enforcing it would lock them out.
 
 ## Project structure
 
@@ -47,7 +52,7 @@ firebase deploy --only functions   # push notifications (needs the Blaze plan)
 | ------------- | -------------------------------------------------------------------- |
 | `app/`        | Screens and routes (Expo Router). `_layout.tsx` sets up providers.   |
 | `components/` | Reusable UI components                                               |
-| `context/`    | `AuthContext` (logged-in user, settings) and `ListsContext` (lists)  |
+| `context/`    | `AuthContext` (is someone logged in) and `ActiveListContext` (open list) |
 | `hooks/`      | Data hooks built on TanStack Query (`useItems`) and live updates (`useLiveUpdates`) |
 | `api/`        | The only code that talks to Firebase. `firebase.ts` sets up the client. |
 | `functions/`  | Cloud Functions (push notifications), a separate Node project        |

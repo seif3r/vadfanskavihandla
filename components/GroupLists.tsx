@@ -6,7 +6,7 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import ListRow from "@/components/ListRow";
 import { MAX_LIST_NAME_LENGTH } from "@/constants/limits";
-import { radius } from "@/constants/theme";
+import { radius, spacing, textSize } from "@/constants/theme";
 import { cleanName } from "@/helpers/list";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { GroupListsProps } from "@/types/components";
@@ -62,14 +62,14 @@ export default function GroupLists({
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     section: {
-      gap: 8,
+      gap: spacing.sm,
     },
     title: {
-      fontSize: 13,
+      fontSize: textSize.small,
       fontWeight: "600",
       textTransform: "uppercase",
       color: colors.textMuted,
-      paddingHorizontal: 4,
+      paddingHorizontal: spacing.xxs,
     },
     card: {
       backgroundColor: colors.surface,
@@ -80,7 +80,7 @@ const createStyles = (colors: ThemeColors) =>
     addRow: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      gap: spacing.sm,
     },
     // Fills all width the button doesn't use.
     input: {

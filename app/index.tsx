@@ -12,12 +12,13 @@ import Input from "@/components/Input";
 import ItemSection from "@/components/ItemSection";
 import ListActions from "@/components/ListActions";
 import ListButton from "@/components/ListButton";
+import { spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
-import { useLists } from "@/context/ListsContext";
 import { MAX_NAME_LENGTH } from "@/constants/limits";
 import { cleanName, sortItems } from "@/helpers/list";
 import { useItems } from "@/hooks/useItems";
 import { useGroups } from "@/hooks/useGroups";
+import { useActiveList } from "@/hooks/useActiveList";
 import { useKnownItems } from "@/hooks/useKnownItems";
 import { Category } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
@@ -26,7 +27,7 @@ export default function Index() {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
   const router = useRouter();
-  const { activeList, isLoading } = useLists();
+  const { activeList, isLoading } = useActiveList();
   const { groups } = useGroups();
   const { items, isLoading: isLoadingItems, addItem, isAdding, toggleItem, checkAll, uncheckAll, removeChecked } =
     useItems(activeList?.id);
@@ -112,7 +113,7 @@ export default function Index() {
         />
       )}
       {/* Bottom inset keeps the bar clear of the home indicator / navigation bar. */}
-      <View style={[styles.inputBar, !showOptions && styles.inputBarBorder, { paddingBottom: 12 + insets.bottom }]}>
+      <View style={[styles.inputBar, !showOptions && styles.inputBarBorder, { paddingBottom: spacing.lg + insets.bottom }]}>
         <Input
           value={text}
           onChangeText={handleTextChange}
@@ -141,8 +142,8 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: "center",
     },
     empty: {
-      gap: 12,
-      padding: 16,
+      gap: spacing.lg,
+      padding: spacing.xl,
     },
     emptyText: {
       color: colors.textMuted,
@@ -154,8 +155,8 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.surface,
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
-      padding: 12,
+      gap: spacing.sm,
+      padding: spacing.lg,
     },
     // The options panel draws its own top border when it's open.
     inputBarBorder: {
@@ -172,7 +173,7 @@ const createStyles = (colors: ThemeColors) =>
       flex: 1,
     },
     scrollContent: {
-      paddingTop: 16,
-      paddingBottom: 16,
+      paddingTop: spacing.xl,
+      paddingBottom: spacing.xl,
     },
   });

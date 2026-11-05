@@ -14,6 +14,9 @@ service cloud.firestore {
     function isGroupMember(groupId) {
       return signedIn() && uid() in group(groupId).data.members;
     }
+    function isGroupOwner(groupId) {
+      return signedIn() && group(groupId).data.ownerId == uid();
+    }
     function isMember(listId) {
       return isGroupMember(list(listId).data.groupId);
     }
@@ -28,6 +31,9 @@ service cloud.firestore {
     function validListName(name) { return validText(name, 50); }
     function validPersonName(name) { return validText(name, 50); }
     function validGroupName(name) { return validText(name, 50); }
+    function validEmail(email) { return validText(email, 254); }
+    // May be empty: an amount is optional, and leaving the field empty is no amount.
+    function validAmount(amount) { return amount is string && amount.size() <= 30; }
     function validCategory(category) {
       return category in ['produce', 'dairy', 'meat', 'bread', 'pantry',
                           'frozen', 'drinks', 'household', 'other'];
@@ -38,17 +44,51 @@ service cloud.firestore {
         && validName(item.name)
         && item.done == false
         && item.createdAt == request.time
-        && (!('amount' in item) || (item.amount is string && item.amount.size() <= 30))
+        && (!('amount' in item) || validAmount(item.amount))
         && (!('category' in item) || validCategory(item.category));
+    }
+
+    // Settings match UserSettings in types/models.ts. Only the settings a write changes are
+    // checked, so accounts saved with an older shape can still change the others.
+    function validNotifications(n) {
+      return n is map && n.keys().hasOnly(['itemAdded', 'itemRemoved'])
+        && n.get('itemAdded', false) is bool && n.get('itemRemoved', false) is bool;
+    }
+    function validSettings(next, prev) {
+      let changed = next.diff(prev).affectedKeys();
+      return next is map
+        && changed.hasOnly(['language', 'theme', 'notifications'])
+        && (!('language' in changed) || next.language in ['sv', 'en'])
+        && (!('theme' in changed) || next.theme in ['system', 'light', 'dark'])
+        && (!('notifications' in changed) || validNotifications(next.notifications));
     }
 
     // Private: email and settings.
     match /users/{userId} {
       allow read, delete: if signedIn() && uid() == userId;
-      allow create, update: if signedIn() && uid() == userId
-        && validPersonName(request.resource.data.name);
+      allow create: if signedIn() && uid() == userId
+        && request.resource.data.keys().hasOnly(['name', 'email', 'settings'])
+        && validPersonName(request.resource.data.name)
+        && validEmail(request.resource.data.email)
+        && request.resource.data.settings.keys().hasAll(['language', 'theme', 'notifications'])
+        && validSettings(request.resource.data.settings, {});
+      // The email is the one the account was created with; Firebase Auth owns changes to it.
+      allow update: if signedIn() && uid() == userId
+        && changes().hasOnly(['name', 'settings'])
+        && validPersonName(request.resource.data.name)
+        && (!('settings' in changes())
+            || validSettings(request.resource.data.settings, resource.data.get('settings', {})));
+
+      // One document per device, named by its Expo push token. Only installed Android/iOS
+      // builds get push, so web never writes here.
       match /pushTokens/{token} {
-        allow read, write: if signedIn() && uid() == userId;
+        allow read, delete: if signedIn() && uid() == userId;
+        allow create, update: if signedIn() && uid() == userId
+          && token.size() <= 200
+          && token.matches('^(Exponent|Expo)PushToken\\[[^\\]]+\\]$')
+          && request.resource.data.keys().hasOnly(['platform', 'updatedAt'])
+          && request.resource.data.platform in ['android', 'ios']
+          && request.resource.data.updatedAt == request.time;
       }
     }
 
@@ -73,23 +113,25 @@ service cloud.firestore {
         // The owner may rename the group.
         (resource.data.ownerId == uid() && changes().hasOnly(['name'])
             && validGroupName(request.resource.data.name))
-        // Anyone with a valid invite may add themselves, and only themselves.
-        || (changes().hasOnly(['members', 'invite'])
-            && !(uid() in resource.data.members)
-            && request.resource.data.members == resource.data.members.concat([uid()])
-            && get(/databases/$(database)/documents/invites/$(request.resource.data.invite))
-                 .data.groupId == groupId)
+        // Nobody can add themselves here: joining goes through the joinGroup Cloud Function.
         // Members may leave. An owner who leaves hands the group to the next member; the last
         // member can't leave (members[0] doesn't exist), only delete.
         || (uid() in resource.data.members && changes().hasOnly(['members', 'ownerId'])
             && request.resource.data.members == resource.data.members.removeAll([uid()])
             && request.resource.data.ownerId == (resource.data.ownerId == uid()
                  ? request.resource.data.members[0] : resource.data.ownerId))
-        // The owner may remove one other member.
-        || (resource.data.ownerId == uid() && changes().hasOnly(['members'])
+        // The owner may remove one other member. They're remembered, so that joinGroup won't
+        // let them back in with an invite code they still know.
+        || (resource.data.ownerId == uid() && changes().hasOnly(['members', 'removedMembers'])
             && request.resource.data.members.size() == resource.data.members.size() - 1
             && resource.data.members.hasAll(request.resource.data.members)
-            && uid() in request.resource.data.members)
+            && uid() in request.resource.data.members
+            && request.resource.data.removedMembers == resource.data.get('removedMembers', [])
+                 .concat(resource.data.members.removeAll(request.resource.data.members)))
+        // The owner may let one removed person be invited again.
+        || (resource.data.ownerId == uid() && changes().hasOnly(['removedMembers'])
+            && request.resource.data.removedMembers.size() == resource.data.removedMembers.size() - 1
+            && resource.data.removedMembers.hasAll(request.resource.data.removedMembers))
       );
       // Its lists and invites are deleted by a Cloud Function (cleanUpGroup).
       allow delete: if signedIn() && resource.data.ownerId == uid();
@@ -136,15 +178,19 @@ service cloud.firestore {
         && request.resource.data.updatedBy == uid();
     }
 
-    // Invite codes to a group are long random document ids. Knowing one is the permission.
+    // Invite codes to a group are random document ids. Only the joinGroup Cloud Function uses
+    // them, and it checks that the code is still valid. It expires based on createdAt, which is
+    // set by the server here, so a client can't choose how long a code lasts.
     match /invites/{code} {
-      allow get: if signedIn();
+      allow read: if isGroupOwner(resource.data.groupId);
       allow create: if isGroupMember(request.resource.data.groupId)
+        && code.matches('^[A-Za-z0-9]{20}$')
         && request.resource.data.keys().hasOnly(['groupId', 'groupName', 'createdBy', 'createdAt'])
         && validGroupName(request.resource.data.groupName)
         && request.resource.data.createdBy == uid()
         && request.resource.data.createdAt == request.time;
-      allow delete: if signedIn() && resource.data.createdBy == uid();
+      allow delete: if signedIn()
+        && (resource.data.createdBy == uid() || isGroupOwner(resource.data.groupId));
     }
   }
 }

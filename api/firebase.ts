@@ -1,11 +1,13 @@
-// The Firebase app, auth and Firestore instances the rest of api/ uses.
+// The Firebase app, auth, Firestore and Functions instances the rest of api/ uses.
 // Nothing outside api/ imports from firebase/*.
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { ApiError } from "@/api/ApiError";
+import { startAppCheck } from "@/api/appCheck";
 import * as firebaseAuth from "firebase/auth";
 import { Auth, connectAuthEmulator, getAuth, initializeAuth, Persistence } from "firebase/auth";
 import { connectFirestoreEmulator, initializeFirestore } from "firebase/firestore";
+import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 import { Platform } from "react-native";
 
 // Exported by the React Native build of firebase/auth but missing from its types. Read here rather
@@ -23,6 +25,7 @@ const app = isFirstLoad
     appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
   })
   : getApp();
+if (isFirstLoad) startAppCheck(app);
 // The browser keeps the session by itself; on phones it's stored in AsyncStorage.
 export const auth: Auth =
   Platform.OS === "web" || !isFirstLoad
@@ -30,10 +33,14 @@ export const auth: Auth =
     : initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) });
 // Optional fields like amount are undefined, which Firestore rejects unless told to skip them.
 export const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
+// The region functions/src/index.ts deploys to.
+export const functions = getFunctions(app, "europe-north1");
 const emulatorHost = process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST;
-if (emulatorHost && isFirstLoad) {
+// Development only: a release build must never send passwords to a host over plain http.
+if (__DEV__ && emulatorHost && isFirstLoad) {
   connectAuthEmulator(auth, `http://${emulatorHost}:9099`);
   connectFirestoreEmulator(db, emulatorHost, 8080);
+  connectFunctionsEmulator(functions, emulatorHost, 5001);
 }
 // The logged-in user's id, for queries that only make sense for "me".
 export function currentUid(): string {
@@ -55,7 +62,15 @@ export function toApiError(error: unknown): ApiError {
       return new ApiError("errors.weakPassword");
     case "permission-denied":
       return new ApiError("errors.notAllowed");
+    // From the joinGroup Cloud Function.
+    case "functions/invalid-argument":
+      return new ApiError("errors.inviteNotFound");
+    case "functions/failed-precondition":
+      return new ApiError("errors.inviteExpired");
+    case "functions/permission-denied":
+      return new ApiError("errors.removedFromGroup");
     case "unavailable":
+    case "functions/unavailable":
     case "auth/network-request-failed":
       return new ApiError("errors.offline");
     default:

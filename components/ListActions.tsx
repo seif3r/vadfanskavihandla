@@ -1,4 +1,5 @@
 import { StyleSheet, View } from "react-native";
+import { spacing } from "@/constants/theme";
 import { useTranslation } from "react-i18next";
 
 import Button from "@/components/Button";
@@ -22,7 +23,7 @@ export default function ListActions({ items, onCheckAll, onUncheckAll, onRemoveC
 const styles = StyleSheet.create({
   bar: {
     flexDirection: "row",
-    gap: 8,
-    padding: 12,
+    gap: spacing.sm,
+    padding: spacing.lg,
   },
 });

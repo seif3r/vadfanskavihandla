@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { radius } from "@/constants/theme";
+import { radius, spacing, textSize } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { OptionPickerProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
@@ -42,21 +42,21 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingHorizontal: 16,
-      paddingVertical: 14,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.xl,
     },
     divider: {
       borderTopWidth: 1,
       borderColor: colors.divider,
     },
     name: {
-      fontSize: 16,
+      fontSize: textSize.body,
       color: colors.text,
     },
     radio: {
       width: 20,
       height: 20,
-      borderRadius: 10,
+      borderRadius: radius.round,
       borderWidth: 2,
       borderColor: colors.border,
     },

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 
-import { radius } from "@/constants/theme";
+import { radius, spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { ConfirmButtonProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
@@ -37,8 +37,8 @@ export default function ConfirmButton({ label, confirmLabel, onConfirm }: Confir
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     button: {
-      paddingHorizontal: 10,
-      paddingVertical: 6,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
       borderRadius: radius.small,
       borderWidth: 1,
       borderColor: colors.danger,

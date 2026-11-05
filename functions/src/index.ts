@@ -11,6 +11,9 @@
  * Also cleans up after deletes: the app only deletes a group or list
  * document, and everything under it is deleted here, with no limit on how
  * much there is.
+ *
+ * Joining a group happens here too, since the rules can't let someone add
+ * themselves to a group they can't read.
  */
 import {initializeApp} from "firebase-admin/app";
 import {FieldValue, getFirestore, Query} from "firebase-admin/firestore";
@@ -20,12 +23,14 @@ import * as logger from "firebase-functions/logger";
 import {
   onDocumentDeleted, onDocumentWrittenWithAuthContext,
 } from "firebase-functions/v2/firestore";
+import {HttpsError, onCall} from "firebase-functions/v2/https";
 import {onTaskDispatched} from "firebase-functions/v2/tasks";
 import {readFileSync} from "fs";
 import {join} from "path";
 
 import {
-  BatchTask, ChangeType, Language, PendingBatch, PushMessage, Texts,
+  BatchTask, ChangeType, JoinGroupRequest, Language, PendingBatch, PushMessage,
+  Texts,
 } from "./types";
 
 initializeApp();
@@ -42,6 +47,11 @@ setGlobalOptions({region, maxInstances: 5});
 const db = getFirestore();
 
 const DELAY_SECONDS = 60;
+// Same number as INVITE_LIFETIME_DAYS in the app's constants/limits.ts.
+const INVITE_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+// Firestore's generated ids, the only codes the rules allow. Checked before
+// the code goes into a path, so a "/" can't point at another document.
+const INVITE_CODE = /^[A-Za-z0-9]{20}$/;
 
 /**
  * Reads the app's own translations, copied into locales/ by the build
@@ -57,6 +67,58 @@ const texts: Record<Language, Texts> = {
   en: loadTexts("en"),
   sv: loadTexts("sv"),
 };
+
+/**
+ * Fills in a notification text. One pass over the template, with a function
+ * as the replacement: a name containing "{{item}}" or "$&" stays as written.
+ * @param {string} template The text with {{placeholders}}.
+ * @param {Record<string, string>} values What each placeholder becomes.
+ * @return {string} The finished text.
+ */
+function fillTemplate(
+  template: string,
+  values: Record<string, string>,
+): string {
+  return template.replace(
+    /{{(\w+)}}/g, (match, key: string) => values[key] ?? match);
+}
+
+// Adds the caller to the group an invite code points to. Each error code
+// becomes its own message in the app (toApiError in api/firebase.ts).
+export const joinGroup = onCall<JoinGroupRequest>(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Not logged in");
+  const code = request.data?.code;
+  const invalid = new HttpsError("invalid-argument", "Invalid invite code");
+  if (typeof code !== "string" || !INVITE_CODE.test(code)) throw invalid;
+
+  await db.runTransaction(async (tx) => {
+    const invite = await tx.get(db.doc(`invites/${code}`));
+    // Codes made before groups existed point to a list instead.
+    const groupId = invite.get("groupId");
+    if (!groupId) throw invalid;
+    const groupRef = db.doc(`groups/${groupId}`);
+    const group = await tx.get(groupRef);
+    if (!group.exists) throw invalid;
+
+    const members: string[] = group.get("members") ?? [];
+    if (members.includes(uid)) return;
+    const removed: string[] = group.get("removedMembers") ?? [];
+    if (removed.includes(uid)) {
+      throw new HttpsError("permission-denied", "Removed from this group");
+    }
+    const createdAt: number = invite.get("createdAt")?.toMillis() ?? 0;
+    // A code dies with its creator's membership: whoever was removed or left
+    // shouldn't have codes out there that still work.
+    if (
+      Date.now() > createdAt + INVITE_LIFETIME_MS ||
+      !members.includes(invite.get("createdBy"))
+    ) {
+      throw new HttpsError("failed-precondition", "Invite has expired");
+    }
+    tx.update(groupRef, {members: FieldValue.arrayUnion(uid)});
+  });
+});
 
 // "WithAuthContext" because a deleted item can't say who deleted it.
 export const notifyOnItemChange = onDocumentWrittenWithAuthContext(
@@ -161,11 +223,12 @@ async function sendPush(batch: PendingBatch): Promise<void> {
     const template = names.length === 1 ?
       texts[language].notifications[type] :
       texts[language].notifications[`${type}Many`];
-    const body = template
-      .replace("{{user}}", actor.get("name") ?? "")
-      .replace("{{item}}", names[0])
-      .replace("{{count}}", String(names.length))
-      .replace("{{items}}", names.join(", "));
+    const body = fillTemplate(template, {
+      user: actor.get("name") ?? "",
+      item: names[0],
+      count: String(names.length),
+      items: names.join(", "),
+    });
     const tokens = await db.collection(`users/${userId}/pushTokens`).get();
     tokens.forEach((token) => sends.push({
       userId,

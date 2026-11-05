@@ -1,5 +1,10 @@
-import { ApiError } from "@/api/ApiError";
-import { ShoppingList, User, UserSettings } from "@/types/models";
+import { ReactNode } from "react";
+
+import { User, UserSettings } from "@/types/models";
+
+export interface ProviderProps {
+  children: ReactNode;
+}
 
 export interface AuthContextValue {
   user: User | null;
@@ -10,14 +15,8 @@ export interface AuthContextValue {
   updateSettings: (settings: Partial<UserSettings>) => Promise<void>;
 }
 
-export interface ListsContextValue {
-  lists: ShoppingList[];
-  activeList: ShoppingList | null;
+// Which list is open. The lists themselves are server data and come from hooks/useLists.ts.
+export interface ActiveListContextValue {
+  activeListId: string | null;
   setActiveListId: (id: string) => void;
-  isLoading: boolean;
-  createList: (groupId: string, name: string) => void;
-  isCreatingList: boolean;
-  deleteList: (listId: string) => void;
-  // From the latest failed create or delete, until the next one succeeds.
-  error: ApiError | null;
 }

@@ -9,7 +9,7 @@ import "@/i18n";
 
 import UserMenu from "@/components/UserMenu";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { ListsProvider } from "@/context/ListsContext";
+import { ActiveListProvider } from "@/context/ActiveListContext";
 import { useLiveUpdates } from "@/hooks/useLiveUpdates";
 import { usePushRegistration } from "@/hooks/usePushRegistration";
 import { useActiveColorScheme, useColors } from "@/hooks/useTheme";
@@ -87,9 +87,9 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ListsProvider>
+        <ActiveListProvider>
           <ThemedApp />
-        </ListsProvider>
+        </ActiveListProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

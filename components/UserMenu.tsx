@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { radius } from "@/constants/theme";
+import { radius, spacing, textSize } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { useAuth } from "@/context/AuthContext";
 import { ThemeColors } from "@/types/theme";
@@ -71,8 +71,8 @@ const createStyles = (colors: ThemeColors) =>
     trigger: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
-      paddingHorizontal: 12,
+      gap: spacing.sm,
+      paddingHorizontal: spacing.lg,
     },
     avatar: {
       width: 32,
@@ -87,7 +87,7 @@ const createStyles = (colors: ThemeColors) =>
       fontWeight: "600",
     },
     name: {
-      fontSize: 16,
+      fontSize: textSize.body,
       color: colors.text,
     },
     backdrop: {
@@ -95,13 +95,13 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.backdrop,
       alignItems: "flex-end",
       paddingTop: 56,
-      paddingRight: 12,
+      paddingRight: spacing.lg,
     },
     menu: {
       backgroundColor: colors.surface,
       borderRadius: radius.large,
       minWidth: 200,
-      paddingVertical: 4,
+      paddingVertical: spacing.xxs,
       shadowColor: colors.shadow,
       shadowOpacity: 0.15,
       shadowRadius: 8,
@@ -109,8 +109,8 @@ const createStyles = (colors: ThemeColors) =>
       elevation: 4,
     },
     menuHeader: {
-      paddingHorizontal: 16,
-      paddingVertical: 10,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.md,
       borderBottomWidth: 1,
       borderColor: colors.divider,
     },
@@ -120,11 +120,11 @@ const createStyles = (colors: ThemeColors) =>
     },
     menuEmail: {
       color: colors.textMuted,
-      fontSize: 12,
+      fontSize: textSize.caption,
     },
     menuItem: {
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.lg,
     },
     divider: {
       borderTopWidth: 1,

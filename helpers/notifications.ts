@@ -3,6 +3,8 @@ import { isRunningInExpoGo } from "expo";
 import Constants from "expo-constants";
 import { Platform, ToastAndroid } from "react-native";
 
+import i18n from "@/i18n";
+
 const isWeb = Platform.OS === "web";
 const hasWebNotifications = () => typeof Notification !== "undefined";
 
@@ -48,9 +50,10 @@ export async function requestNotificationPermission(): Promise<boolean> {
   if (isExpoGoAndroid) return true;
   const Notifications = await loadNotifications();
   if (Platform.OS === "android") {
-    // Android 13+ only shows the permission prompt once a channel exists.
+    // Android 13+ only shows the permission prompt once a channel exists. The name is shown in
+    // the phone's notification settings; setting it again updates it to the current language.
     await Notifications.setNotificationChannelAsync("default", {
-      name: "Default",
+      name: i18n.t("notifications.channelName"),
       importance: Notifications.AndroidImportance.HIGH,
     });
   }

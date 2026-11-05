@@ -1,6 +1,6 @@
 import { StyleSheet, TextInput } from "react-native";
 
-import { radius } from "@/constants/theme";
+import { radius, spacing, textSize } from "@/constants/theme";
 import { useColors, useThemedStyles } from "@/hooks/useTheme";
 import { InputProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
@@ -28,8 +28,8 @@ const createStyles = (colors: ThemeColors) =>
     input: {
       minHeight: 44,
       minWidth: 200,
-      paddingHorizontal: 12,
-      fontSize: 16,
+      paddingHorizontal: spacing.lg,
+      fontSize: textSize.body,
       color: colors.text,
       backgroundColor: colors.surface,
       borderWidth: 1,

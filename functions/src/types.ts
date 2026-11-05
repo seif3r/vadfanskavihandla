@@ -37,3 +37,8 @@ export interface BatchTask {
   batchId: string;
   seq: number;
 }
+
+// What the app sends to joinGroup. Untrusted: checked before it's used.
+export interface JoinGroupRequest {
+  code?: unknown;
+}
