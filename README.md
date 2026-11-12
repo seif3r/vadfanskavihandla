@@ -66,6 +66,10 @@ mocked in the function tests.
 | `tests/rules/`                 | `firestore.rules`                             |
 | `functions/test/`              | Cloud Functions                               |
 
+GitHub Actions (`.github/workflows/ci.yml`) runs all of this on every pull request and push to
+`main`: typecheck, lint and `npm test` for the app, lint and build for `functions/`, and the
+emulator tests.
+
 ## Project structure
 
 | Folder        | Contents                                                             |
