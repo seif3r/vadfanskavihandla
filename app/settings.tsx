@@ -1,7 +1,9 @@
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
+import Button from "@/components/Button";
 import OptionPicker from "@/components/OptionPicker";
 import SettingSwitch from "@/components/SettingSwitch";
 import { radius, spacing, textSize } from "@/constants/theme";
@@ -18,6 +20,7 @@ export default function Settings() {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
   const { user, updateSettings } = useAuth();
+  const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
 
@@ -83,6 +86,13 @@ export default function Settings() {
         />
       </View>
       {isBlocked && <Text style={styles.blocked}>{t("settings.notificationsBlocked")}</Text>}
+
+      <Text style={[styles.sectionTitle, styles.section]}>{t("settings.account")}</Text>
+      <Button
+        value={t("settings.changePassword")}
+        variant="secondary"
+        onPress={() => router.push("/change-password")}
+      />
     </ScrollView>
   );
 }

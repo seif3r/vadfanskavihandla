@@ -4,8 +4,11 @@ import { auth, db, toApiError } from "@/api/firebase";
 import { User, UserSettings } from "@/types/models";
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
   signInWithEmailAndPassword,
   signOut,
+  updatePassword,
 } from "firebase/auth";
 import { doc, DocumentSnapshot, getDoc, writeBatch } from "firebase/firestore";
 // New accounts start in Swedish with notifications off; turning one on asks for permission.
@@ -58,6 +61,29 @@ export async function register(name: string, email: string, password: string): P
     batch.set(doc(db, "profiles", user.uid), { name });
     await batch.commit();
     return profile;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+// Firebase only lets a recent login change the password, so this logs in again with the current
+// one first. That also proves it's the account's owner and not someone at an unlocked phone.
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await auth.authStateReady();
+  const user = auth.currentUser;
+  if (!user?.email) throw new ApiError("errors.invalidSession");
+  try {
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, currentPassword));
+  } catch (error) {
+    const code = (error as { code?: string }).code;
+    // The email is known here, so a rejected credential can only mean the password.
+    if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
+      throw new ApiError("errors.wrongPassword");
+    }
+    throw toApiError(error);
+  }
+  try {
+    await updatePassword(user, newPassword);
   } catch (error) {
     throw toApiError(error);
   }

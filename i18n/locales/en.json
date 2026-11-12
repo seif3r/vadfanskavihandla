@@ -91,7 +91,21 @@
     "notifications": "Notifications",
     "notifyItemAdded": "When someone adds an item",
     "notifyItemRemoved": "When someone removes an item",
-    "notificationsBlocked": "Notifications are blocked. Allow them in your device or browser settings."
+    "notificationsBlocked": "Notifications are blocked. Allow them in your device or browser settings.",
+    "account": "Account",
+    "changePassword": "Change password"
+  },
+  "changePassword": {
+    "title": "Change password",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Repeat new password",
+    "submit": "Change password",
+    "success": "Your password has been changed",
+    "fillAll": "Fill in all fields",
+    "mismatch": "The new passwords don't match",
+    "sameAsCurrent": "The new password must be different from the current one",
+    "tooShort": "The new password must be at least {{min}} characters"
   },
   "notifications": {
     "itemAdded": "{{user}} added {{item}}",
@@ -112,6 +126,8 @@
     "inviteNotFound": "The invite code is not valid",
     "inviteExpired": "The invite code no longer works. Ask for a new one",
     "removedFromGroup": "You were removed from this group. Ask its owner to allow you back",
-    "lastMember": "You're the last member. Delete the group instead"
+    "lastMember": "You're the last member. Delete the group instead",
+    "wrongPassword": "Wrong password",
+    "tooManyAttempts": "Too many attempts. Wait a while and try again"
   }
 }

@@ -35,3 +35,11 @@ export interface UpdateSettingsRequest {
   userId: string;
   settings: Partial<UserSettings>;
 }
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+// What's wrong with a filled-in change password form, as a key under "changePassword" in the locales.
+export type PasswordProblem = "fillAll" | "mismatch" | "sameAsCurrent" | "tooShort";
