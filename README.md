@@ -46,6 +46,26 @@ App Check runs on web when `EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY` holds a reCA
 key registered in the Firebase console. Don't turn on enforcement yet: phones have no App Check
 provider (`api/appCheck.ts`), so enforcing it would lock them out.
 
+## Tests
+
+```bash
+npm test                # helpers, components, and that limits match firestore.rules (Jest + jest-expo)
+npm run test:rules      # Security Rules, against the Firestore emulator
+npm run test:functions  # Cloud Functions (joinGroup, bundled push, cleanup), against the emulator
+npm run test:all        # all three
+```
+
+The emulator tests start the Firestore emulator themselves (`firebase emulators:exec`, with the
+`firebase-tools` dev dependency) under the `demo-vadfanskavihandla` project id, so they never touch
+the real project. The emulator needs Java 21 or newer. Cloud Tasks and Expo's push service are
+mocked in the function tests.
+
+| Folder                         | Tests                                         |
+| ------------------------------ | --------------------------------------------- |
+| `helpers/__tests__/`, `constants/__tests__/`, `components/__tests__/` | App unit and component tests |
+| `tests/rules/`                 | `firestore.rules`                             |
+| `functions/test/`              | Cloud Functions                               |
+
 ## Project structure
 
 | Folder        | Contents                                                             |

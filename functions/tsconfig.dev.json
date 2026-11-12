@@ -1,9 +1,15 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "allowJs": true,
-    "noEmit": true
+    "noEmit": true,
+    "rootDir": ".",
+    "types": ["node", "jest"]
   },
   "include": [
-    ".eslintrc.js"
+    ".eslintrc.js",
+    "jest.config.js",
+    "src",
+    "test"
   ]
 }
