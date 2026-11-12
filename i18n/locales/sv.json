@@ -91,7 +91,21 @@
     "notifications": "Notiser",
     "notifyItemAdded": "När någon lägger till en vara",
     "notifyItemRemoved": "När någon tar bort en vara",
-    "notificationsBlocked": "Notiser är blockerade. Tillåt dem i enhetens eller webbläsarens inställningar."
+    "notificationsBlocked": "Notiser är blockerade. Tillåt dem i enhetens eller webbläsarens inställningar.",
+    "account": "Konto",
+    "changePassword": "Byt lösenord"
+  },
+  "changePassword": {
+    "title": "Byt lösenord",
+    "current": "Nuvarande lösenord",
+    "new": "Nytt lösenord",
+    "confirm": "Upprepa nytt lösenord",
+    "submit": "Byt lösenord",
+    "success": "Ditt lösenord är bytt",
+    "fillAll": "Fyll i alla fält",
+    "mismatch": "De nya lösenorden är inte likadana",
+    "sameAsCurrent": "Det nya lösenordet måste skilja sig från det nuvarande",
+    "tooShort": "Det nya lösenordet måste vara minst {{min}} tecken"
   },
   "notifications": {
     "itemAdded": "{{user}} lade till {{item}}",
@@ -112,6 +126,8 @@
     "inviteNotFound": "Inbjudningskoden är inte giltig",
     "inviteExpired": "Inbjudningskoden fungerar inte längre. Be om en ny",
     "removedFromGroup": "Du har tagits bort från den här gruppen. Be ägaren att tillåta dig igen",
-    "lastMember": "Du är sista medlemmen. Ta bort gruppen i stället"
+    "lastMember": "Du är sista medlemmen. Ta bort gruppen i stället",
+    "wrongPassword": "Fel lösenord",
+    "tooManyAttempts": "För många försök. Vänta en stund och försök igen"
   }
 }
