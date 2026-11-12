@@ -71,6 +71,12 @@ GitHub Actions (`.github/workflows/ci.yml`) runs all of this on every pull reque
 and placeholders as `en.json`), lint and build for `functions/`, the emulator tests, a web and
 Android export, and `expo-doctor` (advisory: it can fail without failing the run).
 
+Every push to `main` also publishes the web app to GitHub Pages (`.github/workflows/deploy-web.yml`),
+at `https://<owner>.github.io/vadfanskavihandla/`. It needs Pages set to "GitHub Actions" and the
+`EXPO_PUBLIC_FIREBASE_*` values as repository variables, and the Pages domain listed under
+Authorized domains in Firebase Authentication. `app.config.ts` sets the `/vadfanskavihandla` base
+path only when `EXPO_BASE_URL` is set, so local development still runs at `/`.
+
 ## Project structure
 
 | Folder        | Contents                                                             |

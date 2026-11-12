@@ -1,0 +1,81 @@
+# Builds the web app and publishes it to GitHub Pages on every push to main.
+# main only changes through PRs that passed CI (the "Run tests" ruleset), so
+# this workflow doesn't run the checks again.
+#
+# Needs, in the repo settings:
+# - Pages: source "GitHub Actions".
+# - Variables (Settings → Secrets and variables → Actions → Variables):
+#   EXPO_PUBLIC_FIREBASE_API_KEY, _AUTH_DOMAIN, _PROJECT_ID, _APP_ID, and
+#   optionally _APPCHECK_SITE_KEY. They end up in the public bundle anyway,
+#   so they are variables, not secrets.
+name: Deploy web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time; a newer push waits instead of cancelling a deploy
+# that is halfway through.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Pages serves the site from https://<owner>.github.io/<repo>/.
+      EXPO_BASE_URL: /${{ github.event.repository.name }}
+      EXPO_PUBLIC_FIREBASE_API_KEY: ${{ vars.EXPO_PUBLIC_FIREBASE_API_KEY }}
+      EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+      EXPO_PUBLIC_FIREBASE_PROJECT_ID: ${{ vars.EXPO_PUBLIC_FIREBASE_PROJECT_ID }}
+      EXPO_PUBLIC_FIREBASE_APP_ID: ${{ vars.EXPO_PUBLIC_FIREBASE_APP_ID }}
+      EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY: ${{ vars.EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY }}
+    steps:
+      # Without the config the site would deploy but fail at login, so stop
+      # here with a clear message instead.
+      - name: Check Firebase variables
+        run: |
+          missing=0
+          for name in EXPO_PUBLIC_FIREBASE_API_KEY EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN \
+                      EXPO_PUBLIC_FIREBASE_PROJECT_ID EXPO_PUBLIC_FIREBASE_APP_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repository variable $name is not set."
+              missing=1
+            fi
+          done
+          exit $missing
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx expo export --platform web --output-dir dist
+      # Pages shows 404.html for paths that don't exist.
+      - run: cp dist/+not-found.html dist/404.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
