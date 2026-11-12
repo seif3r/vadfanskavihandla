@@ -57,8 +57,8 @@ added to that cleanup.
 ## Architecture principles
 
 - **`api/` is the only seam to the backend.** Screens, hooks and contexts call functions in
-  `api/` and nothing else. Nothing outside `api/` imports from `firebase/*`; live updates are
-  exposed as subscribe functions in `api/`.
+  `api/` and nothing else. Nothing outside `api/` imports from `firebase/*` (except the rules
+  tests in `tests/rules/`); live updates are exposed as subscribe functions in `api/`.
 - **All I/O happens in `api/` and `helpers/`.** Components only render and call hooks.
 - **Server data goes through TanStack Query hooks** in `hooks/`. Contexts hold app state (logged-in
   user, current list), not copies of server data.
@@ -93,6 +93,8 @@ added to that cleanup.
 - `npx tsc --noEmit` passes. After adding a screen in `app/`, run `npx expo start` once so the typed
   routes (`.expo/types/router.d.ts`) include it.
 - `npm run lint` passes.
+- `npm test` passes. If `firestore.rules` changed: `npm run test:rules`. If `functions/` changed:
+  `npm run test:functions`. New behaviour in rules, functions or `helpers/` gets a test.
 - If `functions/` changed: `npm run build` and `npm run lint` pass in `functions/`.
 - New UI text exists in both `en.json` and `sv.json`.
 - The change works on web and in the Android emulator.

@@ -5,6 +5,7 @@
     "copy-locales": "mkdir -p locales && cp ../i18n/locales/*.json locales/",
     "build": "npm run copy-locales && tsc",
     "build:watch": "tsc --watch",
+    "test": "jest",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
@@ -20,12 +21,15 @@
     "firebase-functions": "^7.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^8.57.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-import": "^2.25.4",
     "firebase-functions-test": "^3.4.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.15",
     "typescript": "^6.0.0"
   },
   "private": true
