@@ -67,8 +67,9 @@ mocked in the function tests.
 | `functions/test/`              | Cloud Functions                               |
 
 GitHub Actions (`.github/workflows/ci.yml`) runs all of this on every pull request and push to
-`main`: typecheck, lint and `npm test` for the app, lint and build for `functions/`, and the
-emulator tests.
+`main`: typecheck, lint and `npm test` for the app (including a test that `sv.json` has the same keys
+and placeholders as `en.json`), lint and build for `functions/`, the emulator tests, a web and
+Android export, and `expo-doctor` (advisory: it can fail without failing the run).
 
 ## Project structure
 
