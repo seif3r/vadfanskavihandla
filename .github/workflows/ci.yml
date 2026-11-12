@@ -1,6 +1,6 @@
 # Runs the same checks as "Before calling something done" in CLAUDE.md on every
-# PR and every push to main. Three jobs run in parallel so a failure shows
-# which part broke.
+# PR and every push to main, plus a web and Android build and expo-doctor.
+# The jobs run in parallel so a failure shows which part broke.
 name: CI
 
 on:
@@ -86,3 +86,41 @@ jobs:
         working-directory: functions
       - run: npm run test:rules
       - run: npm run test:functions
+
+  export:
+    name: Build (web, Android)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # The web export renders every page, which starts Firebase, and
+      # Firebase rejects a missing API key. These dummy values never reach a
+      # server: the build only needs them to be present.
+      EXPO_PUBLIC_FIREBASE_API_KEY: ci-dummy-key
+      EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-vadfanskavihandla.firebaseapp.com
+      EXPO_PUBLIC_FIREBASE_PROJECT_ID: demo-vadfanskavihandla
+      EXPO_PUBLIC_FIREBASE_APP_ID: 1:0:web:0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx expo export --platform web --output-dir dist/web
+      - run: npx expo export --platform android --output-dir dist/android
+
+  expo-doctor:
+    name: Expo doctor (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Reports SDK version mismatches and config problems. Some of its checks
+    # depend on Expo's servers, so a failure here doesn't fail the run.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx -y expo-doctor
