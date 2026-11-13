@@ -6,7 +6,10 @@ import { ApiError } from "@/api/ApiError";
 import { startAppCheck } from "@/api/appCheck";
 import * as firebaseAuth from "firebase/auth";
 import { Auth, connectAuthEmulator, getAuth, initializeAuth, Persistence } from "firebase/auth";
-import { connectFirestoreEmulator, initializeFirestore } from "firebase/firestore";
+import {
+  clearIndexedDbPersistence, connectFirestoreEmulator, initializeFirestore, persistentLocalCache,
+  persistentMultipleTabManager, terminate,
+} from "firebase/firestore";
 import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 import { Platform } from "react-native";
 
@@ -32,7 +35,15 @@ export const auth: Auth =
     ? getAuth(app)
     : initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) });
 // Optional fields like amount are undefined, which Firestore rejects unless told to skip them.
-export const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
+// In the browser, data is also kept in IndexedDB, so lists open without a connection (common in a
+// store) and changes made offline are sent later, even after a reload. Phones have no IndexedDB, so
+// there the cache is in memory and lasts until the app is closed. Static rendering (expo export)
+// runs without a window, so it gets the memory cache too.
+const isBrowser = Platform.OS === "web" && typeof window !== "undefined";
+export const db = initializeFirestore(app, {
+  ignoreUndefinedProperties: true,
+  ...(isBrowser && { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }),
+});
 // The region functions/src/index.ts deploys to.
 export const functions = getFunctions(app, "europe-north1");
 const emulatorHost = process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST;
@@ -42,6 +53,19 @@ if (__DEV__ && emulatorHost && isFirstLoad) {
   connectFirestoreEmulator(db, emulatorHost, 8080);
   connectFunctionsEmulator(functions, emulatorHost, 5001);
 }
+// Forgets the browser's cached data, so the next person to log in on this browser can't see the
+// previous one's lists offline. Firestore can't be used again afterwards, so the page reloads.
+// Does nothing on phones, whose cache is in memory.
+export async function clearLocalCache(): Promise<void> {
+  if (!isBrowser) return;
+  try {
+    await terminate(db);
+    await clearIndexedDbPersistence(db);
+  } finally {
+    window.location.reload();
+  }
+}
+
 // The logged-in user's id, for queries that only make sense for "me".
 export function currentUid(): string {
   const uid = auth.currentUser?.uid;

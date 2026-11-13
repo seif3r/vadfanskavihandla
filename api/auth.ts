@@ -1,6 +1,6 @@
 // Accounts and the current session.
 import { ApiError } from "@/api/ApiError";
-import { auth, db, functions, toApiError, withApiError } from "@/api/firebase";
+import { auth, clearLocalCache, db, functions, toApiError, withApiError } from "@/api/firebase";
 import { User, UserSettings } from "@/types/models";
 import {
   createUserWithEmailAndPassword,
@@ -121,7 +121,12 @@ export async function deleteAccount(password: string): Promise<void> {
   await signOut(auth).catch(() => {});
 }
 
-// Ends the Firebase session, including the one it has stored on the device.
+// Ends the Firebase session, including the one it has stored on the device, and in the browser
+// forgets the cached data (which reloads the page).
 export async function logout(): Promise<void> {
-  await withApiError(() => signOut(auth));
+  try {
+    await withApiError(() => signOut(auth));
+  } finally {
+    await clearLocalCache();
+  }
 }

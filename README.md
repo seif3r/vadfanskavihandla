@@ -21,6 +21,11 @@ for 7 days, while its creator is still a member, and not for someone the owner r
 opens all lists, where you pick another one, add lists to a group or delete them. Changes show up
 live on every device that has the list open.
 
+Offline: in the browser, Firestore keeps its data in IndexedDB, so the lists open without a
+connection and changes made offline are sent when it's back, even after a reload (logging out
+clears it). On phones the cache is in memory: lists seen since the app started work offline, but
+a phone that starts the app offline shows "Couldn't load" until it has a connection.
+
 Each list remembers the category an item name last had (`lists/{listId}/knownItems`), so adding
 "Äpple" again picks "Fruit & veg" by itself. Picking another category replaces what's remembered.
 
