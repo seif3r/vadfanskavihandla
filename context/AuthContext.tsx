@@ -30,6 +30,15 @@ export function AuthProvider({ children }: ProviderProps) {
       .catch(() => setHasSession(false));
   }, []);
 
+  // Firebase can end the session by itself (password changed on another device, account disabled
+  // or deleted). Show the login screen then, instead of an app whose every call is denied. Starting
+  // a session is left to login, register and hasSession, which also load the user.
+  useEffect(() => authApi.subscribeToSession((isSignedIn) => {
+    if (isSignedIn) return;
+    setHasSession((current) => (current === null ? current : false));
+    queryClient.clear();
+  }), [queryClient]);
+
   // The user couldn't be loaded. Offline (common in a store) or for an unknown reason, the session
   // is still good: keep it and let the app offer a retry instead of the login screen. Otherwise
   // (no user document, session expired, account disabled) end it and show the login screen.

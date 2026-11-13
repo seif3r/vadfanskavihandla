@@ -6,6 +6,7 @@ import {
   createUserWithEmailAndPassword,
   deleteUser,
   EmailAuthProvider,
+  onAuthStateChanged,
   reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -52,6 +53,13 @@ export async function hasSession(): Promise<boolean> {
   await auth.authStateReady();
   return !!auth.currentUser;
 }
+// Calls onChange whenever Firebase's session starts or ends, including when Firebase ends it by
+// itself: the password was changed on another device or the account was disabled or deleted (the
+// session's token can then no longer be refreshed). Returns a function that stops listening.
+export function subscribeToSession(onChange: (isSignedIn: boolean) => void): () => void {
+  return onAuthStateChanged(auth, (user) => onChange(!!user));
+}
+
 export async function loadCurrentUser(): Promise<User> {
   await auth.authStateReady();
   if (!auth.currentUser) throw new ApiError("errors.invalidSession");
