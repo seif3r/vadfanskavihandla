@@ -5,6 +5,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleShe
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
+import ErrorText from "@/components/ErrorText";
 import AddItemOptions from "@/components/AddItemOptions";
 import Button from "@/components/Button";
 import IconButton from "@/components/IconButton";
@@ -112,9 +113,7 @@ export default function Index() {
         onPress={() => router.push("/lists")}
       />
       {liveError && (
-        <Text style={styles.liveError} accessibilityLiveRegion="polite" role="alert">
-          {t("list.notLive", { reason: t(liveError.key) })}
-        </Text>
+        <ErrorText style={styles.liveError}>{t("list.notLive", { reason: t(liveError.key) })}</ErrorText>
       )}
       <ListActions
         items={items}
@@ -130,9 +129,7 @@ export default function Index() {
         )}
       </ScrollView>
       {error && (
-        <Text style={styles.error} accessibilityLiveRegion="polite" role="alert">
-          {t(error.key)}
-        </Text>
+        <ErrorText style={styles.error}>{t(error.key)}</ErrorText>
       )}
       {showOptions && (
         <AddItemOptions
@@ -150,6 +147,7 @@ export default function Index() {
           onSubmit={handleAdd}
           placeholder={t("list.addPlaceholder")}
           maxLength={MAX_NAME_LENGTH}
+          autoCapitalize="sentences"
           style={styles.input}
         />
         <IconButton

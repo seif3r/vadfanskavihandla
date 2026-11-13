@@ -45,6 +45,8 @@ export default function GroupCard({
             onChangeText={setName}
             onSubmit={handleRename}
             maxLength={MAX_GROUP_NAME_LENGTH}
+            accessibilityLabel={t("groups.nameLabel")}
+            autoCapitalize="sentences"
             style={styles.input}
           />
           <Button value={t("groups.save")} compact onPress={handleRename} />

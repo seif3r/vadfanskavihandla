@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ApiError } from "@/api/ApiError";
+import ErrorText from "@/components/ErrorText";
 import Button from "@/components/Button";
 import GroupCard from "@/components/GroupCard";
 import Input from "@/components/Input";
@@ -75,6 +76,7 @@ export default function Groups() {
           onSubmit={handleCreate}
           placeholder={t("groups.newPlaceholder")}
           maxLength={MAX_GROUP_NAME_LENGTH}
+          autoCapitalize="sentences"
           style={styles.input}
         />
         <Button value={t("groups.create")} onPress={handleCreate} disabled={isCreating} />
@@ -105,7 +107,7 @@ export default function Groups() {
           {t("groups.inviteCode", { group: invite.group, code: invite.code, days: INVITE_LIFETIME_DAYS })}
         </Text>
       )}
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <ErrorText style={styles.error}>{error}</ErrorText>}
 
       <Button value={t("groups.join")} variant="secondary" onPress={() => router.push("/join")} />
     </ScrollView>

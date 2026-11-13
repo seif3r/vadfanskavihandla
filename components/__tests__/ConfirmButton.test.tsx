@@ -2,11 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
 
 import ConfirmButton from "@/components/ConfirmButton";
+import { CONFIRM_TIMEOUT_MS } from "@/constants/limits";
 
 jest.mock("@/context/AuthContext", () => ({ useAuth: () => ({ user: null }) }));
+let mockScreenReaderOn = false;
+jest.mock("@/hooks/useScreenReader", () => ({ useScreenReader: () => mockScreenReaderOn }));
 
 describe("ConfirmButton", () => {
   beforeEach(() => {
+    mockScreenReaderOn = false;
     jest.useFakeTimers();
   });
   afterEach(() => {
@@ -27,7 +31,7 @@ describe("ConfirmButton", () => {
     const onConfirm = jest.fn();
     render(<ConfirmButton label="Delete" confirmLabel="Delete?" onConfirm={onConfirm} />);
     fireEvent.press(screen.getByText("Delete"));
-    act(() => { jest.advanceTimersByTime(3000); });
+    act(() => { jest.advanceTimersByTime(CONFIRM_TIMEOUT_MS); });
     fireEvent.press(screen.getByText("Delete"));
     expect(onConfirm).not.toHaveBeenCalled();
   });
@@ -38,5 +42,15 @@ describe("ConfirmButton", () => {
     fireEvent.press(screen.getByText("Delete"));
     expect(screen.queryByText("Delete?")).toBeNull();
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("waits longer for the second tap when a screen reader is on", () => {
+    mockScreenReaderOn = true;
+    const onConfirm = jest.fn();
+    render(<ConfirmButton label="Delete" confirmLabel="Delete?" onConfirm={onConfirm} />);
+    fireEvent.press(screen.getByText("Delete"));
+    act(() => { jest.advanceTimersByTime(CONFIRM_TIMEOUT_MS); });
+    fireEvent.press(screen.getByText("Delete?"));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 });

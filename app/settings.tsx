@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ApiError } from "@/api/ApiError";
+import ErrorText from "@/components/ErrorText";
 import Button from "@/components/Button";
 import OptionPicker from "@/components/OptionPicker";
 import SettingSwitch from "@/components/SettingSwitch";
@@ -93,11 +94,9 @@ export default function Settings() {
           disabled={isSaving}
         />
       </View>
-      {isBlocked && <Text style={styles.blocked}>{t("settings.notificationsBlocked")}</Text>}
+      {isBlocked && <ErrorText style={styles.blocked}>{t("settings.notificationsBlocked")}</ErrorText>}
       {error && (
-        <Text style={styles.blocked} accessibilityLiveRegion="polite" role="alert">
-          {t("settings.saveFailed", { reason: error })}
-        </Text>
+        <ErrorText style={styles.blocked}>{t("settings.saveFailed", { reason: error })}</ErrorText>
       )}
 
       <Text style={[styles.sectionTitle, styles.section]}>{t("settings.account")}</Text>

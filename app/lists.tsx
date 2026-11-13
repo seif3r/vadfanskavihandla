@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text } from "react-native";
 
+import ErrorText from "@/components/ErrorText";
 import Button from "@/components/Button";
 import GroupLists from "@/components/GroupLists";
 import LoadError from "@/components/LoadError";
@@ -55,7 +56,7 @@ export default function Lists() {
         />
       ))}
 
-      {error && <Text style={styles.error}>{t(error.key)}</Text>}
+      {error && <ErrorText style={styles.error}>{t(error.key)}</ErrorText>}
 
       <Button value={t("lists.manageGroups")} variant="secondary" onPress={() => router.push("/groups")} />
     </ScrollView>

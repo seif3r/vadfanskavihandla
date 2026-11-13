@@ -15,7 +15,12 @@ export default function ListRow({ list, isActive, onPress, onDelete, isFirst }: 
 
   return (
     <View style={[styles.row, !isFirst && styles.divider]}>
-      <Pressable onPress={onPress} accessibilityRole="button" style={styles.open}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityState={{ selected: !!isActive }}
+        style={styles.open}
+      >
         <Text style={[styles.name, isActive && styles.active]}>{list.name}</Text>
       </Pressable>
       {onDelete && <ConfirmButton label={t("lists.delete")} confirmLabel={t("lists.confirmDelete")} onConfirm={onDelete} />}

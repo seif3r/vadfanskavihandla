@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import ErrorText from "@/components/ErrorText";
 import Button from "@/components/Button";
 import { spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
@@ -15,9 +16,7 @@ export default function LoadError({ error, onRetry }: LoadErrorProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text} accessibilityLiveRegion="polite" role="alert">
-        {t("loadError.message", { reason: t(error.key) })}
-      </Text>
+      <ErrorText style={styles.text}>{t("loadError.message", { reason: t(error.key) })}</ErrorText>
       <Button value={t("loadError.retry")} variant="secondary" onPress={onRetry} />
     </View>
   );
