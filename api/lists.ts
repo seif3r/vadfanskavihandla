@@ -1,5 +1,5 @@
 // The shopping lists in the logged-in user's groups.
-import { currentUid, db, toApiError } from "@/api/firebase";
+import { currentUid, db, withApiError } from "@/api/firebase";
 import { groupListsQuery, myGroupsQuery } from "@/api/queries";
 import { ShoppingList } from "@/types/models";
 import {
@@ -11,32 +11,26 @@ function toList(snap: QueryDocumentSnapshot<DocumentData>): ShoppingList {
 }
 // Lists of all my groups, group by group. Firestore can't join, so it's one query per group.
 export async function getLists(): Promise<ShoppingList[]> {
-  const groups = await getDocs(myGroupsQuery(currentUid()));
-  const perGroup = await Promise.all(groups.docs.map((group) => getDocs(groupListsQuery(group.id))));
-  return perGroup.flatMap((snap) => snap.docs.map(toList));
+  return withApiError(async () => {
+    const groups = await getDocs(myGroupsQuery(currentUid()));
+    const perGroup = await Promise.all(groups.docs.map((group) => getDocs(groupListsQuery(group.id))));
+    return perGroup.flatMap((snap) => snap.docs.map(toList));
+  });
 }
 export async function createList(groupId: string, name: string): Promise<ShoppingList> {
   const uid = currentUid();
-  try {
-    const ref = await addDoc(collection(db, "lists"), {
-      name,
-      groupId,
-      ownerId: uid,
-      createdAt: serverTimestamp(),
-    });
-    return { id: ref.id, name, groupId, ownerId: uid };
-  } catch (error) {
-    throw toApiError(error);
-  }
+  const ref = await withApiError(() => addDoc(collection(db, "lists"), {
+    name,
+    groupId,
+    ownerId: uid,
+    createdAt: serverTimestamp(),
+  }));
+  return { id: ref.id, name, groupId, ownerId: uid };
 }
 // Deletes the list. Its items and remembered categories are deleted by a Cloud Function
 // (cleanUpList); until then the rules already hide them, since they look the list up.
 export async function deleteList(listId: string): Promise<void> {
-  try {
-    await deleteDoc(doc(db, "lists", listId));
-  } catch (error) {
-    throw toApiError(error);
-  }
+  await withApiError(() => deleteDoc(doc(db, "lists", listId)));
 }
 
 // Calls onChange with the lists of all my groups whenever a list is created, renamed or deleted,

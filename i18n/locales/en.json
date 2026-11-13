@@ -115,12 +115,12 @@
     "channelName": "List changes"
   },
   "errors": {
-    "invalidSession": "Invalid session",
+    "invalidSession": "Your account couldn't be loaded. Log in again",
     "itemNotFound": "Item not found",
     "invalidCredentials": "Wrong email or password",
     "emailInUse": "There is already an account with this email",
     "weakPassword": "The password is too weak. Use at least 6 characters",
-    "notAllowed": "You don't have access to this",
+    "notAllowed": "The list or group no longer exists, or you've been removed from it",
     "offline": "No connection. Check your internet and try again",
     "unknown": "Something went wrong. Try again",
     "inviteNotFound": "The invite code is not valid",
@@ -128,6 +128,10 @@
     "removedFromGroup": "You were removed from this group. Ask its owner to allow you back",
     "lastMember": "You're the last member. Delete the group instead",
     "wrongPassword": "Wrong password",
-    "tooManyAttempts": "Too many attempts. Wait a while and try again"
+    "tooManyAttempts": "Too many attempts. Wait a while and try again",
+    "invalidEmail": "That doesn't look like an email address",
+    "accountDisabled": "This account has been disabled",
+    "sessionExpired": "You've been logged out. Log in again",
+    "notFound": "This no longer exists"
   }
 }

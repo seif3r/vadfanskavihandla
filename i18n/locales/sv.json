@@ -115,12 +115,12 @@
     "channelName": "Ändringar i listor"
   },
   "errors": {
-    "invalidSession": "Ogiltig session",
+    "invalidSession": "Kontot kunde inte laddas. Logga in igen",
     "itemNotFound": "Varan hittades inte",
     "invalidCredentials": "Fel e-postadress eller lösenord",
     "emailInUse": "Det finns redan ett konto med den här e-postadressen",
     "weakPassword": "Lösenordet är för svagt. Använd minst 6 tecken",
-    "notAllowed": "Du har inte behörighet till det här",
+    "notAllowed": "Listan eller gruppen finns inte längre, eller så har du tagits bort från den",
     "offline": "Ingen anslutning. Kontrollera internet och försök igen",
     "unknown": "Något gick fel. Försök igen",
     "inviteNotFound": "Inbjudningskoden är inte giltig",
@@ -128,6 +128,10 @@
     "removedFromGroup": "Du har tagits bort från den här gruppen. Be ägaren att tillåta dig igen",
     "lastMember": "Du är sista medlemmen. Ta bort gruppen i stället",
     "wrongPassword": "Fel lösenord",
-    "tooManyAttempts": "För många försök. Vänta en stund och försök igen"
+    "tooManyAttempts": "För många försök. Vänta en stund och försök igen",
+    "invalidEmail": "E-postadressen ser inte rätt ut",
+    "accountDisabled": "Kontot är spärrat",
+    "sessionExpired": "Du har loggats ut. Logga in igen",
+    "notFound": "Det här finns inte längre"
   }
 }

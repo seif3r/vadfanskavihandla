@@ -9,7 +9,7 @@ const mockUpdatePassword = jest.fn<(...args: unknown[]) => Promise<void>>();
 
 // Only the parts of Firebase changePassword touches; the real SDK would need a project.
 jest.mock("@/api/firebase", () => ({
-  toApiError: jest.requireActual<typeof import("@/api/errors")>("@/api/errors").toApiError,
+  ...jest.requireActual<typeof import("@/api/errors")>("@/api/errors"),
   db: {},
   auth: { authStateReady: () => Promise.resolve(), get currentUser() { return mockUser; } },
 }));

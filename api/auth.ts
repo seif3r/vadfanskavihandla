@@ -1,6 +1,6 @@
 // Accounts and the current session.
 import { ApiError } from "@/api/ApiError";
-import { auth, db, toApiError } from "@/api/firebase";
+import { auth, db, toApiError, withApiError } from "@/api/firebase";
 import { User, UserSettings } from "@/types/models";
 import {
   createUserWithEmailAndPassword,
@@ -28,7 +28,7 @@ export const toUser = (snap: DocumentSnapshot): User => {
   return { id: snap.id, name: data.name, email: data.email, settings };
 };
 async function loadUser(uid: string): Promise<User> {
-  const snap = await getDoc(doc(db, "users", uid));
+  const snap = await withApiError(() => getDoc(doc(db, "users", uid)));
   if (!snap.exists()) throw new ApiError("errors.invalidSession");
   return toUser(snap);
 }
@@ -91,5 +91,5 @@ export async function changePassword(currentPassword: string, newPassword: strin
 
 // Ends the Firebase session, including the one it has stored on the device.
 export async function logout(): Promise<void> {
-  await signOut(auth);
+  await withApiError(() => signOut(auth));
 }

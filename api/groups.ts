@@ -1,6 +1,6 @@
 // Groups: the people who shop together. Every member sees all of the group's lists.
 import { ApiError } from "@/api/ApiError";
-import { currentUid, db, functions, toApiError } from "@/api/firebase";
+import { currentUid, db, functions, withApiError } from "@/api/firebase";
 import { myGroupsQuery } from "@/api/queries";
 import { INVITE_LIFETIME_DAYS } from "@/constants/limits";
 import { JoinGroupRequest } from "@/types/api";
@@ -39,16 +39,8 @@ function toActiveInvites(snap: QuerySnapshot<DocumentData>): Invite[] {
     .filter((invite) => invite.expiresAt > Date.now())
     .sort((a, b) => a.expiresAt - b.expiresAt);
 }
-// Runs a Firestore call and turns Firebase errors into ApiErrors.
-async function withApiError<T>(action: () => Promise<T>): Promise<T> {
-  try {
-    return await action();
-  } catch (error) {
-    throw toApiError(error);
-  }
-}
 export async function getGroups(): Promise<Group[]> {
-  const snap = await getDocs(myGroupsQuery(currentUid()));
+  const snap = await withApiError(() => getDocs(myGroupsQuery(currentUid())));
   return snap.docs.map(toGroup);
 }
 export async function createGroup(name: string): Promise<Group> {
