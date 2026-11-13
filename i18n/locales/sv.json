@@ -138,6 +138,11 @@
     "message": "Kunde inte laddas. {{reason}}",
     "retry": "Försök igen"
   },
+  "crash": {
+    "title": "Något gick fel",
+    "message": "Skärmen kunde inte visas. Försök igen, eller starta om appen om det fortsätter.",
+    "retry": "Försök igen"
+  },
   "errors": {
     "invalidSession": "Kontot kunde inte laddas. Logga in igen",
     "itemNotFound": "Varan hittades inte",

@@ -138,6 +138,11 @@
     "message": "Couldn't load. {{reason}}",
     "retry": "Try again"
   },
+  "crash": {
+    "title": "Something went wrong",
+    "message": "This screen couldn't be shown. Try again, or restart the app if it keeps happening.",
+    "retry": "Try again"
+  },
   "errors": {
     "invalidSession": "Your account couldn't be loaded. Log in again",
     "itemNotFound": "Item not found",
