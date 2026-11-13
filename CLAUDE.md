@@ -41,7 +41,9 @@ per group, since Firestore can't join.
 `cleanUpList` in `functions/`) delete everything under it: a group's lists and invites, a list's
 items, `knownItems` and `pendingNotifications`. Until they've run, the rules already hide the
 leftovers, since they look up the parent. Anything new that hangs off a group or list must be
-added to that cleanup.
+added to that cleanup. Deleting an account goes through the `deleteAccount` Cloud Function (it leaves
+shared groups, deletes groups only that user is in, and deletes their documents and login); anything
+new that belongs to a user must be added there.
 
 ## Tech stack and why
 

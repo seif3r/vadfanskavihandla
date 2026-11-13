@@ -99,7 +99,8 @@
     "notifyItemRemoved": "När någon tar bort en vara",
     "notificationsBlocked": "Notiser är blockerade. Tillåt dem i enhetens eller webbläsarens inställningar.",
     "account": "Konto",
-    "changePassword": "Byt lösenord"
+    "changePassword": "Byt lösenord",
+    "deleteAccount": "Radera konto"
   },
   "changePassword": {
     "title": "Byt lösenord",
@@ -112,6 +113,18 @@
     "mismatch": "De nya lösenorden är inte likadana",
     "sameAsCurrent": "Det nya lösenordet måste skilja sig från det nuvarande",
     "tooShort": "Det nya lösenordet måste vara minst {{min}} tecken"
+  },
+  "deleteAccount": {
+    "title": "Radera konto",
+    "intro": "När du raderar ditt konto:",
+    "soloGroups": "raderas grupper där du är ensam medlem, med deras listor",
+    "sharedGroups": "lämnar du grupper du delar med andra. Listor du skapat blir kvar i gruppen, och äger du den tar nästa medlem över",
+    "personalData": "raderas ditt namn, din e-post, dina inställningar och din inloggning",
+    "permanent": "Det går inte att ångra. Skriv ditt lösenord för att bekräfta.",
+    "password": "Lösenord",
+    "passwordRequired": "Skriv ditt lösenord",
+    "submit": "Radera konto",
+    "confirm": "Radera för alltid?"
   },
   "notifications": {
     "itemAdded": "{{user}} lade till {{item}}",

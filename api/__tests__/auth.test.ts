@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 import { ApiError } from "@/api/ApiError";
-import { changePassword, login, register, resetPassword } from "@/api/auth";
+import { changePassword, deleteAccount, login, register, resetPassword } from "@/api/auth";
 
 const mockUser: { email: string | null } = { email: "anna@example.com" };
 const mockReauthenticate = jest.fn<(...args: unknown[]) => Promise<void>>();
@@ -13,12 +13,14 @@ const mockDeleteUser = jest.fn<(...args: unknown[]) => Promise<void>>();
 const mockSignOut = jest.fn<(...args: unknown[]) => Promise<void>>();
 const mockCommit = jest.fn<() => Promise<void>>();
 const mockSendReset = jest.fn<(...args: unknown[]) => Promise<void>>();
+const mockCallDeleteAccount = jest.fn<() => Promise<unknown>>();
 const mockGetDoc = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 
 // Only the parts of Firebase changePassword touches; the real SDK would need a project.
 jest.mock("@/api/firebase", () => ({
   ...jest.requireActual<typeof import("@/api/errors")>("@/api/errors"),
   db: {},
+  functions: {},
   auth: { authStateReady: () => Promise.resolve(), get currentUser() { return mockUser; }, languageCode: null },
 }));
 jest.mock("firebase/auth", () => ({
@@ -30,6 +32,12 @@ jest.mock("firebase/auth", () => ({
   deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
   signOut: (...args: unknown[]) => mockSignOut(...args),
   sendPasswordResetEmail: (...args: unknown[]) => mockSendReset(...args),
+}));
+jest.mock("firebase/functions", () => ({
+  httpsCallable: (_functions: unknown, name: string) => {
+    if (name !== "deleteAccount") throw new Error(`Unexpected function ${name}`);
+    return () => mockCallDeleteAccount();
+  },
 }));
 jest.mock("firebase/firestore", () => ({
   doc: (_db: unknown, ...path: string[]) => path.join("/"),
@@ -157,5 +165,33 @@ describe("resetPassword", () => {
   it("says when the address can't be one", async () => {
     mockSendReset.mockRejectedValueOnce({ code: "auth/invalid-email" });
     expect(await errorKey(resetPassword("anna", "sv"))).toBe("errors.invalidEmail");
+  });
+});
+
+describe("deleteAccount", () => {
+  beforeEach(() => {
+    mockUser.email = "anna@example.com";
+    mockReauthenticate.mockReset().mockResolvedValue(undefined);
+    mockCallDeleteAccount.mockReset().mockResolvedValue({ data: null });
+    mockSignOut.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("checks the password, deletes the account and signs out", async () => {
+    await deleteAccount("hemligt1");
+    expect(mockReauthenticate).toHaveBeenCalledWith(mockUser, { email: "anna@example.com", password: "hemligt1" });
+    expect(mockCallDeleteAccount).toHaveBeenCalled();
+    expect(mockSignOut).toHaveBeenCalled();
+  });
+
+  it("deletes nothing with the wrong password", async () => {
+    mockReauthenticate.mockRejectedValueOnce({ code: "auth/invalid-credential" });
+    expect(await errorKey(deleteAccount("fel"))).toBe("errors.wrongPassword");
+    expect(mockCallDeleteAccount).not.toHaveBeenCalled();
+  });
+
+  it("stays logged in when the deletion fails, so it can be tried again", async () => {
+    mockCallDeleteAccount.mockRejectedValueOnce({ code: "functions/unavailable" });
+    expect(await errorKey(deleteAccount("hemligt1"))).toBe("errors.offline");
+    expect(mockSignOut).not.toHaveBeenCalled();
   });
 });

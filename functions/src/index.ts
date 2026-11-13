@@ -16,6 +16,7 @@
  * themselves to a group they can't read.
  */
 import {initializeApp} from "firebase-admin/app";
+import {getAuth} from "firebase-admin/auth";
 import {FieldValue, getFirestore, Query} from "firebase-admin/firestore";
 import {getFunctions} from "firebase-admin/functions";
 import {setGlobalOptions} from "firebase-functions";
@@ -121,6 +122,53 @@ export const joinGroup = onCall<JoinGroupRequest>(async (request) => {
     }
     tx.update(groupRef, {members: FieldValue.arrayUnion(uid)});
   });
+});
+
+// Deletes the caller's account and what belongs only to them. The app asks
+// for the password first (logs in again), so this only needs the session.
+// Groups they share with others stay: they leave them, and an owner hands
+// the group to the next member, as in the app's leaveGroup. Lists they
+// made there stay with the group, and items they added keep their name
+// but lose the person (whose profile is gone). A group only they are in is
+// deleted, and cleanUpGroup deletes its lists and items.
+export const deleteAccount = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Not logged in");
+
+  const groups = await db.collection("groups")
+    .where("members", "array-contains", uid).get();
+  for (const {ref} of groups.docs) {
+    // Fresh read, in case someone joined or left since the query.
+    await db.runTransaction(async (tx) => {
+      const group = await tx.get(ref);
+      if (!group.exists) return;
+      const others = (group.get("members") as string[])
+        .filter((id) => id !== uid);
+      if (others.length === 0) {
+        tx.delete(ref);
+        return;
+      }
+      tx.update(ref, {
+        members: FieldValue.arrayRemove(uid),
+        ...(group.get("ownerId") === uid && {ownerId: others[0]}),
+      });
+    });
+  }
+  // Groups they were removed from remember them; that's personal data too.
+  const removedFrom = await db.collection("groups")
+    .where("removedMembers", "array-contains", uid).get();
+  await Promise.all(removedFrom.docs.map(({ref}) =>
+    ref.update({removedMembers: FieldValue.arrayRemove(uid)})));
+
+  await deleteWhere(db.collection("invites").where("createdBy", "==", uid));
+  await deleteWhere(
+    db.collection("pendingNotifications").where("actorId", "==", uid));
+  // The user document with its push tokens, and the public profile.
+  await db.recursiveDelete(db.doc(`users/${uid}`));
+  await db.doc(`profiles/${uid}`).delete();
+  // Last, so a failure above can be retried by calling again while the
+  // session still works.
+  await getAuth().deleteUser(uid);
 });
 
 // "WithAuthContext" because a deleted item can't say who deleted it.

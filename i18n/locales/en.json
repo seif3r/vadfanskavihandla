@@ -99,7 +99,8 @@
     "notifyItemRemoved": "When someone removes an item",
     "notificationsBlocked": "Notifications are blocked. Allow them in your device or browser settings.",
     "account": "Account",
-    "changePassword": "Change password"
+    "changePassword": "Change password",
+    "deleteAccount": "Delete account"
   },
   "changePassword": {
     "title": "Change password",
@@ -112,6 +113,18 @@
     "mismatch": "The new passwords don't match",
     "sameAsCurrent": "The new password must be different from the current one",
     "tooShort": "The new password must be at least {{min}} characters"
+  },
+  "deleteAccount": {
+    "title": "Delete account",
+    "intro": "Deleting your account:",
+    "soloGroups": "deletes groups where you're the only member, with their lists",
+    "sharedGroups": "takes you out of groups you share with others. Lists you made stay with the group, and if you own it, the next member takes over",
+    "personalData": "deletes your name, email, settings and login",
+    "permanent": "This can't be undone. Type your password to confirm.",
+    "password": "Password",
+    "passwordRequired": "Type your password",
+    "submit": "Delete account",
+    "confirm": "Delete for good?"
   },
   "notifications": {
     "itemAdded": "{{user}} added {{item}}",

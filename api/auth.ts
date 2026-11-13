@@ -1,6 +1,6 @@
 // Accounts and the current session.
 import { ApiError } from "@/api/ApiError";
-import { auth, db, toApiError, withApiError } from "@/api/firebase";
+import { auth, db, functions, toApiError, withApiError } from "@/api/firebase";
 import { User, UserSettings } from "@/types/models";
 import {
   createUserWithEmailAndPassword,
@@ -11,8 +11,10 @@ import {
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
+  User as FirebaseUser,
 } from "firebase/auth";
 import { doc, DocumentSnapshot, getDoc, writeBatch } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 // New accounts start in Swedish with notifications off; turning one on asks for permission.
 const defaultSettings: UserSettings = {
   language: "sv",
@@ -74,14 +76,14 @@ export async function register(name: string, email: string, password: string): P
   }
 }
 
-// Firebase only lets a recent login change the password, so this logs in again with the current
-// one first. That also proves it's the account's owner and not someone at an unlocked phone.
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+// Logs the current user in again with their password, for changes that need proof it's them.
+async function reauthenticate(password: string): Promise<FirebaseUser> {
   await auth.authStateReady();
   const user = auth.currentUser;
   if (!user?.email) throw new ApiError("errors.invalidSession");
   try {
-    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, currentPassword));
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+    return user;
   } catch (error) {
     const code = (error as { code?: string }).code;
     // The email is known here, so a rejected credential can only mean the password.
@@ -90,6 +92,12 @@ export async function changePassword(currentPassword: string, newPassword: strin
     }
     throw toApiError(error);
   }
+}
+
+// Firebase only lets a recent login change the password, so this logs in again with the current
+// one first. That also proves it's the account's owner and not someone at an unlocked phone.
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const user = await reauthenticate(currentPassword);
   try {
     await updatePassword(user, newPassword);
   } catch (error) {
@@ -102,6 +110,15 @@ export async function changePassword(currentPassword: string, newPassword: strin
 export async function resetPassword(email: string, language: string): Promise<void> {
   auth.languageCode = language;
   await withApiError(() => sendPasswordResetEmail(auth, email.trim()));
+}
+
+// Deletes the account for good: the deleteAccount Cloud Function leaves or deletes the user's
+// groups and deletes their documents and login (see functions/src/index.ts). The password is asked
+// for first, so someone at an unlocked phone can't do it. Ends the session on this device too.
+export async function deleteAccount(password: string): Promise<void> {
+  await reauthenticate(password);
+  await withApiError(() => httpsCallable(functions, "deleteAccount")());
+  await signOut(auth).catch(() => {});
 }
 
 // Ends the Firebase session, including the one it has stored on the device.

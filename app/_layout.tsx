@@ -59,6 +59,7 @@ function RootStack() {
           />
           <Stack.Screen name="settings" options={{ title: t("settings.title") }} />
           <Stack.Screen name="change-password" options={{ title: t("changePassword.title") }} />
+          <Stack.Screen name="delete-account" options={{ title: t("deleteAccount.title") }} />
           <Stack.Screen name="lists" options={{ title: t("lists.title") }} />
           <Stack.Screen name="groups" options={{ title: t("groups.title") }} />
           <Stack.Screen name="join" options={{ title: t("join.title") }} />
