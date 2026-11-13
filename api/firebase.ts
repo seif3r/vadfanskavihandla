@@ -21,14 +21,21 @@ const { getReactNativePersistence } = firebaseAuth as unknown as {
 };
 // Fast Refresh re-runs this file; initializing twice throws.
 const isFirstLoad = getApps().length === 0;
-const app = isFirstLoad
-  ? initializeApp({
-    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-  })
-  : getApp();
+const config = {
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+};
+// Without these, Firebase fails later with "auth/invalid-api-key", which doesn't say what's wrong.
+// For developers only, so in English and in development builds only.
+if (__DEV__ && (!config.apiKey || !config.projectId)) {
+  throw new Error(
+    "Firebase config missing: copy .env.example to .env.local, fill in the EXPO_PUBLIC_FIREBASE_* " +
+    "values and restart Expo. See docs/setup.md.",
+  );
+}
+const app = isFirstLoad ? initializeApp(config) : getApp();
 if (isFirstLoad) startAppCheck(app);
 // The browser keeps the session by itself; on phones it's stored in AsyncStorage.
 export const auth: Auth =
