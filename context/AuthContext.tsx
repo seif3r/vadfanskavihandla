@@ -6,6 +6,7 @@ import { removePushToken } from "@/api/push";
 import { userKey, useCurrentUser } from "@/hooks/useCurrentUser";
 import { ApiError } from "@/api/ApiError";
 import { getPushToken } from "@/helpers/notifications";
+import { deviceLanguage } from "@/helpers/language";
 import i18n from "@/i18n";
 import { AuthContextValue, ProviderProps } from "@/types/context";
 import { ErrorKey } from "@/types/errors";
@@ -54,10 +55,12 @@ export function AuthProvider({ children }: ProviderProps) {
   const isLoading = hasSession === null || current.isLoading;
   const loadError = hasSession && canRetry ? error : null;
 
-  // Shows the app in the logged-in user's language, and follows changes to it.
+  // Shows the app in the logged-in user's language, and follows changes to it. Logged out, the
+  // device's. Set after the first render (i18n starts in English), so the web page's static HTML,
+  // rendered without a browser, matches the browser's first render.
   const language = user?.settings.language;
   useEffect(() => {
-    if (language) i18n.changeLanguage(language);
+    i18n.changeLanguage(language ?? deviceLanguage());
   }, [language]);
 
   // Puts the user in the cache before marking the session, so the screens never see a

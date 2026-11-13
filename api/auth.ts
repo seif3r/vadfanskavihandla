@@ -1,6 +1,7 @@
 // Accounts and the current session.
 import { ApiError } from "@/api/ApiError";
 import { auth, clearLocalCache, db, functions, toApiError, withApiError } from "@/api/firebase";
+import { deviceLanguage } from "@/helpers/language";
 import { User, UserSettings } from "@/types/models";
 import {
   createUserWithEmailAndPassword,
@@ -16,12 +17,13 @@ import {
 } from "firebase/auth";
 import { doc, DocumentSnapshot, getDoc, writeBatch } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
-// New accounts start in Swedish with notifications off; turning one on asks for permission.
-const defaultSettings: UserSettings = {
-  language: "sv",
+// New accounts start in the device's language (the one the login screen was shown in) with
+// notifications off; turning one on asks for permission.
+const defaultSettings = (): UserSettings => ({
+  language: deviceLanguage(),
   theme: "system",
   notifications: { itemAdded: false, itemRemoved: false },
-};
+});
 export const toUser = (snap: DocumentSnapshot): User => {
   const data = snap.data()!;
   // Spelled out so accounts saved before a setting existed get it as off, and old keys are dropped.
@@ -68,10 +70,11 @@ export async function loadCurrentUser(): Promise<User> {
 // Creates the account plus its private user document and public profile.
 export async function register(name: string, email: string, password: string): Promise<User> {
   const { user } = await withApiError(() => createUserWithEmailAndPassword(auth, email.trim(), password));
-  const profile: User = { id: user.uid, name, email: email.trim(), settings: defaultSettings };
+  const settings = defaultSettings();
+  const profile: User = { id: user.uid, name, email: email.trim(), settings };
   try {
     const batch = writeBatch(db);
-    batch.set(doc(db, "users", user.uid), { name, email: profile.email, settings: defaultSettings });
+    batch.set(doc(db, "users", user.uid), { name, email: profile.email, settings });
     batch.set(doc(db, "profiles", user.uid), { name });
     await batch.commit();
     return profile;
