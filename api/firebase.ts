@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { ApiError } from "@/api/ApiError";
 import { startAppCheck } from "@/api/appCheck";
+import { EMULATOR_PORTS, FUNCTIONS_REGION } from "@/constants/firebase";
 import * as firebaseAuth from "firebase/auth";
 import { Auth, connectAuthEmulator, getAuth, initializeAuth, Persistence } from "firebase/auth";
 import {
@@ -20,14 +21,21 @@ const { getReactNativePersistence } = firebaseAuth as unknown as {
 };
 // Fast Refresh re-runs this file; initializing twice throws.
 const isFirstLoad = getApps().length === 0;
-const app = isFirstLoad
-  ? initializeApp({
-    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
-    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
-  })
-  : getApp();
+const config = {
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
+};
+// Without these, Firebase fails later with "auth/invalid-api-key", which doesn't say what's wrong.
+// For developers only, so in English and in development builds only.
+if (__DEV__ && (!config.apiKey || !config.projectId)) {
+  throw new Error(
+    "Firebase config missing: copy .env.example to .env.local, fill in the EXPO_PUBLIC_FIREBASE_* " +
+    "values and restart Expo. See docs/setup.md.",
+  );
+}
+const app = isFirstLoad ? initializeApp(config) : getApp();
 if (isFirstLoad) startAppCheck(app);
 // The browser keeps the session by itself; on phones it's stored in AsyncStorage.
 export const auth: Auth =
@@ -44,14 +52,13 @@ export const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
   ...(isBrowser && { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }),
 });
-// The region functions/src/index.ts deploys to.
-export const functions = getFunctions(app, "europe-north1");
+export const functions = getFunctions(app, FUNCTIONS_REGION);
 const emulatorHost = process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST;
 // Development only: a release build must never send passwords to a host over plain http.
 if (__DEV__ && emulatorHost && isFirstLoad) {
-  connectAuthEmulator(auth, `http://${emulatorHost}:9099`);
-  connectFirestoreEmulator(db, emulatorHost, 8080);
-  connectFunctionsEmulator(functions, emulatorHost, 5001);
+  connectAuthEmulator(auth, `http://${emulatorHost}:${EMULATOR_PORTS.auth}`);
+  connectFirestoreEmulator(db, emulatorHost, EMULATOR_PORTS.firestore);
+  connectFunctionsEmulator(functions, emulatorHost, EMULATOR_PORTS.functions);
 }
 // Forgets the browser's cached data, so the next person to log in on this browser can't see the
 // previous one's lists offline. Firestore can't be used again afterwards, so the page reloads.

@@ -34,7 +34,12 @@ export default function UserMenu() {
 
   return (
     <>
-      <Pressable onPress={() => setIsOpen(true)} style={styles.trigger}>
+      <Pressable
+        onPress={() => setIsOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={t("userMenu.open", { name: user.name })}
+        style={styles.trigger}
+      >
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{user.name.charAt(0).toUpperCase()}</Text>
         </View>
@@ -44,19 +49,24 @@ export default function UserMenu() {
       {/* Modal instead of an absolutely positioned dropdown, so the menu
           isn't clipped by the header and a tap outside closes it. */}
       <Modal visible={isOpen} transparent animationType="fade" onRequestClose={() => setIsOpen(false)}>
-        <Pressable style={styles.backdrop} onPress={() => setIsOpen(false)}>
-          <View style={styles.menu}>
+        <Pressable
+          style={styles.backdrop}
+          onPress={() => setIsOpen(false)}
+          accessibilityRole="button"
+          accessibilityLabel={t("userMenu.close")}
+        >
+          <View style={styles.menu} accessibilityRole="menu">
             <View style={styles.menuHeader}>
               <Text style={styles.menuName}>{user.name}</Text>
               <Text style={styles.menuEmail}>{user.email}</Text>
             </View>
-            <Pressable onPress={handleGroups} style={styles.menuItem}>
+            <Pressable onPress={handleGroups} accessibilityRole="menuitem" style={styles.menuItem}>
               <Text style={styles.menuText}>{t("userMenu.groups")}</Text>
             </Pressable>
-            <Pressable onPress={handleSettings} style={[styles.menuItem, styles.divider]}>
+            <Pressable onPress={handleSettings} accessibilityRole="menuitem" style={[styles.menuItem, styles.divider]}>
               <Text style={styles.menuText}>{t("userMenu.settings")}</Text>
             </Pressable>
-            <Pressable onPress={handleLogout} style={[styles.menuItem, styles.divider]}>
+            <Pressable onPress={handleLogout} accessibilityRole="menuitem" style={[styles.menuItem, styles.divider]}>
               <Text style={styles.logout}>{t("userMenu.logout")}</Text>
             </Pressable>
           </View>

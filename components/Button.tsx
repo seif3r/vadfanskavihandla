@@ -14,6 +14,8 @@ export default function Button({ value, onPress, disabled, variant = "primary", 
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [
         styles.button,
         compact && styles.compact,

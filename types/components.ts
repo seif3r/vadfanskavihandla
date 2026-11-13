@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { StyleProp, TextStyle } from "react-native";
+import { StyleProp, TextInputProps, TextStyle } from "react-native";
 
 import { ApiError } from "@/api/ApiError";
 import { Category, Group, Item, Member, ShoppingList } from "@/types/models";
@@ -20,6 +20,18 @@ export interface InputProps {
   placeholder?: string;
   secureTextEntry?: boolean;
   maxLength?: number;
+  style?: StyleProp<TextStyle>;
+  accessibilityLabel?: string;
+  // So phones show the right keyboard and password managers can fill the field in.
+  keyboardType?: TextInputProps["keyboardType"];
+  autoComplete?: TextInputProps["autoComplete"];
+  textContentType?: TextInputProps["textContentType"];
+  // "none" unless given: most fields are emails, codes and item names.
+  autoCapitalize?: TextInputProps["autoCapitalize"];
+}
+
+export interface ErrorTextProps {
+  children: string;
   style?: StyleProp<TextStyle>;
 }
 

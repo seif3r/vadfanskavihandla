@@ -44,10 +44,16 @@ const region = "europe-north1";
 // function it calls live in Belgium. A push that waits a minute anyway
 // doesn't notice the extra distance.
 const tasksRegion = "europe-west1";
-setGlobalOptions({region, maxInstances: 5});
+const MAX_INSTANCES = 5;
+setGlobalOptions({region, maxInstances: MAX_INSTANCES});
 const db = getFirestore();
 
+// Same number as NOTIFICATION_DELAY_SECONDS in the app's constants/limits.ts,
+// which shows notifications in-app on web and in Expo Go.
 const DELAY_SECONDS = 60;
+// How often Cloud Tasks tries a send that failed, and how long it waits.
+const SEND_ATTEMPTS = 3;
+const SEND_MIN_BACKOFF_SECONDS = 30;
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 // Without one, a hanging request holds the task until it times out.
 const EXPO_TIMEOUT_MS = 10_000;
@@ -229,7 +235,10 @@ export const notifyOnItemChange = onDocumentWrittenWithAuthContext(
 export const sendBatchedNotification = onTaskDispatched<BatchTask>(
   {
     region: tasksRegion,
-    retryConfig: {maxAttempts: 3, minBackoffSeconds: 30},
+    retryConfig: {
+      maxAttempts: SEND_ATTEMPTS,
+      minBackoffSeconds: SEND_MIN_BACKOFF_SECONDS,
+    },
   },
   async (request) => {
     const {batchId, seq} = request.data;

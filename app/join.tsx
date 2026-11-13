@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { ApiError } from "@/api/ApiError";
+import ErrorText from "@/components/ErrorText";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { findInviteCode } from "@/helpers/groups";
@@ -47,7 +48,7 @@ export default function Join() {
   return (
     <View style={styles.container}>
       <Input value={code} onChangeText={setCode} onSubmit={handleJoin} placeholder={t("join.codePlaceholder")} />
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <ErrorText style={styles.error}>{error}</ErrorText>}
       <Button value={t("join.submit")} onPress={handleJoin} disabled={isSubmitting} />
     </View>
   );

@@ -81,12 +81,15 @@
     "confirmRevokeInvite": "Revoke?",
     "removedMembers": "Removed members",
     "allowRemovedMember": "Allow again",
-    "join": "Join a group"
+    "join": "Join a group",
+    "nameLabel": "Group name"
   },
   "userMenu": {
     "settings": "Settings",
     "groups": "Groups",
-    "logout": "Log out"
+    "logout": "Log out",
+    "open": "Menu for {{name}}",
+    "close": "Close menu"
   },
   "settings": {
     "title": "Settings",

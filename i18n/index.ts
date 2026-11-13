@@ -23,7 +23,8 @@ export const languages: LanguageOption[] = [
 // eslint-disable-next-line import/no-named-as-default-member
 i18n.use(initReactI18next).init({
   resources,
-  // Used until a user logs in; after that, the user's own setting applies.
+  // Only for the first render: AuthContext then switches to the user's language, or the device's
+  // when logged out. Fixed here so the web export's static HTML is always the same.
   lng: "en",
   fallbackLng: "en",
   interpolation: {

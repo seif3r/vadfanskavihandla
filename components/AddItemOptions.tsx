@@ -36,6 +36,8 @@ export default function AddItemOptions({ amount, onAmountChange, category, onCat
                 key={c}
                 // Tapping the selected category again clears it.
                 onPress={() => onCategoryChange(isSelected ? undefined : c)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
                 style={[styles.chip, isSelected && styles.chipSelected]}
               >
                 <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>{t(`categories.${c}`)}</Text>

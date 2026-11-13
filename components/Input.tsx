@@ -5,7 +5,12 @@ import { useColors, useThemedStyles } from "@/hooks/useTheme";
 import { InputProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
 
-export default function Input({ value, onChangeText, onSubmit, placeholder, secureTextEntry, maxLength, style }: InputProps) {
+// The placeholder doubles as the label screen readers read, unless a label is given (a field without
+// a placeholder, like renaming a group, needs one).
+export default function Input({
+  value, onChangeText, onSubmit, placeholder, secureTextEntry, maxLength, style, accessibilityLabel,
+  keyboardType, autoComplete, textContentType, autoCapitalize = "none",
+}: InputProps) {
   const styles = useThemedStyles(createStyles);
   const colors = useColors();
   return (
@@ -17,7 +22,11 @@ export default function Input({ value, onChangeText, onSubmit, placeholder, secu
       placeholderTextColor={colors.textMuted}
       secureTextEntry={secureTextEntry}
       maxLength={maxLength}
-      autoCapitalize="none"
+      accessibilityLabel={accessibilityLabel ?? placeholder}
+      keyboardType={keyboardType}
+      autoComplete={autoComplete}
+      textContentType={textContentType}
+      autoCapitalize={autoCapitalize}
       style={[styles.input, style]}
     />
   );

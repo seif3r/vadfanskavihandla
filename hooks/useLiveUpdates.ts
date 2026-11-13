@@ -8,6 +8,7 @@ import { subscribeToItems } from "@/api/items";
 import { subscribeToLists } from "@/api/lists";
 import { getUsers } from "@/api/users";
 import { useAuth } from "@/context/AuthContext";
+import { NOTIFICATION_DELAY_SECONDS } from "@/constants/limits";
 import { useLists } from "@/hooks/useLists";
 import { memberKey } from "@/helpers/groups";
 import { canReceivePush, showNotification } from "@/helpers/notifications";
@@ -15,7 +16,7 @@ import { Group, ItemChange, PendingNotification } from "@/types/models";
 
 // Same as the server: a person's changes to a list are collected until they've been quiet for a minute,
 // then shown as one notification.
-const DELAY_MS = 60 * 1000;
+const DELAY_MS = NOTIFICATION_DELAY_SECONDS * 1000;
 // A listener that failed is stopped for good, so all of them are started again after this long.
 export const LIVE_RETRY_MS = 15 * 1000;
 

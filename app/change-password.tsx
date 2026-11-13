@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text } from "react-native";
 
 import { ApiError } from "@/api/ApiError";
+import ErrorText from "@/components/ErrorText";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { MIN_PASSWORD_LENGTH } from "@/constants/limits";
@@ -51,12 +52,16 @@ export default function ChangePassword() {
         onChangeText={setCurrentPassword}
         placeholder={t("changePassword.current")}
         secureTextEntry
+        autoComplete="current-password"
+        textContentType="password"
       />
       <Input
         value={newPassword}
         onChangeText={setNewPassword}
         placeholder={t("changePassword.new")}
         secureTextEntry
+        autoComplete="new-password"
+        textContentType="newPassword"
       />
       <Input
         value={repeatedPassword}
@@ -64,8 +69,10 @@ export default function ChangePassword() {
         onSubmit={handleSubmit}
         placeholder={t("changePassword.confirm")}
         secureTextEntry
+        autoComplete="new-password"
+        textContentType="newPassword"
       />
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <ErrorText style={styles.error}>{error}</ErrorText>}
       {isDone && <Text style={styles.success}>{t("changePassword.success")}</Text>}
       <Button value={t("changePassword.submit")} onPress={handleSubmit} disabled={changePassword.isPending} />
     </ScrollView>

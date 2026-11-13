@@ -51,6 +51,7 @@ export default function GroupLists({
           onSubmit={handleCreate}
           placeholder={t("lists.newPlaceholder")}
           maxLength={MAX_LIST_NAME_LENGTH}
+          autoCapitalize="sentences"
           style={styles.input}
         />
         <Button value={t("lists.add")} onPress={handleCreate} disabled={isCreating} />

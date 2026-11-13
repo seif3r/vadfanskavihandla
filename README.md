@@ -11,9 +11,9 @@ npm run android   # in an Android emulator
 npm start         # QR code for Expo Go on your phone
 ```
 
-The backend is Firebase (Authentication, Cloud Firestore, and Cloud Functions for push). Put the project's web config in
-`.env.local` as `EXPO_PUBLIC_FIREBASE_*` variables (see `api/firebase.ts`), then create an account
-in the app. Lists belong to a group (`groups/{groupId}`, e.g. a household): everyone in the group
+The backend is Firebase (Authentication, Cloud Firestore, and Cloud Functions for push). Copy
+`.env.example` to `.env.local` and fill in the project's web config (see
+[docs/setup.md](docs/setup.md)), then create an account in the app. Lists belong to a group (`groups/{groupId}`, e.g. a household): everyone in the group
 sees all its lists. Create a group or join one with an invite code from the Groups screen; a user
 can be in several groups and sees the lists of all of them. The group's owner can rename it, remove
 members, revoke invites and delete it. Joining goes through the `joinGroup` Cloud Function: a code works
@@ -103,6 +103,7 @@ All UI text goes through `t("...")` from `react-i18next`. Keys are type-checked 
 
 ## Backend
 
-See `docs/backend-and-hosting-guide.pdf` for the Firebase setup, push notifications, EAS builds
-and hosting the web version on GitHub Pages. Its push chapter predates bundled notifications;
-`docs/notifications.md` describes how they work now.
+[docs/setup.md](docs/setup.md) covers the Firebase setup, deploying, the emulators, EAS builds and
+hosting the web version on GitHub Pages; [docs/notifications.md](docs/notifications.md) how push
+works. `docs/backend-and-hosting-guide.pdf` is historical: it describes an earlier stage (lists
+shared per list, push one change at a time) and is kept only for reference.

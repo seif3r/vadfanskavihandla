@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
+import ErrorText from "@/components/ErrorText";
 import ConfirmButton from "@/components/ConfirmButton";
 import Input from "@/components/Input";
 import { spacing, textSize } from "@/constants/theme";
@@ -41,8 +42,10 @@ export default function DeleteAccount() {
         onChangeText={setPassword}
         placeholder={t("deleteAccount.password")}
         secureTextEntry
+        autoComplete="current-password"
+        textContentType="password"
       />
-      {error && <Text style={styles.error} accessibilityLiveRegion="polite" role="alert">{error}</Text>}
+      {error && <ErrorText style={styles.error}>{error}</ErrorText>}
       <View style={styles.actions}>
         <ConfirmButton
           label={t("deleteAccount.submit")}

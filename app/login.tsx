@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/api/ApiError";
+import ErrorText from "@/components/ErrorText";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { MAX_EMAIL_LENGTH, MAX_PERSON_NAME_LENGTH } from "@/constants/limits";
@@ -73,17 +74,35 @@ export default function Login() {
   return (
     <View style={styles.container}>
       {isRegistering && (
-        <Input value={name} onChangeText={setName} placeholder={t("login.name")} maxLength={MAX_PERSON_NAME_LENGTH} />
+        <Input
+          value={name}
+          onChangeText={setName}
+          placeholder={t("login.name")}
+          maxLength={MAX_PERSON_NAME_LENGTH}
+          autoComplete="name"
+          textContentType="name"
+          autoCapitalize="words"
+        />
       )}
-      <Input value={email} onChangeText={setEmail} placeholder={t("login.email")} maxLength={MAX_EMAIL_LENGTH} />
+      <Input
+        value={email}
+        onChangeText={setEmail}
+        placeholder={t("login.email")}
+        maxLength={MAX_EMAIL_LENGTH}
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType={isRegistering ? "emailAddress" : "username"}
+      />
       <Input
         value={password}
         onChangeText={setPassword}
         onSubmit={handleSubmit}
         placeholder={t("login.password")}
         secureTextEntry
+        autoComplete={isRegistering ? "new-password" : "current-password"}
+        textContentType={isRegistering ? "newPassword" : "password"}
       />
-      {error && <Text style={styles.error} accessibilityLiveRegion="polite" role="alert">{error}</Text>}
+      {error && <ErrorText style={styles.error}>{error}</ErrorText>}
       {resetSentTo && (
         <Text style={styles.info} accessibilityLiveRegion="polite">{t("login.resetSent", { email: resetSentTo })}</Text>
       )}
