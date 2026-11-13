@@ -58,3 +58,9 @@ export async function withApiError<T>(action: () => Promise<T>): Promise<T> {
     throw toApiError(error);
   }
 }
+
+// For live listeners: whether an error is worth showing. permission-denied is expected (a list was
+// deleted, I left a group, I'm logging out) and the listener that got it is stopped anyway.
+export function isListenerFailure(error: unknown): boolean {
+  return (error as { code?: string }).code !== "permission-denied";
+}

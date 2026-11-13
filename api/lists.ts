@@ -1,5 +1,6 @@
 // The shopping lists in the logged-in user's groups.
-import { currentUid, db, withApiError } from "@/api/firebase";
+import { ApiError } from "@/api/ApiError";
+import { currentUid, db, isListenerFailure, toApiError, withApiError } from "@/api/firebase";
 import { groupListsQuery, myGroupsQuery } from "@/api/queries";
 import { ShoppingList } from "@/types/models";
 import {
@@ -34,8 +35,18 @@ export async function deleteList(listId: string): Promise<void> {
 }
 
 // Calls onChange with the lists of all my groups whenever a list is created, renamed or deleted,
-// or I join or leave a group. Returns a function that stops listening.
-export function subscribeToLists(userId: string, onChange: (lists: ShoppingList[]) => void): () => void {
+// or I join or leave a group. Returns a function that stops listening. onError hears about
+// failures that stop a listener (see subscribeToItems).
+// A group whose listener has failed counts as empty from then on, so the other groups' lists still
+// show; it isn't retried until the caller subscribes again.
+export function subscribeToLists(
+  userId: string,
+  onChange: (lists: ShoppingList[]) => void,
+  onError?: (error: ApiError) => void,
+): () => void {
+  const report = (error: unknown) => {
+    if (isListenerFailure(error)) onError?.(toApiError(error));
+  };
   // One lists listener per group, started and stopped as my groups change.
   const listsByGroup = new Map<string, ShoppingList[]>();
   const stops = new Map<string, () => void>();
@@ -64,16 +75,17 @@ export function subscribeToLists(userId: string, onChange: (lists: ShoppingList[
           },
           // Denied once I leave or am removed (the groups listener then stops this one),
           // or the query fails. Counts as empty, so the other groups' lists still show.
-          () => {
+          (error) => {
             listsByGroup.set(id, []);
             emit();
+            report(error);
           },
         ));
       });
       emit();
     },
     // Denied for a moment while logging out; the listener is stopped right after.
-    () => {},
+    report,
   );
   return () => {
     stopGroups();

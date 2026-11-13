@@ -14,6 +14,7 @@ import UserMenu from "@/components/UserMenu";
 import { spacing } from "@/constants/theme";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ActiveListProvider } from "@/context/ActiveListContext";
+import { LiveStatusProvider } from "@/context/LiveStatusContext";
 import { useLiveUpdates } from "@/hooks/useLiveUpdates";
 import { usePushRegistration } from "@/hooks/usePushRegistration";
 import { useActiveColorScheme, useColors } from "@/hooks/useTheme";
@@ -24,7 +25,7 @@ function RootStack() {
   const { t } = useTranslation();
   const { user, isLoading, loadError, reload, logout } = useAuth();
   const colors = useColors();
-  useLiveUpdates();
+  const liveError = useLiveUpdates();
   usePushRegistration();
 
   // Wait until the saved session is checked, so the login screen doesn't flash.
@@ -41,30 +42,32 @@ function RootStack() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
-        headerTitleStyle: { fontWeight: "600" },
-        headerShadowVisible: false,
-        contentStyle: { backgroundColor: colors.background },
-      }}
-    >
-      <Stack.Protected guard={!!user}>
-        <Stack.Screen
-          name="index"
-          options={{ title: t("list.title"), headerRight: () => <UserMenu /> }}
-        />
-        <Stack.Screen name="settings" options={{ title: t("settings.title") }} />
-        <Stack.Screen name="change-password" options={{ title: t("changePassword.title") }} />
-        <Stack.Screen name="lists" options={{ title: t("lists.title") }} />
-        <Stack.Screen name="groups" options={{ title: t("groups.title") }} />
-        <Stack.Screen name="join" options={{ title: t("join.title") }} />
-      </Stack.Protected>
-      <Stack.Protected guard={!user}>
-        <Stack.Screen name="login" options={{ title: t("login.title") }} />
-      </Stack.Protected>
-    </Stack>
+    <LiveStatusProvider value={liveError}>
+      <Stack
+        screenOptions={{
+          headerStyle: { backgroundColor: colors.surface },
+          headerTintColor: colors.text,
+          headerTitleStyle: { fontWeight: "600" },
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
+        <Stack.Protected guard={!!user}>
+          <Stack.Screen
+            name="index"
+            options={{ title: t("list.title"), headerRight: () => <UserMenu /> }}
+          />
+          <Stack.Screen name="settings" options={{ title: t("settings.title") }} />
+          <Stack.Screen name="change-password" options={{ title: t("changePassword.title") }} />
+          <Stack.Screen name="lists" options={{ title: t("lists.title") }} />
+          <Stack.Screen name="groups" options={{ title: t("groups.title") }} />
+          <Stack.Screen name="join" options={{ title: t("join.title") }} />
+        </Stack.Protected>
+        <Stack.Protected guard={!user}>
+          <Stack.Screen name="login" options={{ title: t("login.title") }} />
+        </Stack.Protected>
+      </Stack>
+    </LiveStatusProvider>
   );
 }
 

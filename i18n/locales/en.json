@@ -28,7 +28,8 @@
     "category": "Category",
     "empty": "You have no shopping lists yet.",
     "createFirst": "Create a list",
-    "noItems": "The list is empty. Type something below to add it."
+    "noItems": "The list is empty. Type something below to add it.",
+    "notLive": "Not updating right now, trying again soon. {{reason}}"
   },
   "categories": {
     "produce": "Fruit & veg",

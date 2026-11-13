@@ -1,6 +1,6 @@
 // Items on a shopping list.
 import { ApiError } from "@/api/ApiError";
-import { currentUid, db, withApiError } from "@/api/firebase";
+import { currentUid, db, isListenerFailure, toApiError, withApiError } from "@/api/firebase";
 import { itemKey } from "@/helpers/list";
 import { AddItemRequest } from "@/types/api";
 import { Item, ItemChange, KnownItem } from "@/types/models";
@@ -95,10 +95,15 @@ export async function removeDone(listId: string): Promise<void> {
 
 // Calls onChange with the list's items whenever anyone changes them, plus what other
 // people just did (for notifications). Returns a function that stops listening.
+// Firestore rides out lost connections by itself; onError hears about the failures that stop the
+// listener for good (e.g. an index that's still building), so the caller can show it and subscribe
+// again later. Changes made while nobody listens (app in the background, a stopped listener) are
+// never notified in-app; installed builds still get them as push.
 export function subscribeToItems(
   listId: string,
   userId: string,
   onChange: (items: Item[], changes: ItemChange[]) => void,
+  onError?: (error: ApiError) => void,
 ): () => void {
   let isFirstSnapshot = true;
   return onSnapshot(itemsQuery(listId), (snap) => {
@@ -121,5 +126,7 @@ export function subscribeToItems(
   },
   // Denied once the list is deleted or I log out. The lists listener drops the list
   // and this listener is stopped, so there is nothing to do.
-  () => {});
+  (error) => {
+    if (isListenerFailure(error)) onError?.(toApiError(error));
+  });
 }

@@ -28,7 +28,8 @@
     "category": "Kategori",
     "empty": "Ni har inga inköpslistor än.",
     "createFirst": "Skapa en lista",
-    "noItems": "Listan är tom. Skriv något nedan för att lägga till det."
+    "noItems": "Listan är tom. Skriv något nedan för att lägga till det.",
+    "notLive": "Uppdateras inte just nu, försöker igen snart. {{reason}}"
   },
   "categories": {
     "produce": "Frukt & grönt",

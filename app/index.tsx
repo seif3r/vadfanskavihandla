@@ -21,6 +21,7 @@ import { useItems } from "@/hooks/useItems";
 import { useGroups } from "@/hooks/useGroups";
 import { useActiveList } from "@/hooks/useActiveList";
 import { useKnownItems } from "@/hooks/useKnownItems";
+import { useLiveStatus } from "@/context/LiveStatusContext";
 import { Category } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
 
@@ -29,6 +30,7 @@ export default function Index() {
   const { t } = useTranslation();
   const router = useRouter();
   const { activeList, isLoading, loadError, reload } = useActiveList();
+  const liveError = useLiveStatus();
   const { groups } = useGroups();
   const {
     items, isLoading: isLoadingItems, addItem, isAdding, toggleItem, checkAll, uncheckAll, removeChecked, error,
@@ -109,6 +111,11 @@ export default function Index() {
         groupName={groups.find((group) => group.id === activeList.groupId)?.name}
         onPress={() => router.push("/lists")}
       />
+      {liveError && (
+        <Text style={styles.liveError} accessibilityLiveRegion="polite" role="alert">
+          {t("list.notLive", { reason: t(liveError.key) })}
+        </Text>
+      )}
       <ListActions
         items={items}
         onCheckAll={checkAll}
@@ -175,6 +182,12 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.danger,
       paddingHorizontal: spacing.lg,
       paddingVertical: spacing.sm,
+    },
+    liveError: {
+      color: colors.textMuted,
+      textAlign: "center",
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
     },
     screen: {
       flex: 1,
