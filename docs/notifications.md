@@ -37,11 +37,18 @@ files (copied into `functions/locales/` at build time), so there is one place to
    are `cleanUpList` removing the items of a deleted list, and there's no one to tell.
 2. It adds the item to `pendingNotifications/{listId}_{personId}_{type}` in a transaction and bumps
    that doc's `seq`. No Security Rule matches this collection, so only the server can touch it.
-3. It enqueues a Cloud Task for `sendBatchedNotification` with `{batchId, seq}`, 60 s out.
+3. It enqueues a Cloud Task for `sendBatchedNotification` with `{batchId, seq}`, 60 s out. The
+   trigger has `retry: true`, so a failed enqueue doesn't leave a batch with no task to send it.
 4. When a task runs, it only sends if its `seq` is still the latest. Otherwise a newer change has
-   its own task coming. The sender empties the batch's items in the same transaction (the doc stays,
-   so `seq` never repeats), then sends via Expo's push service and removes tokens Expo reports as
-   `DeviceNotRegistered`. Recipients are the `members` of the group named by the list's `groupId`.
+   its own task coming. The sender moves the batch's `items` to `sending` in the same transaction
+   (the doc stays, so `seq` never repeats), then sends via Expo's push service (10 s time limit)
+   and removes tokens Expo reports as `DeviceNotRegistered`. Recipients are the `members` of the
+   group named by the list's `groupId`.
+5. Only after Expo has accepted the messages are they removed from `sending`. If Expo can't be
+   reached or answers with an error, the task throws and Cloud Tasks retries it (3 attempts). If a
+   newer change arrives first, its task sends what is left in `sending` together with its own items.
+   Ticket errors other than `DeviceNotRegistered` are logged, not retried, since resending would
+   repeat the notification on the phones that got it.
 
 **Web and Expo Go (in-app, only while the app is open)** — `hooks/useLiveUpdates.ts` gets changes
 from `subscribeToItems` in `api/items.ts` and batches them with timers in the same way. Installed

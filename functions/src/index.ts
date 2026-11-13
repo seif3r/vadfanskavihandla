@@ -47,6 +47,9 @@ setGlobalOptions({region, maxInstances: 5});
 const db = getFirestore();
 
 const DELAY_SECONDS = 60;
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+// Without one, a hanging request holds the task until it times out.
+const EXPO_TIMEOUT_MS = 10_000;
 // Same number as INVITE_LIFETIME_DAYS in the app's constants/limits.ts.
 const INVITE_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 // Firestore's generated ids, the only codes the rules allow. Checked before
@@ -121,8 +124,11 @@ export const joinGroup = onCall<JoinGroupRequest>(async (request) => {
 });
 
 // "WithAuthContext" because a deleted item can't say who deleted it.
+// retry: if the transaction or the enqueue fails, the batch would sit in
+// pendingNotifications with no task to send it. Running again is safe: the
+// item is keyed by id, and only the task for the latest seq sends.
 export const notifyOnItemChange = onDocumentWrittenWithAuthContext(
-  "items/{itemId}",
+  {document: "items/{itemId}", retry: true},
   async (event) => {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
@@ -180,18 +186,28 @@ export const sendBatchedNotification = onTaskDispatched<BatchTask>(
   async (request) => {
     const {batchId, seq} = request.data;
     const ref = db.doc(`pendingNotifications/${batchId}`);
-    // Read and empty in one go, so changes arriving now start a new batch
-    // instead of being lost. The doc itself stays so seq never repeats and
-    // a late, retried task can't send someone else's batch early.
+    // Moves the items to "sending" in one go, so changes arriving now start
+    // a new batch instead of being lost. The doc itself stays so seq never
+    // repeats and a late, retried task can't send someone else's batch early.
     const batch = await db.runTransaction(async (tx) => {
       const pending = await tx.get(ref);
-      // A later change has its own task coming.
+      // A later change has its own task coming. It also sends whatever is
+      // still in "sending" from this one.
       if (!pending.exists || pending.get("seq") !== seq) return null;
-      tx.update(ref, {items: FieldValue.delete()});
-      return pending.data() as PendingBatch;
+      const data = pending.data() as PendingBatch;
+      // What an earlier, failed attempt didn't get out, plus anything new.
+      const sending = {...data.sending, ...data.items};
+      if (Object.keys(sending).length === 0) return null;
+      tx.update(ref, {items: FieldValue.delete(), sending});
+      return {...data, items: sending};
     });
     if (!batch) return;
+    // Throws if Expo can't be reached or answers with an error, so Cloud
+    // Tasks tries again; "sending" still holds the items then.
     await sendPush(batch);
+    // Only the items sent, in case a newer task has added more meanwhile.
+    await ref.update(Object.fromEntries(Object.keys(batch.items).map(
+      (itemId) => [`sending.${itemId}`, FieldValue.delete()])));
   },
 );
 
@@ -243,14 +259,20 @@ async function sendPush(batch: PendingBatch): Promise<void> {
   }
   if (sends.length === 0) return;
 
-  const response = await fetch("https://exp.host/--/api/v2/push/send", {
+  const response = await fetch(EXPO_PUSH_URL, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify(sends.map((send) => send.message)),
+    signal: AbortSignal.timeout(EXPO_TIMEOUT_MS),
   });
   if (!response.ok) {
-    logger.error("Expo push failed", response.status, await response.text());
-    return;
+    const details = {
+      listId, type, recipients: sends.length, status: response.status,
+      response: await response.text(),
+    };
+    logger.error("Expo push failed", details);
+    // The task is retried, and the items are still in "sending" for it.
+    throw new Error(`Expo push failed with status ${response.status}`);
   }
 
   // Tickets come back in the same order as the messages. Forget tokens
@@ -258,6 +280,15 @@ async function sendPush(batch: PendingBatch): Promise<void> {
   const {data: tickets} = await response.json() as {
     data: { status: string; details?: { error?: string } }[];
   };
+  // Other errors (too big, rate limited) mean that phone missed this one.
+  // Logged, not retried: resending would repeat it on the phones that got it.
+  tickets.forEach((ticket, i) => {
+    const error = ticket.details?.error;
+    if (ticket.status === "error" && error !== "DeviceNotRegistered") {
+      logger.warn("Expo push ticket error", {listId, type, error,
+        userId: sends[i]?.userId});
+    }
+  });
   await Promise.all(
     sends
       .filter((_send, i) =>
