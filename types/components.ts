@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { StyleProp, TextStyle } from "react-native";
 
 import { ApiError } from "@/api/ApiError";
@@ -93,6 +94,20 @@ export interface ListRowProps {
   // Left out when the user may not delete the list.
   onDelete?: () => void;
   isFirst?: boolean;
+}
+
+export interface AppErrorBoundaryProps {
+  children: ReactNode;
+}
+
+export interface AppErrorBoundaryState {
+  error: Error | null;
+}
+
+export interface CrashScreenProps {
+  error: Error;
+  // Renders the app again.
+  retry: () => void;
 }
 
 export interface LoadErrorProps {

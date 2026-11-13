@@ -1,13 +1,13 @@
-import { ErrorBoundaryProps } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, useColorScheme, View } from "react-native";
 
 import { palettes, radius, spacing, textSize } from "@/constants/theme";
+import { CrashScreenProps } from "@/types/components";
 
-// Shown instead of a white screen when a screen crashes while rendering. It can sit outside the
-// providers (the root layout's ErrorBoundary wraps them), so it uses the device's light/dark mode
-// and plain components instead of the themed ones, which need the logged-in user.
-export default function CrashScreen({ error, retry }: ErrorBoundaryProps) {
+// Shown instead of a white screen when the app crashes while rendering. It sits outside the
+// providers (AppErrorBoundary wraps them), so it uses the device's light/dark mode and plain
+// components instead of the themed ones, which need the logged-in user.
+export default function CrashScreen({ error, retry }: CrashScreenProps) {
   const { t } = useTranslation();
   const colors = palettes[useColorScheme() === "dark" ? "dark" : "light"];
 

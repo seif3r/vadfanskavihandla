@@ -9,7 +9,7 @@ import { StyleSheet, View } from "react-native";
 import "@/i18n";
 
 import Button from "@/components/Button";
-import CrashScreen from "@/components/CrashScreen";
+import AppErrorBoundary from "@/components/AppErrorBoundary";
 import LoadError from "@/components/LoadError";
 import UserMenu from "@/components/UserMenu";
 import { spacing } from "@/constants/theme";
@@ -21,9 +21,6 @@ import { usePushRegistration } from "@/hooks/usePushRegistration";
 import { useActiveColorScheme, useColors } from "@/hooks/useTheme";
 
 const queryClient = new QueryClient();
-
-// Expo Router shows this when a screen throws while rendering, instead of a white screen.
-export { CrashScreen as ErrorBoundary };
 
 function RootStack() {
   const { t } = useTranslation();
@@ -108,13 +105,16 @@ function ThemedApp() {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ActiveListProvider>
-          <ThemedApp />
-        </ActiveListProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    // Outermost, so a crash in a provider is caught too.
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ActiveListProvider>
+            <ThemedApp />
+          </ActiveListProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 }
 
