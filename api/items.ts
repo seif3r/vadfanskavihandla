@@ -1,11 +1,13 @@
 // Items on a shopping list.
 import { ApiError } from "@/api/ApiError";
 import { currentUid, db, isListenerFailure, toApiError, withApiError } from "@/api/firebase";
+import { chunk } from "@/helpers/batches";
 import { itemKey } from "@/helpers/list";
 import { AddItemRequest } from "@/types/api";
 import { Item, ItemChange, KnownItem } from "@/types/models";
 import {
-  collection, doc, DocumentSnapshot, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where, writeBatch,
+  collection, doc, DocumentSnapshot, getDoc, getDocs, onSnapshot, orderBy, query, QueryDocumentSnapshot,
+  serverTimestamp, updateDoc, where, WriteBatch, writeBatch,
 } from "firebase/firestore";
 export const toItem = (snap: DocumentSnapshot): Item => {
   const data = snap.data()!;
@@ -60,14 +62,23 @@ export async function toggleItem(itemId: string, userId: string): Promise<Item> 
     return { ...item, done: !item.done };
   });
 }
+// Writes something for each document, in batches of at most 500 (Firestore's limit), so a
+// long list can still be checked off or cleared. Each batch is all or nothing, the whole isn't.
+async function commitInBatches(
+  docs: QueryDocumentSnapshot[],
+  write: (batch: WriteBatch, doc: QueryDocumentSnapshot) => void,
+): Promise<void> {
+  for (const piece of chunk(docs)) {
+    const batch = writeBatch(db);
+    piece.forEach((d) => write(batch, d));
+    await batch.commit();
+  }
+}
 export async function setAllDone(listId: string, done: boolean, userId: string): Promise<Item[]> {
   return withApiError(async () => {
     const snap = await getDocs(itemsQuery(listId));
-    const batch = writeBatch(db);
-    snap.docs
-      .filter((d) => d.data().done !== done)
-      .forEach((d) => batch.update(d.ref, { done, updatedBy: userId }));
-    await batch.commit();
+    const toChange = snap.docs.filter((d) => d.data().done !== done);
+    await commitInBatches(toChange, (batch, d) => batch.update(d.ref, { done, updatedBy: userId }));
     return snap.docs.map((d) => ({ ...toItem(d), done }));
   });
 }
@@ -82,14 +93,8 @@ export async function removeDone(listId: string): Promise<void> {
       query(collection(db, "items"), where("listId", "==", listId), where("done", "==", true)),
     );
     const toStamp = snap.docs.filter((d) => d.data().updatedBy !== uid);
-    if (toStamp.length > 0) {
-      const stamp = writeBatch(db);
-      toStamp.forEach((d) => stamp.update(d.ref, { updatedBy: uid }));
-      await stamp.commit();
-    }
-    const batch = writeBatch(db);
-    snap.docs.forEach((d) => batch.delete(d.ref));
-    await batch.commit();
+    await commitInBatches(toStamp, (batch, d) => batch.update(d.ref, { updatedBy: uid }));
+    await commitInBatches(snap.docs, (batch, d) => batch.delete(d.ref));
   });
 }
 

@@ -1,11 +1,12 @@
 // Accounts and the current session.
 import { ApiError } from "@/api/ApiError";
-import { auth, db, functions, toApiError, withApiError } from "@/api/firebase";
+import { auth, clearLocalCache, db, functions, toApiError, withApiError } from "@/api/firebase";
 import { User, UserSettings } from "@/types/models";
 import {
   createUserWithEmailAndPassword,
   deleteUser,
   EmailAuthProvider,
+  onAuthStateChanged,
   reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -52,6 +53,13 @@ export async function hasSession(): Promise<boolean> {
   await auth.authStateReady();
   return !!auth.currentUser;
 }
+// Calls onChange whenever Firebase's session starts or ends, including when Firebase ends it by
+// itself: the password was changed on another device or the account was disabled or deleted (the
+// session's token can then no longer be refreshed). Returns a function that stops listening.
+export function subscribeToSession(onChange: (isSignedIn: boolean) => void): () => void {
+  return onAuthStateChanged(auth, (user) => onChange(!!user));
+}
+
 export async function loadCurrentUser(): Promise<User> {
   await auth.authStateReady();
   if (!auth.currentUser) throw new ApiError("errors.invalidSession");
@@ -121,7 +129,12 @@ export async function deleteAccount(password: string): Promise<void> {
   await signOut(auth).catch(() => {});
 }
 
-// Ends the Firebase session, including the one it has stored on the device.
+// Ends the Firebase session, including the one it has stored on the device, and in the browser
+// forgets the cached data (which reloads the page).
 export async function logout(): Promise<void> {
-  await withApiError(() => signOut(auth));
+  try {
+    await withApiError(() => signOut(auth));
+  } finally {
+    await clearLocalCache();
+  }
 }

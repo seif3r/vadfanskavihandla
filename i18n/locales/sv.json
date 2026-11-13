@@ -54,7 +54,8 @@
   "join": {
     "title": "Gå med i en grupp",
     "codePlaceholder": "Inbjudningskod",
-    "submit": "Gå med"
+    "submit": "Gå med",
+    "badFormat": "En inbjudningskod är 20 bokstäver och siffror"
   },
   "groups": {
     "title": "Grupper",
@@ -100,7 +101,8 @@
     "notificationsBlocked": "Notiser är blockerade. Tillåt dem i enhetens eller webbläsarens inställningar.",
     "account": "Konto",
     "changePassword": "Byt lösenord",
-    "deleteAccount": "Radera konto"
+    "deleteAccount": "Radera konto",
+    "saveFailed": "Kunde inte sparas. {{reason}}"
   },
   "changePassword": {
     "title": "Byt lösenord",
@@ -135,6 +137,11 @@
   },
   "loadError": {
     "message": "Kunde inte laddas. {{reason}}",
+    "retry": "Försök igen"
+  },
+  "crash": {
+    "title": "Något gick fel",
+    "message": "Skärmen kunde inte visas. Försök igen, eller starta om appen om det fortsätter.",
     "retry": "Försök igen"
   },
   "errors": {

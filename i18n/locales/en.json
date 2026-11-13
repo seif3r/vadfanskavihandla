@@ -54,7 +54,8 @@
   "join": {
     "title": "Join a group",
     "codePlaceholder": "Invite code",
-    "submit": "Join"
+    "submit": "Join",
+    "badFormat": "An invite code is 20 letters and digits"
   },
   "groups": {
     "title": "Groups",
@@ -100,7 +101,8 @@
     "notificationsBlocked": "Notifications are blocked. Allow them in your device or browser settings.",
     "account": "Account",
     "changePassword": "Change password",
-    "deleteAccount": "Delete account"
+    "deleteAccount": "Delete account",
+    "saveFailed": "Couldn't save. {{reason}}"
   },
   "changePassword": {
     "title": "Change password",
@@ -135,6 +137,11 @@
   },
   "loadError": {
     "message": "Couldn't load. {{reason}}",
+    "retry": "Try again"
+  },
+  "crash": {
+    "title": "Something went wrong",
+    "message": "This screen couldn't be shown. Try again, or restart the app if it keeps happening.",
     "retry": "Try again"
   },
   "errors": {

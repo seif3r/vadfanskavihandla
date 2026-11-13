@@ -21,6 +21,7 @@ jest.mock("@/api/firebase", () => ({
   ...jest.requireActual<typeof import("@/api/errors")>("@/api/errors"),
   db: {},
   functions: {},
+  clearLocalCache: () => Promise.resolve(),
   auth: { authStateReady: () => Promise.resolve(), get currentUser() { return mockUser; }, languageCode: null },
 }));
 jest.mock("firebase/auth", () => ({

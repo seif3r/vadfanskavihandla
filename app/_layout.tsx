@@ -9,6 +9,7 @@ import { StyleSheet, View } from "react-native";
 import "@/i18n";
 
 import Button from "@/components/Button";
+import AppErrorBoundary from "@/components/AppErrorBoundary";
 import LoadError from "@/components/LoadError";
 import UserMenu from "@/components/UserMenu";
 import { spacing } from "@/constants/theme";
@@ -104,13 +105,16 @@ function ThemedApp() {
 
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ActiveListProvider>
-          <ThemedApp />
-        </ActiveListProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    // Outermost, so a crash in a provider is caught too.
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ActiveListProvider>
+            <ThemedApp />
+          </ActiveListProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 }
 

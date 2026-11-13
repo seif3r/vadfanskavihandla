@@ -6,6 +6,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { ApiError } from "@/api/ApiError";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
+import { findInviteCode } from "@/helpers/groups";
 import { cleanName } from "@/helpers/list";
 import { useGroups } from "@/hooks/useGroups";
 import { spacing } from "@/constants/theme";
@@ -17,19 +18,24 @@ export default function Join() {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
   const router = useRouter();
-  const params = useLocalSearchParams<{ code?: string }>();
+  // An array if the link has the parameter twice (?code=a&code=b): the first one counts.
+  const params = useLocalSearchParams<{ code?: string | string[] }>();
   const { joinGroup } = useGroups();
-  const [code, setCode] = useState(params.code ?? "");
+  const [code, setCode] = useState((Array.isArray(params.code) ? params.code[0] : params.code) ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleJoin = async () => {
-    const cleaned = cleanName(code);
-    if (!cleaned) return;
+    if (!cleanName(code)) return;
     setError(null);
+    const found = findInviteCode(code);
+    if (!found) {
+      setError(t("join.badFormat"));
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await joinGroup(cleaned);
+      await joinGroup(found);
       router.replace("/groups");
     } catch (e) {
       setError(t(e instanceof ApiError ? e.key : "errors.unknown"));
