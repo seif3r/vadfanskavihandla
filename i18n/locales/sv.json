@@ -54,7 +54,8 @@
   "join": {
     "title": "Gå med i en grupp",
     "codePlaceholder": "Inbjudningskod",
-    "submit": "Gå med"
+    "submit": "Gå med",
+    "badFormat": "En inbjudningskod är 20 bokstäver och siffror"
   },
   "groups": {
     "title": "Grupper",

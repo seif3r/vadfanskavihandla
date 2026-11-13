@@ -54,7 +54,8 @@
   "join": {
     "title": "Join a group",
     "codePlaceholder": "Invite code",
-    "submit": "Join"
+    "submit": "Join",
+    "badFormat": "An invite code is 20 letters and digits"
   },
   "groups": {
     "title": "Groups",
