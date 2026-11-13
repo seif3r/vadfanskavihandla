@@ -8,6 +8,10 @@ export const MAX_EMAIL_LENGTH = 254; // The longest address the email standard a
 // Firebase Auth's own minimum; it rejects shorter passwords with auth/weak-password.
 export const MIN_PASSWORD_LENGTH = 6;
 
+// A person's changes to a list are collected until they've been quiet this long, then notified
+// as one. DELAY_SECONDS in functions/src/index.ts (push) is the same number.
+export const NOTIFICATION_DELAY_SECONDS = 60;
+
 // How long a two-tap button (ConfirmButton) waits for the second tap. Longer with a screen reader,
 // which needs time to read the new label out before the person can tap again.
 export const CONFIRM_TIMEOUT_MS = 3000;

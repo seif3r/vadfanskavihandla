@@ -5,8 +5,9 @@ import { describe, expect, it } from "@jest/globals";
 import { readFileSync } from "fs";
 import { join } from "path";
 
+import { EMULATOR_PORTS, FUNCTIONS_REGION } from "@/constants/firebase";
 import {
-  INVITE_LIFETIME_DAYS, MAX_AMOUNT_LENGTH, MAX_EMAIL_LENGTH, MAX_GROUP_NAME_LENGTH, MAX_LIST_NAME_LENGTH,
+  INVITE_LIFETIME_DAYS, NOTIFICATION_DELAY_SECONDS, MAX_AMOUNT_LENGTH, MAX_EMAIL_LENGTH, MAX_GROUP_NAME_LENGTH, MAX_LIST_NAME_LENGTH,
   MAX_NAME_LENGTH, MAX_PERSON_NAME_LENGTH,
 } from "@/constants/limits";
 import { categories } from "@/helpers/categories";
@@ -48,5 +49,22 @@ describe("functions/ matches constants/limits.ts", () => {
   it("uses the same invite lifetime", () => {
     const days = functionsSource.match(/INVITE_LIFETIME_MS = (\d+) \* 24 \* 60 \* 60 \* 1000/)?.[1];
     expect(Number(days)).toBe(INVITE_LIFETIME_DAYS);
+  });
+
+  it("waits as long as the app before notifying", () => {
+    const seconds = functionsSource.match(/const DELAY_SECONDS = (\d+);/)?.[1];
+    expect(Number(seconds)).toBe(NOTIFICATION_DELAY_SECONDS);
+  });
+
+  it("runs in the region the app calls", () => {
+    expect(functionsSource.match(/const region = "([\w-]+)";/)?.[1]).toBe(FUNCTIONS_REGION);
+  });
+});
+
+describe("firebase.json matches constants/firebase.ts", () => {
+  const config = JSON.parse(readFileSync(join(root, "firebase.json"), "utf8"));
+
+  it.each(Object.entries(EMULATOR_PORTS))("runs the %s emulator on port %i", (name, port) => {
+    expect(config.emulators[name]?.port).toBe(port);
   });
 });

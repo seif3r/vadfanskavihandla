@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { ApiError } from "@/api/ApiError";
 import { startAppCheck } from "@/api/appCheck";
+import { EMULATOR_PORTS, FUNCTIONS_REGION } from "@/constants/firebase";
 import * as firebaseAuth from "firebase/auth";
 import { Auth, connectAuthEmulator, getAuth, initializeAuth, Persistence } from "firebase/auth";
 import {
@@ -44,14 +45,13 @@ export const db = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
   ...(isBrowser && { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) }),
 });
-// The region functions/src/index.ts deploys to.
-export const functions = getFunctions(app, "europe-north1");
+export const functions = getFunctions(app, FUNCTIONS_REGION);
 const emulatorHost = process.env.EXPO_PUBLIC_FIREBASE_EMULATOR_HOST;
 // Development only: a release build must never send passwords to a host over plain http.
 if (__DEV__ && emulatorHost && isFirstLoad) {
-  connectAuthEmulator(auth, `http://${emulatorHost}:9099`);
-  connectFirestoreEmulator(db, emulatorHost, 8080);
-  connectFunctionsEmulator(functions, emulatorHost, 5001);
+  connectAuthEmulator(auth, `http://${emulatorHost}:${EMULATOR_PORTS.auth}`);
+  connectFirestoreEmulator(db, emulatorHost, EMULATOR_PORTS.firestore);
+  connectFunctionsEmulator(functions, emulatorHost, EMULATOR_PORTS.functions);
 }
 // Forgets the browser's cached data, so the next person to log in on this browser can't see the
 // previous one's lists offline. Firestore can't be used again afterwards, so the page reloads.
