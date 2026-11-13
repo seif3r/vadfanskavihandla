@@ -133,6 +133,51 @@ describe("sendBatchedNotification", () => {
     })]);
     // Emptied, so later changes start a new batch.
     expect((await pending(batchId))?.items).toBeUndefined();
+    expect((await pending(batchId))?.sending).toEqual({});
+  });
+
+  it("keeps the batch for a retry when Expo returns an error", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false, status: 503, text: async () => "unavailable",
+    });
+    await expect(send(batchId, 2)).rejects.toThrow("503");
+    expect((await pending(batchId))?.sending).toEqual(
+      {i1: "Mjölk", i2: "Bröd"});
+
+    // Cloud Tasks runs the same task again.
+    await send(batchId, 2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)[0].body)
+      .toBe("Alice added 2 items: Mjölk, Bröd");
+    expect((await pending(batchId))?.sending).toEqual({});
+  });
+
+  it("keeps the batch for a retry when Expo can't be reached", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
+    await expect(send(batchId, 2)).rejects.toThrow("fetch failed");
+    await send(batchId, 2);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)[0].body)
+      .toBe("Alice added 2 items: Mjölk, Bröd");
+  });
+
+  it("lets the next batch send what a failed one didn't", async () => {
+    fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
+    await expect(send(batchId, 2)).rejects.toThrow();
+    // A new change arrives before the retry, so the old task stands down.
+    await db.doc(`pendingNotifications/${batchId}`).update(
+      {seq: 3, items: {i3: "Ost"}});
+    await send(batchId, 2);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await send(batchId, 3);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)[0].body)
+      .toBe("Alice added 3 items: Mjölk, Bröd, Ost");
+    expect((await pending(batchId))?.sending).toEqual({});
+  });
+
+  it("gives Expo a time limit", async () => {
+    await send(batchId, 2);
+    expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
   });
 
   it("writes in the recipient's language", async () => {

@@ -41,5 +41,11 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export interface ResetPasswordRequest {
+  email: string;
+  // For the email's text.
+  language: string;
+}
+
 // What's wrong with a filled-in change password form, as a key under "changePassword" in the locales.
 export type PasswordProblem = "fillAll" | "mismatch" | "sameAsCurrent" | "tooShort";

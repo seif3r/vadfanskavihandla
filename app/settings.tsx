@@ -93,6 +93,11 @@ export default function Settings() {
         variant="secondary"
         onPress={() => router.push("/change-password")}
       />
+      <Button
+        value={t("settings.deleteAccount")}
+        variant="secondary"
+        onPress={() => router.push("/delete-account")}
+      />
     </ScrollView>
   );
 }

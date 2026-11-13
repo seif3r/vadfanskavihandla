@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
+import { ApiError } from "@/api/ApiError";
 import { addItem, getItems, removeDone, setAllDone, toggleItem } from "@/api/items";
 import { useAuth } from "@/context/AuthContext";
 import { NewItem } from "@/types/api";
@@ -12,6 +14,11 @@ export function useItems(listId: string | undefined) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const queryKey = ["items", listId];
+  // The latest change that failed, with the list it was made on. Cleared when the next change
+  // starts rather than when it succeeds, since offline a write may not be confirmed for a long time.
+  const [failed, setFailed] = useState<{ listId: string | undefined; error: ApiError } | null>(null);
+  const onMutate = () => setFailed(null);
+  const onError = (error: ApiError) => setFailed({ listId, error });
 
   const itemsQuery = useQuery({
     queryKey,
@@ -19,8 +26,11 @@ export function useItems(listId: string | undefined) {
     enabled: !!listId,
   });
 
-  const addMutation = useMutation({
-    mutationFn: (newItem: NewItem) => addItem({ ...newItem, listId: listId! }, user!.id),
+  // Every function in api/ throws ApiError, hence the error type.
+  const addMutation = useMutation<Item, ApiError, NewItem>({
+    mutationFn: (newItem) => addItem({ ...newItem, listId: listId! }, user!.id),
+    onMutate,
+    onError,
     // Remember the category locally too, so the next add of the same name suggests it.
     onSuccess: ({ name, category }) => {
       if (!category) return;
@@ -33,9 +43,10 @@ export function useItems(listId: string | undefined) {
 
   // Optimistic: flips the checkbox on screen right away instead of waiting for the server,
   // and puts it back if the request fails.
-  const toggleMutation = useMutation({
-    mutationFn: (itemId: string) => toggleItem(itemId, user!.id),
-    onMutate: async (itemId: string) => {
+  const toggleMutation = useMutation<Item, ApiError, string, { previous: Item[] | undefined }>({
+    mutationFn: (itemId) => toggleItem(itemId, user!.id),
+    onMutate: async (itemId) => {
+      onMutate();
       // Stop in-flight refetches so they don't overwrite the optimistic change.
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Item[]>(queryKey);
@@ -44,27 +55,35 @@ export function useItems(listId: string | undefined) {
       );
       return { previous };
     },
-    onError: (_error, _itemId, context) => {
+    onError: (error, _itemId, context) => {
       queryClient.setQueryData(queryKey, context?.previous);
+      onError(error);
     },
   });
 
-  const setAllDoneMutation = useMutation({
-    mutationFn: (done: boolean) => setAllDone(listId!, done, user!.id),
+  const setAllDoneMutation = useMutation<Item[], ApiError, boolean>({
+    mutationFn: (done) => setAllDone(listId!, done, user!.id),
+    onMutate,
+    onError,
   });
 
-  const removeDoneMutation = useMutation({
+  const removeDoneMutation = useMutation<void, ApiError>({
     mutationFn: () => removeDone(listId!),
+    onMutate,
+    onError,
   });
 
   return {
     items: itemsQuery.data ?? [],
     isLoading: itemsQuery.isLoading,
-    addItem: addMutation.mutate,
+    // onError lets the screen put back what was typed, so a failed add doesn't lose it.
+    addItem: (newItem: NewItem, onFailed?: () => void) => addMutation.mutate(newItem, { onError: onFailed }),
     isAdding: addMutation.isPending,
     toggleItem: toggleMutation.mutate,
     checkAll: () => setAllDoneMutation.mutate(true),
     uncheckAll: () => setAllDoneMutation.mutate(false),
     removeChecked: () => removeDoneMutation.mutate(),
+    // Only for the list it happened on, so switching lists doesn't carry it over.
+    error: failed?.listId === listId ? failed?.error ?? null : null,
   };
 }

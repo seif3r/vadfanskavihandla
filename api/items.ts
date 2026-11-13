@@ -1,6 +1,6 @@
 // Items on a shopping list.
 import { ApiError } from "@/api/ApiError";
-import { currentUid, db } from "@/api/firebase";
+import { currentUid, db, isListenerFailure, toApiError, withApiError } from "@/api/firebase";
 import { itemKey } from "@/helpers/list";
 import { AddItemRequest } from "@/types/api";
 import { Item, ItemChange, KnownItem } from "@/types/models";
@@ -23,7 +23,7 @@ export const toItem = (snap: DocumentSnapshot): Item => {
 export const itemsQuery = (listId: string) =>
   query(collection(db, "items"), where("listId", "==", listId), orderBy("createdAt"));
 export async function getItems(listId: string): Promise<Item[]> {
-  const snap = await getDocs(itemsQuery(listId));
+  const snap = await withApiError(() => getDocs(itemsQuery(listId)));
   return snap.docs.map(toItem);
 }
 // Also remembers the item's category for the list, in the same batch, so adding the
@@ -42,30 +42,34 @@ export async function addItem(request: AddItemRequest, userId: string): Promise<
     const known: KnownItem = { name: request.name, category: request.category };
     batch.set(doc(db, "lists", request.listId, "knownItems", itemKey(request.name)), known);
   }
-  await batch.commit();
+  await withApiError(() => batch.commit());
   return { ...request, id: ref.id, done: false, addedBy: userId };
 }
 // Every item name the list has a remembered category for.
 export async function getKnownItems(listId: string): Promise<KnownItem[]> {
-  const snap = await getDocs(collection(db, "lists", listId, "knownItems"));
+  const snap = await withApiError(() => getDocs(collection(db, "lists", listId, "knownItems")));
   return snap.docs.map((d) => ({ name: d.data().name, category: d.data().category }));
 }
 export async function toggleItem(itemId: string, userId: string): Promise<Item> {
   const ref = doc(db, "items", itemId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) throw new ApiError("errors.itemNotFound");
-  const item = toItem(snap);
-  await updateDoc(ref, { done: !item.done, updatedBy: userId });
-  return { ...item, done: !item.done };
+  return withApiError(async () => {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new ApiError("errors.itemNotFound");
+    const item = toItem(snap);
+    await updateDoc(ref, { done: !item.done, updatedBy: userId });
+    return { ...item, done: !item.done };
+  });
 }
 export async function setAllDone(listId: string, done: boolean, userId: string): Promise<Item[]> {
-  const snap = await getDocs(itemsQuery(listId));
-  const batch = writeBatch(db);
-  snap.docs
-    .filter((d) => d.data().done !== done)
-    .forEach((d) => batch.update(d.ref, { done, updatedBy: userId }));
-  await batch.commit();
-  return snap.docs.map((d) => ({ ...toItem(d), done }));
+  return withApiError(async () => {
+    const snap = await getDocs(itemsQuery(listId));
+    const batch = writeBatch(db);
+    snap.docs
+      .filter((d) => d.data().done !== done)
+      .forEach((d) => batch.update(d.ref, { done, updatedBy: userId }));
+    await batch.commit();
+    return snap.docs.map((d) => ({ ...toItem(d), done }));
+  });
 }
 // A deleted document can't say who deleted it, so the items are first stamped with my id.
 // That way both notification paths name me: the listeners in subscribeToItems read updatedBy,
@@ -73,26 +77,33 @@ export async function setAllDone(listId: string, done: boolean, userId: string):
 // other people's listeners receive it before the removal.
 export async function removeDone(listId: string): Promise<void> {
   const uid = currentUid();
-  const snap = await getDocs(
-    query(collection(db, "items"), where("listId", "==", listId), where("done", "==", true)),
-  );
-  const toStamp = snap.docs.filter((d) => d.data().updatedBy !== uid);
-  if (toStamp.length > 0) {
-    const stamp = writeBatch(db);
-    toStamp.forEach((d) => stamp.update(d.ref, { updatedBy: uid }));
-    await stamp.commit();
-  }
-  const batch = writeBatch(db);
-  snap.docs.forEach((d) => batch.delete(d.ref));
-  await batch.commit();
+  await withApiError(async () => {
+    const snap = await getDocs(
+      query(collection(db, "items"), where("listId", "==", listId), where("done", "==", true)),
+    );
+    const toStamp = snap.docs.filter((d) => d.data().updatedBy !== uid);
+    if (toStamp.length > 0) {
+      const stamp = writeBatch(db);
+      toStamp.forEach((d) => stamp.update(d.ref, { updatedBy: uid }));
+      await stamp.commit();
+    }
+    const batch = writeBatch(db);
+    snap.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  });
 }
 
 // Calls onChange with the list's items whenever anyone changes them, plus what other
 // people just did (for notifications). Returns a function that stops listening.
+// Firestore rides out lost connections by itself; onError hears about the failures that stop the
+// listener for good (e.g. an index that's still building), so the caller can show it and subscribe
+// again later. Changes made while nobody listens (app in the background, a stopped listener) are
+// never notified in-app; installed builds still get them as push.
 export function subscribeToItems(
   listId: string,
   userId: string,
   onChange: (items: Item[], changes: ItemChange[]) => void,
+  onError?: (error: ApiError) => void,
 ): () => void {
   let isFirstSnapshot = true;
   return onSnapshot(itemsQuery(listId), (snap) => {
@@ -115,5 +126,7 @@ export function subscribeToItems(
   },
   // Denied once the list is deleted or I log out. The lists listener drops the list
   // and this listener is stopped, so there is nothing to do.
-  () => {});
+  (error) => {
+    if (isListenerFailure(error)) onError?.(toApiError(error));
+  });
 }

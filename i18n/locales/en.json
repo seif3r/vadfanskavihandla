@@ -9,7 +9,10 @@
     "register": "Create account",
     "switchToRegister": "No account? Create one",
     "switchToLogin": "Already have an account? Log in",
-    "nameRequired": "Enter your name"
+    "nameRequired": "Enter your name",
+    "forgotPassword": "Forgot your password?",
+    "emailRequired": "Type your email first",
+    "resetSent": "If {{email}} has an account, we've sent it a link for choosing a new password. Check your spam folder too."
   },
   "list": {
     "title": "Shopping list",
@@ -18,12 +21,15 @@
     "checkAll": "Check all",
     "uncheckAll": "Uncheck all",
     "removeChecked": "Remove",
+    "confirmRemoveChecked": "Remove checked?",
     "moreOptions": "More options",
     "amount": "Amount",
     "amountPlaceholder": "e.g. 2 l",
     "category": "Category",
     "empty": "You have no shopping lists yet.",
-    "createFirst": "Create a list"
+    "createFirst": "Create a list",
+    "noItems": "The list is empty. Type something below to add it.",
+    "notLive": "Not updating right now, trying again soon. {{reason}}"
   },
   "categories": {
     "produce": "Fruit & veg",
@@ -93,7 +99,8 @@
     "notifyItemRemoved": "When someone removes an item",
     "notificationsBlocked": "Notifications are blocked. Allow them in your device or browser settings.",
     "account": "Account",
-    "changePassword": "Change password"
+    "changePassword": "Change password",
+    "deleteAccount": "Delete account"
   },
   "changePassword": {
     "title": "Change password",
@@ -107,6 +114,18 @@
     "sameAsCurrent": "The new password must be different from the current one",
     "tooShort": "The new password must be at least {{min}} characters"
   },
+  "deleteAccount": {
+    "title": "Delete account",
+    "intro": "Deleting your account:",
+    "soloGroups": "deletes groups where you're the only member, with their lists",
+    "sharedGroups": "takes you out of groups you share with others. Lists you made stay with the group, and if you own it, the next member takes over",
+    "personalData": "deletes your name, email, settings and login",
+    "permanent": "This can't be undone. Type your password to confirm.",
+    "password": "Password",
+    "passwordRequired": "Type your password",
+    "submit": "Delete account",
+    "confirm": "Delete for good?"
+  },
   "notifications": {
     "itemAdded": "{{user}} added {{item}}",
     "itemRemoved": "{{user}} removed {{item}}",
@@ -114,13 +133,17 @@
     "itemRemovedMany": "{{user}} removed {{count}} items: {{items}}",
     "channelName": "List changes"
   },
+  "loadError": {
+    "message": "Couldn't load. {{reason}}",
+    "retry": "Try again"
+  },
   "errors": {
-    "invalidSession": "Invalid session",
+    "invalidSession": "Your account couldn't be loaded. Log in again",
     "itemNotFound": "Item not found",
     "invalidCredentials": "Wrong email or password",
     "emailInUse": "There is already an account with this email",
     "weakPassword": "The password is too weak. Use at least 6 characters",
-    "notAllowed": "You don't have access to this",
+    "notAllowed": "The list or group no longer exists, or you've been removed from it",
     "offline": "No connection. Check your internet and try again",
     "unknown": "Something went wrong. Try again",
     "inviteNotFound": "The invite code is not valid",
@@ -128,6 +151,11 @@
     "removedFromGroup": "You were removed from this group. Ask its owner to allow you back",
     "lastMember": "You're the last member. Delete the group instead",
     "wrongPassword": "Wrong password",
-    "tooManyAttempts": "Too many attempts. Wait a while and try again"
+    "tooManyAttempts": "Too many attempts. Wait a while and try again",
+    "invalidEmail": "That doesn't look like an email address",
+    "accountDisabled": "This account has been disabled",
+    "sessionExpired": "You've been logged out. Log in again",
+    "notFound": "This no longer exists",
+    "registrationIncomplete": "Creating your account wasn't finished. Create it again"
   }
 }

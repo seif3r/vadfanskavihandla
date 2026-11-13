@@ -50,4 +50,4 @@ export function currentUid(): string {
 }
 
 // Lives in its own file so it can be tested without starting Firebase; re-exported for api/.
-export { toApiError } from "@/api/errors";
+export { isListenerFailure, toApiError, withApiError } from "@/api/errors";

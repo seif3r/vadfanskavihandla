@@ -1,6 +1,6 @@
 // The user's settings, stored on their private user document.
 import { toUser } from "@/api/auth";
-import { db } from "@/api/firebase";
+import { db, withApiError } from "@/api/firebase";
 import { User, UserSettings } from "@/types/models";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 // Saves the given settings and returns the updated user. Each one is written by its own
@@ -12,6 +12,8 @@ export async function updateSettings(userId: string, settings: Partial<UserSetti
   const fields = Object.fromEntries(
     Object.entries(settings).map(([key, value]) => [`settings.${key}`, value]),
   );
-  await updateDoc(ref, fields);
-  return toUser(await getDoc(ref));
+  return withApiError(async () => {
+    await updateDoc(ref, fields);
+    return toUser(await getDoc(ref));
+  });
 }

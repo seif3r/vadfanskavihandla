@@ -1,6 +1,6 @@
 // Groups: the people who shop together. Every member sees all of the group's lists.
 import { ApiError } from "@/api/ApiError";
-import { currentUid, db, functions, toApiError } from "@/api/firebase";
+import { currentUid, db, functions, isListenerFailure, toApiError, withApiError } from "@/api/firebase";
 import { myGroupsQuery } from "@/api/queries";
 import { INVITE_LIFETIME_DAYS } from "@/constants/limits";
 import { JoinGroupRequest } from "@/types/api";
@@ -39,16 +39,8 @@ function toActiveInvites(snap: QuerySnapshot<DocumentData>): Invite[] {
     .filter((invite) => invite.expiresAt > Date.now())
     .sort((a, b) => a.expiresAt - b.expiresAt);
 }
-// Runs a Firestore call and turns Firebase errors into ApiErrors.
-async function withApiError<T>(action: () => Promise<T>): Promise<T> {
-  try {
-    return await action();
-  } catch (error) {
-    throw toApiError(error);
-  }
-}
 export async function getGroups(): Promise<Group[]> {
-  const snap = await getDocs(myGroupsQuery(currentUid()));
+  const snap = await withApiError(() => getDocs(myGroupsQuery(currentUid())));
   return snap.docs.map(toGroup);
 }
 export async function createGroup(name: string): Promise<Group> {
@@ -117,13 +109,20 @@ export async function acceptInvite(code: string): Promise<void> {
 }
 
 // Calls onChange with my groups whenever one is created, renamed or deleted, or its members
-// change. Returns a function that stops listening.
-export function subscribeToGroups(userId: string, onChange: (groups: Group[]) => void): () => void {
+// change. Returns a function that stops listening. onError hears about failures that stop the
+// listener (see subscribeToItems).
+export function subscribeToGroups(
+  userId: string,
+  onChange: (groups: Group[]) => void,
+  onError?: (error: ApiError) => void,
+): () => void {
   return onSnapshot(
     myGroupsQuery(userId),
     (snap) => onChange(snap.docs.map(toGroup)),
     // Denied for a moment while logging out; the listener is stopped right after.
-    () => {},
+    (error) => {
+      if (isListenerFailure(error)) onError?.(toApiError(error));
+    },
   );
 }
 

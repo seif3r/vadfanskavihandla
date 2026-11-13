@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text } from "react-native";
 
 import Button from "@/components/Button";
 import GroupLists from "@/components/GroupLists";
+import LoadError from "@/components/LoadError";
 import { useAuth } from "@/context/AuthContext";
 import { useActiveList } from "@/hooks/useActiveList";
 import { useGroups } from "@/hooks/useGroups";
@@ -20,9 +21,9 @@ export default function Lists() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
-  const { lists, createList, isCreatingList, deleteList, error } = useLists();
+  const { lists, createList, isCreatingList, deleteList, error, loadError, reload } = useLists();
   const { activeList, setActiveListId } = useActiveList();
-  const { groups } = useGroups();
+  const { groups, loadError: groupsError, reload: reloadGroups } = useGroups();
 
   // The list's creator and the group's owner may delete it; the rules check the same.
   const canDelete = (group: Group) => (list: ShoppingList) => list.ownerId === user?.id || group.ownerId === user?.id;
@@ -36,7 +37,9 @@ export default function Lists() {
 
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-      {groups.length === 0 && <Text style={styles.empty}>{t("lists.noGroups")}</Text>}
+      {groupsError && <LoadError error={groupsError} onRetry={reloadGroups} />}
+      {!groupsError && loadError && <LoadError error={loadError} onRetry={reload} />}
+      {groups.length === 0 && !groupsError && <Text style={styles.empty}>{t("lists.noGroups")}</Text>}
 
       {groups.map((group) => (
         <GroupLists

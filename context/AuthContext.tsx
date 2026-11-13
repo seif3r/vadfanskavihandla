@@ -8,9 +8,13 @@ import { ApiError } from "@/api/ApiError";
 import { getPushToken } from "@/helpers/notifications";
 import i18n from "@/i18n";
 import { AuthContextValue, ProviderProps } from "@/types/context";
+import { ErrorKey } from "@/types/errors";
 import { User } from "@/types/models";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+// Errors loading the user that don't mean the session is bad.
+const RETRYABLE_ERRORS: ErrorKey[] = ["errors.offline", "errors.unknown"];
 
 // Whether someone is logged in. The user's profile and settings are server data, so they live
 // in the query cache (hooks/useCurrentUser.ts); this only keeps track of the session.
@@ -26,18 +30,20 @@ export function AuthProvider({ children }: ProviderProps) {
       .catch(() => setHasSession(false));
   }, []);
 
-  // The user couldn't be loaded: show the login screen. If the account has no user document,
-  // also end the Firebase session, or the next start would hit the same wall. Other errors
-  // (offline) keep it, so the next start can try again.
+  // The user couldn't be loaded. Offline (common in a store) or for an unknown reason, the session
+  // is still good: keep it and let the app offer a retry instead of the login screen. Otherwise
+  // (no user document, session expired, account disabled) end it and show the login screen.
   const { error } = current;
+  const canRetry = error instanceof ApiError && RETRYABLE_ERRORS.includes(error.key);
   useEffect(() => {
-    if (!error) return;
+    if (!error || canRetry) return;
     setHasSession(false);
-    if (error instanceof ApiError && error.key === "errors.invalidSession") authApi.logout().catch(() => {});
-  }, [error]);
+    authApi.logout().catch(() => {});
+  }, [error, canRetry]);
 
   const user = hasSession ? current.user : null;
   const isLoading = hasSession === null || current.isLoading;
+  const loadError = hasSession && canRetry ? error : null;
 
   // Shows the app in the logged-in user's language, and follows changes to it.
   const language = user?.settings.language;
@@ -65,7 +71,8 @@ export function AuthProvider({ children }: ProviderProps) {
       // Stop push to this device. Before signing out, while the rules still know who we are.
       const pushToken = await getPushToken().catch(() => null);
       if (user && pushToken) await removePushToken(user.id, pushToken).catch(() => {});
-      await authApi.logout();
+      // Never throws: callers (the user menu) don't wait for it, and logging out locally is what matters.
+      await authApi.logout().catch(() => {});
     } finally {
       // Log out locally even if Firebase can't be reached.
       setHasSession(false);
@@ -76,7 +83,10 @@ export function AuthProvider({ children }: ProviderProps) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, login, register, logout, updateSettings: current.updateSettings }}
+      value={{
+        user, isLoading, loadError, reload: current.reload, login, register, logout,
+        updateSettings: current.updateSettings,
+      }}
     >
       {children}
     </AuthContext.Provider>

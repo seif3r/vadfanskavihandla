@@ -9,7 +9,10 @@
     "register": "Skapa konto",
     "switchToRegister": "Inget konto? Skapa ett",
     "switchToLogin": "Har du redan ett konto? Logga in",
-    "nameRequired": "Skriv ditt namn"
+    "nameRequired": "Skriv ditt namn",
+    "forgotPassword": "Glömt lösenordet?",
+    "emailRequired": "Skriv din e-post först",
+    "resetSent": "Om {{email}} har ett konto har vi skickat en länk dit för att välja ett nytt lösenord. Titta även i skräpposten."
   },
   "list": {
     "title": "Inköpslista",
@@ -18,12 +21,15 @@
     "checkAll": "Markera alla",
     "uncheckAll": "Avmarkera alla",
     "removeChecked": "Ta bort",
+    "confirmRemoveChecked": "Ta bort avbockade?",
     "moreOptions": "Fler alternativ",
     "amount": "Mängd",
     "amountPlaceholder": "t.ex. 2 l",
     "category": "Kategori",
     "empty": "Ni har inga inköpslistor än.",
-    "createFirst": "Skapa en lista"
+    "createFirst": "Skapa en lista",
+    "noItems": "Listan är tom. Skriv något nedan för att lägga till det.",
+    "notLive": "Uppdateras inte just nu, försöker igen snart. {{reason}}"
   },
   "categories": {
     "produce": "Frukt & grönt",
@@ -93,7 +99,8 @@
     "notifyItemRemoved": "När någon tar bort en vara",
     "notificationsBlocked": "Notiser är blockerade. Tillåt dem i enhetens eller webbläsarens inställningar.",
     "account": "Konto",
-    "changePassword": "Byt lösenord"
+    "changePassword": "Byt lösenord",
+    "deleteAccount": "Radera konto"
   },
   "changePassword": {
     "title": "Byt lösenord",
@@ -107,6 +114,18 @@
     "sameAsCurrent": "Det nya lösenordet måste skilja sig från det nuvarande",
     "tooShort": "Det nya lösenordet måste vara minst {{min}} tecken"
   },
+  "deleteAccount": {
+    "title": "Radera konto",
+    "intro": "När du raderar ditt konto:",
+    "soloGroups": "raderas grupper där du är ensam medlem, med deras listor",
+    "sharedGroups": "lämnar du grupper du delar med andra. Listor du skapat blir kvar i gruppen, och äger du den tar nästa medlem över",
+    "personalData": "raderas ditt namn, din e-post, dina inställningar och din inloggning",
+    "permanent": "Det går inte att ångra. Skriv ditt lösenord för att bekräfta.",
+    "password": "Lösenord",
+    "passwordRequired": "Skriv ditt lösenord",
+    "submit": "Radera konto",
+    "confirm": "Radera för alltid?"
+  },
   "notifications": {
     "itemAdded": "{{user}} lade till {{item}}",
     "itemRemoved": "{{user}} tog bort {{item}}",
@@ -114,13 +133,17 @@
     "itemRemovedMany": "{{user}} tog bort {{count}} varor: {{items}}",
     "channelName": "Ändringar i listor"
   },
+  "loadError": {
+    "message": "Kunde inte laddas. {{reason}}",
+    "retry": "Försök igen"
+  },
   "errors": {
-    "invalidSession": "Ogiltig session",
+    "invalidSession": "Kontot kunde inte laddas. Logga in igen",
     "itemNotFound": "Varan hittades inte",
     "invalidCredentials": "Fel e-postadress eller lösenord",
     "emailInUse": "Det finns redan ett konto med den här e-postadressen",
     "weakPassword": "Lösenordet är för svagt. Använd minst 6 tecken",
-    "notAllowed": "Du har inte behörighet till det här",
+    "notAllowed": "Listan eller gruppen finns inte längre, eller så har du tagits bort från den",
     "offline": "Ingen anslutning. Kontrollera internet och försök igen",
     "unknown": "Något gick fel. Försök igen",
     "inviteNotFound": "Inbjudningskoden är inte giltig",
@@ -128,6 +151,11 @@
     "removedFromGroup": "Du har tagits bort från den här gruppen. Be ägaren att tillåta dig igen",
     "lastMember": "Du är sista medlemmen. Ta bort gruppen i stället",
     "wrongPassword": "Fel lösenord",
-    "tooManyAttempts": "För många försök. Vänta en stund och försök igen"
+    "tooManyAttempts": "För många försök. Vänta en stund och försök igen",
+    "invalidEmail": "E-postadressen ser inte rätt ut",
+    "accountDisabled": "Kontot är spärrat",
+    "sessionExpired": "Du har loggats ut. Logga in igen",
+    "notFound": "Det här finns inte längre",
+    "registrationIncomplete": "Kontot blev inte färdigt när det skapades. Skapa det igen"
   }
 }

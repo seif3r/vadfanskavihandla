@@ -1,16 +1,20 @@
 // Accounts and the current session.
 import { ApiError } from "@/api/ApiError";
-import { auth, db, toApiError } from "@/api/firebase";
+import { auth, db, functions, toApiError, withApiError } from "@/api/firebase";
 import { User, UserSettings } from "@/types/models";
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   EmailAuthProvider,
   reauthenticateWithCredential,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
+  User as FirebaseUser,
 } from "firebase/auth";
 import { doc, DocumentSnapshot, getDoc, writeBatch } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 // New accounts start in Swedish with notifications off; turning one on asks for permission.
 const defaultSettings: UserSettings = {
   language: "sv",
@@ -28,17 +32,19 @@ export const toUser = (snap: DocumentSnapshot): User => {
   return { id: snap.id, name: data.name, email: data.email, settings };
 };
 async function loadUser(uid: string): Promise<User> {
-  const snap = await getDoc(doc(db, "users", uid));
+  const snap = await withApiError(() => getDoc(doc(db, "users", uid)));
   if (!snap.exists()) throw new ApiError("errors.invalidSession");
   return toUser(snap);
 }
 export async function login(email: string, password: string): Promise<User> {
-  try {
-    const { user } = await signInWithEmailAndPassword(auth, email.trim(), password);
-    return await loadUser(user.uid);
-  } catch (error) {
-    throw toApiError(error);
-  }
+  const { user } = await withApiError(() => signInWithEmailAndPassword(auth, email.trim(), password));
+  const snap = await withApiError(() => getDoc(doc(db, "users", user.uid)));
+  if (snap.exists()) return toUser(snap);
+  // Only an account whose registration stopped halfway, and that register couldn't remove (it
+  // was offline), has no user document. It holds no data, so remove it now (it was just logged
+  // into, which deleting needs) and let the person register again with the same email.
+  await deleteUser(user).catch(() => signOut(auth).catch(() => {}));
+  throw new ApiError("errors.registrationIncomplete");
 }
 // Firebase stores and refreshes the session itself (localStorage/IndexedDB on web, AsyncStorage
 // on phones; see api/firebase.ts). On startup this waits until it has been restored.
@@ -53,27 +59,31 @@ export async function loadCurrentUser(): Promise<User> {
 }
 // Creates the account plus its private user document and public profile.
 export async function register(name: string, email: string, password: string): Promise<User> {
+  const { user } = await withApiError(() => createUserWithEmailAndPassword(auth, email.trim(), password));
+  const profile: User = { id: user.uid, name, email: email.trim(), settings: defaultSettings };
   try {
-    const { user } = await createUserWithEmailAndPassword(auth, email.trim(), password);
-    const profile: User = { id: user.uid, name, email: email.trim(), settings: defaultSettings };
     const batch = writeBatch(db);
     batch.set(doc(db, "users", user.uid), { name, email: profile.email, settings: defaultSettings });
     batch.set(doc(db, "profiles", user.uid), { name });
     await batch.commit();
     return profile;
   } catch (error) {
+    // An account without a user document can't log in (invalidSession), and its email is taken,
+    // so it would be stuck for good. Remove it, so registering again works. The new account is
+    // signed in, which is all deleting it needs.
+    await deleteUser(user).catch(() => signOut(auth).catch(() => {}));
     throw toApiError(error);
   }
 }
 
-// Firebase only lets a recent login change the password, so this logs in again with the current
-// one first. That also proves it's the account's owner and not someone at an unlocked phone.
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+// Logs the current user in again with their password, for changes that need proof it's them.
+async function reauthenticate(password: string): Promise<FirebaseUser> {
   await auth.authStateReady();
   const user = auth.currentUser;
   if (!user?.email) throw new ApiError("errors.invalidSession");
   try {
-    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, currentPassword));
+    await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+    return user;
   } catch (error) {
     const code = (error as { code?: string }).code;
     // The email is known here, so a rejected credential can only mean the password.
@@ -82,6 +92,12 @@ export async function changePassword(currentPassword: string, newPassword: strin
     }
     throw toApiError(error);
   }
+}
+
+// Firebase only lets a recent login change the password, so this logs in again with the current
+// one first. That also proves it's the account's owner and not someone at an unlocked phone.
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const user = await reauthenticate(currentPassword);
   try {
     await updatePassword(user, newPassword);
   } catch (error) {
@@ -89,7 +105,23 @@ export async function changePassword(currentPassword: string, newPassword: strin
   }
 }
 
+// Emails a link for choosing a new password, in the given language. Firebase doesn't say whether
+// the address has an account (so nobody can find out who uses the app), so neither does this.
+export async function resetPassword(email: string, language: string): Promise<void> {
+  auth.languageCode = language;
+  await withApiError(() => sendPasswordResetEmail(auth, email.trim()));
+}
+
+// Deletes the account for good: the deleteAccount Cloud Function leaves or deletes the user's
+// groups and deletes their documents and login (see functions/src/index.ts). The password is asked
+// for first, so someone at an unlocked phone can't do it. Ends the session on this device too.
+export async function deleteAccount(password: string): Promise<void> {
+  await reauthenticate(password);
+  await withApiError(() => httpsCallable(functions, "deleteAccount")());
+  await signOut(auth).catch(() => {});
+}
+
 // Ends the Firebase session, including the one it has stored on the device.
 export async function logout(): Promise<void> {
-  await signOut(auth);
+  await withApiError(() => signOut(auth));
 }

@@ -7,6 +7,7 @@ import { ApiError } from "@/api/ApiError";
 import Button from "@/components/Button";
 import GroupCard from "@/components/GroupCard";
 import Input from "@/components/Input";
+import LoadError from "@/components/LoadError";
 import { INVITE_LIFETIME_DAYS, MAX_GROUP_NAME_LENGTH } from "@/constants/limits";
 import { useAuth } from "@/context/AuthContext";
 import { cleanName } from "@/helpers/list";
@@ -25,7 +26,7 @@ export default function Groups() {
   const { user } = useAuth();
   const {
     groups, membersOf, removedMembersOf, createGroup, isCreating, renameGroup, leaveGroup, removeMember,
-    allowRemovedMember, deleteGroup, createInvite, revokeInvite,
+    allowRemovedMember, deleteGroup, createInvite, revokeInvite, loadError, reload,
   } = useGroups();
   const [name, setName] = useState("");
   // The latest invite, also shown on screen: there's no share sheet in most desktop browsers.
@@ -79,7 +80,8 @@ export default function Groups() {
         <Button value={t("groups.create")} onPress={handleCreate} disabled={isCreating} />
       </View>
 
-      {groups.length === 0 && <Text style={styles.muted}>{t("groups.empty")}</Text>}
+      {loadError && <LoadError error={loadError} onRetry={reload} />}
+      {groups.length === 0 && !loadError && <Text style={styles.muted}>{t("groups.empty")}</Text>}
 
       {groups.map((group) => (
         <GroupCard

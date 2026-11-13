@@ -9,14 +9,17 @@ import { MAX_EMAIL_LENGTH, MAX_PERSON_NAME_LENGTH } from "@/constants/limits";
 import { spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { useAuth } from "@/context/AuthContext";
+import { useResetPassword } from "@/hooks/useResetPassword";
 import { cleanName } from "@/helpers/list";
 import { ThemeColors } from "@/types/theme";
 
 // Logging in, or creating an account (which also needs a name, shown to the people you share lists with).
 export default function Login() {
   const styles = useThemedStyles(createStyles);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { login, register } = useAuth();
+  const resetPassword = useResetPassword();
+  const [resetSentTo, setResetSentTo] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,6 +29,7 @@ export default function Login() {
 
   const handleSubmit = async () => {
     setError(null);
+    setResetSentTo(null);
     const cleanedName = cleanName(name);
     if (isRegistering && !cleanedName) {
       setError(t("login.nameRequired"));
@@ -42,9 +46,28 @@ export default function Login() {
     }
   };
 
+  // Uses the email already typed in, so there's no separate form.
+  const handleForgotPassword = () => {
+    setError(null);
+    setResetSentTo(null);
+    const address = email.trim();
+    if (!address) {
+      setError(t("login.emailRequired"));
+      return;
+    }
+    resetPassword.mutate(
+      { email: address, language: i18n.language },
+      {
+        onSuccess: () => setResetSentTo(address),
+        onError: (e) => setError(t(e.key)),
+      },
+    );
+  };
+
   const toggleMode = () => {
     setIsRegistering(!isRegistering);
     setError(null);
+    setResetSentTo(null);
   };
 
   return (
@@ -60,12 +83,23 @@ export default function Login() {
         placeholder={t("login.password")}
         secureTextEntry
       />
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={styles.error} accessibilityLiveRegion="polite" role="alert">{error}</Text>}
+      {resetSentTo && (
+        <Text style={styles.info} accessibilityLiveRegion="polite">{t("login.resetSent", { email: resetSentTo })}</Text>
+      )}
       <Button
         value={isRegistering ? t("login.register") : t("login.submit")}
         onPress={handleSubmit}
         disabled={isSubmitting}
       />
+      {!isRegistering && (
+        <Button
+          value={t("login.forgotPassword")}
+          variant="secondary"
+          onPress={handleForgotPassword}
+          disabled={resetPassword.isPending}
+        />
+      )}
       <Button
         value={isRegistering ? t("login.switchToLogin") : t("login.switchToRegister")}
         variant="secondary"
@@ -85,5 +119,12 @@ const createStyles = (colors: ThemeColors) =>
     },
     error: {
       color: colors.danger,
+      textAlign: "center",
+      paddingHorizontal: spacing.xl,
+    },
+    info: {
+      color: colors.text,
+      textAlign: "center",
+      paddingHorizontal: spacing.xl,
     },
   });

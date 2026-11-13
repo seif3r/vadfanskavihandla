@@ -12,6 +12,7 @@ import Input from "@/components/Input";
 import ItemSection from "@/components/ItemSection";
 import ListActions from "@/components/ListActions";
 import ListButton from "@/components/ListButton";
+import LoadError from "@/components/LoadError";
 import { spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { MAX_NAME_LENGTH } from "@/constants/limits";
@@ -20,6 +21,7 @@ import { useItems } from "@/hooks/useItems";
 import { useGroups } from "@/hooks/useGroups";
 import { useActiveList } from "@/hooks/useActiveList";
 import { useKnownItems } from "@/hooks/useKnownItems";
+import { useLiveStatus } from "@/context/LiveStatusContext";
 import { Category } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
 
@@ -27,10 +29,12 @@ export default function Index() {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
   const router = useRouter();
-  const { activeList, isLoading } = useActiveList();
+  const { activeList, isLoading, loadError, reload } = useActiveList();
+  const liveError = useLiveStatus();
   const { groups } = useGroups();
-  const { items, isLoading: isLoadingItems, addItem, isAdding, toggleItem, checkAll, uncheckAll, removeChecked } =
-    useItems(activeList?.id);
+  const {
+    items, isLoading: isLoadingItems, addItem, isAdding, toggleItem, checkAll, uncheckAll, removeChecked, error,
+  } = useItems(activeList?.id);
   const [text, setText] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category>();
@@ -45,7 +49,15 @@ export default function Index() {
   const handleAdd = () => {
     const name = cleanName(text);
     if (!name) return;
-    addItem({ name, amount: amount.trim() || undefined, category });
+    const draft = { text, amount, category };
+    // Cleared right away so the next item can be typed (offline, the save isn't confirmed until
+    // the connection is back). If the save fails, what was typed comes back, unless the field has
+    // been filled in again since.
+    addItem({ name, amount: amount.trim() || undefined, category }, () => {
+      setText((current) => current || draft.text);
+      setAmount((current) => current || draft.amount);
+      setCategory((current) => current ?? draft.category);
+    });
     setText("");
     setAmount("");
     setCategory(undefined);
@@ -66,6 +78,14 @@ export default function Index() {
     return (
       <View style={styles.container}>
         <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (!activeList && loadError) {
+    return (
+      <View style={[styles.container, styles.empty]}>
+        <LoadError error={loadError} onRetry={reload} />
       </View>
     );
   }
@@ -91,6 +111,11 @@ export default function Index() {
         groupName={groups.find((group) => group.id === activeList.groupId)?.name}
         onPress={() => router.push("/lists")}
       />
+      {liveError && (
+        <Text style={styles.liveError} accessibilityLiveRegion="polite" role="alert">
+          {t("list.notLive", { reason: t(liveError.key) })}
+        </Text>
+      )}
       <ListActions
         items={items}
         onCheckAll={checkAll}
@@ -101,9 +126,14 @@ export default function Index() {
         {isLoadingItems ? (
           <ActivityIndicator />
         ) : (
-          <ItemSection items={sortedItems} onToggle={toggleItem} />
+          <ItemSection items={sortedItems} onToggle={toggleItem} emptyText={t("list.noItems")} />
         )}
       </ScrollView>
+      {error && (
+        <Text style={styles.error} accessibilityLiveRegion="polite" role="alert">
+          {t(error.key)}
+        </Text>
+      )}
       {showOptions && (
         <AddItemOptions
           amount={amount}
@@ -147,6 +177,17 @@ const createStyles = (colors: ThemeColors) =>
     },
     emptyText: {
       color: colors.textMuted,
+    },
+    error: {
+      color: colors.danger,
+      paddingHorizontal: spacing.lg,
+      paddingVertical: spacing.sm,
+    },
+    liveError: {
+      color: colors.textMuted,
+      textAlign: "center",
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
     },
     screen: {
       flex: 1,

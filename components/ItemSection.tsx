@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import ItemRow from "@/components/ItemRow";
 import { radius, spacing } from "@/constants/theme";
@@ -7,9 +7,9 @@ import { ItemSectionProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
 
 // The items as one rounded card, with thin dividers between rows.
-export default function ItemSection({ items, onToggle }: ItemSectionProps) {
+export default function ItemSection({ items, onToggle, emptyText }: ItemSectionProps) {
   const styles = useThemedStyles(createStyles);
-  if (items.length === 0) return null;
+  if (items.length === 0) return emptyText ? <Text style={styles.empty}>{emptyText}</Text> : null;
 
   return (
     <View style={styles.card}>
@@ -29,5 +29,10 @@ const createStyles = (colors: ThemeColors) =>
       borderColor: colors.border,
       // Clips the rows' backgrounds to the rounded corners.
       overflow: "hidden",
+    },
+    empty: {
+      color: colors.textMuted,
+      textAlign: "center",
+      marginHorizontal: spacing.xl,
     },
   });

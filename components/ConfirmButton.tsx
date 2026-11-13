@@ -10,7 +10,7 @@ const CONFIRM_TIMEOUT_MS = 3000;
 
 // A small red button for something that can't be undone, so it takes two taps: the first turns it
 // into the confirm label ("Delete?"), the second calls onConfirm. Works the same on web and phones.
-export default function ConfirmButton({ label, confirmLabel, onConfirm }: ConfirmButtonProps) {
+export default function ConfirmButton({ label, confirmLabel, onConfirm, disabled }: ConfirmButtonProps) {
   const styles = useThemedStyles(createStyles);
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -28,7 +28,14 @@ export default function ConfirmButton({ label, confirmLabel, onConfirm }: Confir
   };
 
   return (
-    <Pressable onPress={handlePress} hitSlop={8} style={[styles.button, isConfirming && styles.confirm]}>
+    <Pressable
+      onPress={handlePress}
+      disabled={disabled}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!disabled }}
+      style={[styles.button, isConfirming && styles.confirm, disabled && styles.disabled]}
+    >
       <Text style={[styles.text, isConfirming && styles.confirmText]}>{isConfirming ? confirmLabel : label}</Text>
     </Pressable>
   );
@@ -42,6 +49,9 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: radius.small,
       borderWidth: 1,
       borderColor: colors.danger,
+    },
+    disabled: {
+      opacity: 0.4,
     },
     confirm: {
       backgroundColor: colors.danger,
