@@ -84,7 +84,9 @@ export async function allowRemovedMember(groupId: string, userId: string): Promi
 export async function deleteGroup(groupId: string): Promise<void> {
   await withApiError(() => deleteDoc(doc(db, "groups", groupId)));
 }
-// Creates a code others can use to join the group. The document id is the code.
+// Creates a code others can use to join the group. The document id is the code. groupName is
+// stored (the rules require it) but nothing reads it, and it can't be trusted since the client
+// writes it; joinGroup only uses groupId.
 export async function createInvite(groupId: string, groupName: string): Promise<string> {
   const ref = await withApiError(() => addDoc(collection(db, "invites"), {
     groupId,

@@ -22,9 +22,9 @@ It is not hard-coded for one family.
 - Backend: Firebase (Authentication, Cloud Firestore with realtime listeners, Cloud Functions +
   Cloud Tasks for bundled push via Expo's push service, and cleanup after deletes).
 
-**Current state:** the app runs on Firebase; the mock backend is gone. `docs/backend-and-hosting-guide.pdf`
-describes the setup, but parts are outdated: its push chapter (8) is replaced by `docs/notifications.md`,
-and its data model shares lists per list, while lists now belong to groups (below).
+**Current state:** the app runs on Firebase; the mock backend is gone. `docs/setup.md` describes the
+setup and `docs/notifications.md` push. `docs/backend-and-hosting-guide.pdf` is historical (lists
+shared per list, unbundled push); don't follow it.
 
 **Data model:** `groups/{groupId}` (`name`, `ownerId`, `members`) is the one place membership lives.
 `lists/{listId}` has a `groupId` and an `ownerId` (its creator); items point to their list with
@@ -59,7 +59,8 @@ new that belongs to a user must be added there.
 ## Architecture principles
 
 - **`api/` is the only seam to the backend.** Screens, hooks and contexts call functions in
-  `api/` and nothing else. Nothing outside `api/` imports from `firebase/*` (except the rules
+  `api/` and nothing else. Every exported `api/` function throws `ApiError`, never a raw Firebase
+  error: wrap Firebase calls in `withApiError` (`api/errors.ts`). Nothing outside `api/` imports from `firebase/*` (except the rules
   tests in `tests/rules/`); live updates are exposed as subscribe functions in `api/`.
 - **All I/O happens in `api/` and `helpers/`.** Components only render and call hooks.
 - **Server data goes through TanStack Query hooks** in `hooks/`. Contexts hold app state (logged-in

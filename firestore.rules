@@ -110,25 +110,25 @@ service cloud.firestore {
         && request.resource.data.ownerId == uid()
         && request.resource.data.members == [uid()];
       allow update: if signedIn() && (
-        // The owner may rename the group.
+        // The owner may rename the group (renameGroup in api/groups.ts).
         (resource.data.ownerId == uid() && changes().hasOnly(['name'])
             && validGroupName(request.resource.data.name))
         // Nobody can add themselves here: joining goes through the joinGroup Cloud Function.
-        // Members may leave. An owner who leaves hands the group to the next member; the last
-        // member can't leave (members[0] doesn't exist), only delete.
+        // Members may leave (leaveGroup). An owner who leaves hands the group to the next member;
+        // the last member can't leave (members[0] doesn't exist), only delete.
         || (uid() in resource.data.members && changes().hasOnly(['members', 'ownerId'])
             && request.resource.data.members == resource.data.members.removeAll([uid()])
             && request.resource.data.ownerId == (resource.data.ownerId == uid()
                  ? request.resource.data.members[0] : resource.data.ownerId))
-        // The owner may remove one other member. They're remembered, so that joinGroup won't
-        // let them back in with an invite code they still know.
+        // The owner may remove one other member (removeMember). They're remembered, so that
+        // joinGroup won't let them back in with an invite code they still know.
         || (resource.data.ownerId == uid() && changes().hasOnly(['members', 'removedMembers'])
             && request.resource.data.members.size() == resource.data.members.size() - 1
             && resource.data.members.hasAll(request.resource.data.members)
             && uid() in request.resource.data.members
             && request.resource.data.removedMembers == resource.data.get('removedMembers', [])
                  .concat(resource.data.members.removeAll(request.resource.data.members)))
-        // The owner may let one removed person be invited again.
+        // The owner may let one removed person be invited again (allowRemovedMember).
         || (resource.data.ownerId == uid() && changes().hasOnly(['removedMembers'])
             && request.resource.data.removedMembers.size() == resource.data.removedMembers.size() - 1
             && resource.data.removedMembers.hasAll(request.resource.data.removedMembers))

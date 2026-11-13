@@ -52,7 +52,9 @@ files (copied into `functions/locales/` at build time), so there is one place to
 
 **Web and Expo Go (in-app, only while the app is open)** — `hooks/useLiveUpdates.ts` gets changes
 from `subscribeToItems` in `api/items.ts` and batches them with timers in the same way. Installed
-builds skip this path so nothing is shown twice. A delete arriving through a listener doesn't say
+builds skip this path so nothing is shown twice. This path only sees changes while the app is open
+and its listeners run: changes made while it's in the background, closed or offline are never
+notified in-app. A delete arriving through a listener doesn't say
 who made it, so `removeDone` first stamps the items' `updatedBy` with the remover (a separate
 commit, so listeners get it before the delete) and the listener names `updatedBy`, the same person
 the server gets from `authId`. Batches not yet shown are lost if the app closes.
