@@ -138,6 +138,7 @@
     "invalidEmail": "That doesn't look like an email address",
     "accountDisabled": "This account has been disabled",
     "sessionExpired": "You've been logged out. Log in again",
-    "notFound": "This no longer exists"
+    "notFound": "This no longer exists",
+    "registrationIncomplete": "Creating your account wasn't finished. Create it again"
   }
 }

@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 import { ApiError } from "@/api/ApiError";
-import { changePassword } from "@/api/auth";
+import { changePassword, login, register } from "@/api/auth";
 
 const mockUser: { email: string | null } = { email: "anna@example.com" };
 const mockReauthenticate = jest.fn<(...args: unknown[]) => Promise<void>>();
 const mockUpdatePassword = jest.fn<(...args: unknown[]) => Promise<void>>();
+const mockNewUser = { uid: "anna" };
+const mockCreateUser = jest.fn<(...args: unknown[]) => Promise<{ user: typeof mockNewUser }>>();
+const mockSignIn = jest.fn<(...args: unknown[]) => Promise<{ user: typeof mockNewUser }>>();
+const mockDeleteUser = jest.fn<(...args: unknown[]) => Promise<void>>();
+const mockSignOut = jest.fn<(...args: unknown[]) => Promise<void>>();
+const mockCommit = jest.fn<() => Promise<void>>();
+const mockGetDoc = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 
 // Only the parts of Firebase changePassword touches; the real SDK would need a project.
 jest.mock("@/api/firebase", () => ({
@@ -17,9 +24,16 @@ jest.mock("firebase/auth", () => ({
   EmailAuthProvider: { credential: (email: string, password: string) => ({ email, password }) },
   reauthenticateWithCredential: (...args: unknown[]) => mockReauthenticate(...args),
   updatePassword: (...args: unknown[]) => mockUpdatePassword(...args),
+  createUserWithEmailAndPassword: (...args: unknown[]) => mockCreateUser(...args),
+  signInWithEmailAndPassword: (...args: unknown[]) => mockSignIn(...args),
+  deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
+  signOut: (...args: unknown[]) => mockSignOut(...args),
 }));
-// Used by login and register, not by changePassword.
-jest.mock("firebase/firestore", () => ({}));
+jest.mock("firebase/firestore", () => ({
+  doc: (_db: unknown, ...path: string[]) => path.join("/"),
+  getDoc: (...args: unknown[]) => mockGetDoc(...args),
+  writeBatch: () => ({ set: () => {}, commit: () => mockCommit() }),
+}));
 
 const errorKey = async (promise: Promise<unknown>) => {
   const error = await promise.catch((e: unknown) => e);
@@ -62,5 +76,68 @@ describe("changePassword", () => {
     mockUser.email = null;
     expect(await errorKey(changePassword("gammalt1", "nyttlösen"))).toBe("errors.invalidSession");
     expect(mockReauthenticate).not.toHaveBeenCalled();
+  });
+});
+
+describe("register", () => {
+  beforeEach(() => {
+    mockCreateUser.mockReset().mockResolvedValue({ user: mockNewUser });
+    mockCommit.mockReset().mockResolvedValue(undefined);
+    mockDeleteUser.mockReset().mockResolvedValue(undefined);
+    mockSignOut.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("creates the account and its documents", async () => {
+    const user = await register("Anna", " anna@example.com ", "hemligt1");
+    expect(user).toMatchObject({ id: "anna", name: "Anna", email: "anna@example.com" });
+    expect(mockDeleteUser).not.toHaveBeenCalled();
+  });
+
+  it("removes the new account if its documents can't be saved", async () => {
+    mockCommit.mockRejectedValueOnce({ code: "unavailable" });
+    expect(await errorKey(register("Anna", "anna@example.com", "hemligt1"))).toBe("errors.offline");
+    expect(mockDeleteUser).toHaveBeenCalledWith(mockNewUser);
+  });
+
+  it("signs out if the half-made account can't be removed either", async () => {
+    mockCommit.mockRejectedValueOnce({ code: "unavailable" });
+    mockDeleteUser.mockRejectedValueOnce({ code: "auth/network-request-failed" });
+    expect(await errorKey(register("Anna", "anna@example.com", "hemligt1"))).toBe("errors.offline");
+    expect(mockSignOut).toHaveBeenCalled();
+  });
+
+  it("doesn't remove anything when the account itself can't be created", async () => {
+    mockCreateUser.mockRejectedValueOnce({ code: "auth/email-already-in-use" });
+    expect(await errorKey(register("Anna", "anna@example.com", "hemligt1"))).toBe("errors.emailInUse");
+    expect(mockDeleteUser).not.toHaveBeenCalled();
+  });
+});
+
+describe("login", () => {
+  beforeEach(() => {
+    mockSignIn.mockReset().mockResolvedValue({ user: mockNewUser });
+    mockGetDoc.mockReset();
+    mockDeleteUser.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("loads the user", async () => {
+    mockGetDoc.mockResolvedValue({
+      id: "anna",
+      exists: () => true,
+      data: () => ({ name: "Anna", email: "anna@example.com", settings: { language: "sv", theme: "system" } }),
+    });
+    expect(await login("anna@example.com", "hemligt1")).toMatchObject({ id: "anna", name: "Anna" });
+  });
+
+  it("removes an account whose registration never finished, so it can be made again", async () => {
+    mockGetDoc.mockResolvedValue({ exists: () => false });
+    expect(await errorKey(login("anna@example.com", "hemligt1"))).toBe("errors.registrationIncomplete");
+    expect(mockDeleteUser).toHaveBeenCalledWith(mockNewUser);
+  });
+
+  it("keeps the account when the user can't be loaded for another reason", async () => {
+    mockGetDoc.mockRejectedValue({ code: "unavailable" });
+    expect(await errorKey(login("anna@example.com", "hemligt1"))).toBe("errors.offline");
+    expect(mockDeleteUser).not.toHaveBeenCalled();
   });
 });

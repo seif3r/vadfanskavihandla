@@ -4,6 +4,7 @@ import { auth, db, toApiError, withApiError } from "@/api/firebase";
 import { User, UserSettings } from "@/types/models";
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
   EmailAuthProvider,
   reauthenticateWithCredential,
   signInWithEmailAndPassword,
@@ -33,12 +34,14 @@ async function loadUser(uid: string): Promise<User> {
   return toUser(snap);
 }
 export async function login(email: string, password: string): Promise<User> {
-  try {
-    const { user } = await signInWithEmailAndPassword(auth, email.trim(), password);
-    return await loadUser(user.uid);
-  } catch (error) {
-    throw toApiError(error);
-  }
+  const { user } = await withApiError(() => signInWithEmailAndPassword(auth, email.trim(), password));
+  const snap = await withApiError(() => getDoc(doc(db, "users", user.uid)));
+  if (snap.exists()) return toUser(snap);
+  // Only an account whose registration stopped halfway, and that register couldn't remove (it
+  // was offline), has no user document. It holds no data, so remove it now (it was just logged
+  // into, which deleting needs) and let the person register again with the same email.
+  await deleteUser(user).catch(() => signOut(auth).catch(() => {}));
+  throw new ApiError("errors.registrationIncomplete");
 }
 // Firebase stores and refreshes the session itself (localStorage/IndexedDB on web, AsyncStorage
 // on phones; see api/firebase.ts). On startup this waits until it has been restored.
@@ -53,15 +56,19 @@ export async function loadCurrentUser(): Promise<User> {
 }
 // Creates the account plus its private user document and public profile.
 export async function register(name: string, email: string, password: string): Promise<User> {
+  const { user } = await withApiError(() => createUserWithEmailAndPassword(auth, email.trim(), password));
+  const profile: User = { id: user.uid, name, email: email.trim(), settings: defaultSettings };
   try {
-    const { user } = await createUserWithEmailAndPassword(auth, email.trim(), password);
-    const profile: User = { id: user.uid, name, email: email.trim(), settings: defaultSettings };
     const batch = writeBatch(db);
     batch.set(doc(db, "users", user.uid), { name, email: profile.email, settings: defaultSettings });
     batch.set(doc(db, "profiles", user.uid), { name });
     await batch.commit();
     return profile;
   } catch (error) {
+    // An account without a user document can't log in (invalidSession), and its email is taken,
+    // so it would be stuck for good. Remove it, so registering again works. The new account is
+    // signed in, which is all deleting it needs.
+    await deleteUser(user).catch(() => signOut(auth).catch(() => {}));
     throw toApiError(error);
   }
 }

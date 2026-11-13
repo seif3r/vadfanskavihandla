@@ -138,6 +138,7 @@
     "invalidEmail": "E-postadressen ser inte rätt ut",
     "accountDisabled": "Kontot är spärrat",
     "sessionExpired": "Du har loggats ut. Logga in igen",
-    "notFound": "Det här finns inte längre"
+    "notFound": "Det här finns inte längre",
+    "registrationIncomplete": "Kontot blev inte färdigt när det skapades. Skapa det igen"
   }
 }
