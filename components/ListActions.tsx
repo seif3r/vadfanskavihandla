@@ -3,6 +3,7 @@ import { spacing } from "@/constants/theme";
 import { useTranslation } from "react-i18next";
 
 import Button from "@/components/Button";
+import ConfirmButton from "@/components/ConfirmButton";
 import { ListActionsProps } from "@/types/components";
 
 export default function ListActions({ items, onCheckAll, onUncheckAll, onRemoveChecked }: ListActionsProps) {
@@ -15,7 +16,13 @@ export default function ListActions({ items, onCheckAll, onUncheckAll, onRemoveC
     <View style={styles.bar}>
       <Button value={t("list.checkAll")} variant="secondary" compact onPress={onCheckAll} disabled={!hasUnchecked} />
       <Button value={t("list.uncheckAll")} variant="secondary" compact onPress={onUncheckAll} disabled={!hasChecked} />
-      <Button value={t("list.removeChecked")} variant="secondary" compact onPress={onRemoveChecked} disabled={!hasChecked} />
+      {/* Deletes the checked items for everyone in the group, with no undo, so it asks first. */}
+      <ConfirmButton
+        label={t("list.removeChecked")}
+        confirmLabel={t("list.confirmRemoveChecked")}
+        onConfirm={onRemoveChecked}
+        disabled={!hasChecked}
+      />
     </View>
   );
 }
@@ -23,6 +30,7 @@ export default function ListActions({ items, onCheckAll, onUncheckAll, onRemoveC
 const styles = StyleSheet.create({
   bar: {
     flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     padding: spacing.lg,
   },

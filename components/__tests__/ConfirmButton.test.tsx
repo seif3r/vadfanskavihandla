@@ -31,4 +31,12 @@ describe("ConfirmButton", () => {
     fireEvent.press(screen.getByText("Delete"));
     expect(onConfirm).not.toHaveBeenCalled();
   });
+
+  it("does nothing while disabled", () => {
+    const onConfirm = jest.fn();
+    render(<ConfirmButton label="Delete" confirmLabel="Delete?" onConfirm={onConfirm} disabled />);
+    fireEvent.press(screen.getByText("Delete"));
+    expect(screen.queryByText("Delete?")).toBeNull();
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
 });
