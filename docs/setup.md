@@ -103,8 +103,15 @@ eas build --profile preview --platform android   # an installable APK
 Every push to `main` builds the web app and publishes it (`.github/workflows/deploy-web.yml`).
 The Firebase values come from the repository's **Settings › Secrets and variables › Actions ›
 Variables** (`EXPO_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_APP_ID`, and
-optionally `_APPCHECK_SITE_KEY`). The site lives under `/<repository name>`, which the workflow
-passes to the export as `EXPO_BASE_URL`.
+optionally `_APPCHECK_SITE_KEY`). Pages must be set to "GitHub Actions" in the repository's
+settings, and the Pages domain (`<owner>.github.io`) added under Authorized domains in Firebase
+Authentication. The site lives under `/<repository name>`, which the workflow passes to the export
+as `EXPO_BASE_URL`; `app.config.ts` sets the base path only then, so local development runs at `/`.
+
+**CI.** `.github/workflows/ci.yml` runs on every pull request and push to `main`: typecheck, lint
+and `npm test` (including a check that every locale has the same keys and placeholders as
+`en.json`), lint and build of `functions/`, the emulator tests, a web and Android export, and
+`expo-doctor` (advisory).
 
 **App Check** runs on web when `EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY` is set. Don't enforce it
 yet: phones have no App Check provider (`api/appCheck.ts`), so enforcing would lock them out.

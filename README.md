@@ -1,109 +1,115 @@
 # Vad fan ska vi handla
 
-A shared shopping list app for households, built with Expo (React Native), Expo Router and Firebase.
+En gemensam inköpslista för hushållet, så att den som står i affären alltid ser vad de andra just har lagt till.
 
-## Get started
+Live: https://seif3r.github.io/vadfanskavihandla/
+
+## Vad det gör
+
+Du skapar ett konto och en grupp, till exempel "Hemma", och bjuder in dem du handlar med via en kod. Alla i gruppen ser gruppens listor och varandras ändringar direkt. Du kan lägga till varor med mängd och kategori, bocka av dem och rensa det avbockade. När någon lägger till eller tar bort varor kan de andra få en notis, och en persons ändringar samlas till en enda notis en minut efter den sista ändringen ("Anna lade till 3 varor: mjölk, ägg, bröd"). Att bocka av en vara är personligt och skickar ingen notis.
+
+## Kom igång
+
+### Krav
+
+- Node 24 och npm
+- Ett Firebase-projekt med Authentication (e-post och lösenord) och Cloud Firestore. Cloud Functions (notiser, inbjudningar, radering) kräver Blaze-planen.
+- Firebase CLI (`npm install -g firebase-tools`) för att driftsätta regler, index och funktioner
+- Java 21 eller senare, för regel- och funktionstesterna (de kör Firestore-emulatorn)
+- Valfritt: Expo Go på telefonen för snabbtest, och ett Expo-konto med EAS CLI för riktiga Android-byggen med push
+
+### Installation
 
 ```bash
+git clone https://github.com/seif3r/vadfanskavihandla
+cd vadfanskavihandla
 npm install
-npm run web       # in the browser
-npm run android   # in an Android emulator
-npm start         # QR code for Expo Go on your phone
 ```
 
-The backend is Firebase (Authentication, Cloud Firestore, and Cloud Functions for push). Copy
-`.env.example` to `.env.local` and fill in the project's web config (see
-[docs/setup.md](docs/setup.md)), then create an account in the app. Lists belong to a group (`groups/{groupId}`, e.g. a household): everyone in the group
-sees all its lists. Create a group or join one with an invite code from the Groups screen; a user
-can be in several groups and sees the lists of all of them. The group's owner can rename it, remove
-members, revoke invites and delete it. Joining goes through the `joinGroup` Cloud Function: a code works
-for 7 days, while its creator is still a member, and not for someone the owner removed. The button at the top of the home screen shows the open list; tapping it
-opens all lists, where you pick another one, add lists to a group or delete them. Changes show up
-live on every device that has the list open.
+### Konfiguration
 
-Offline: in the browser, Firestore keeps its data in IndexedDB, so the lists open without a
-connection and changes made offline are sent when it's back, even after a reload (logging out
-clears it). On phones the cache is in memory: lists seen since the app started work offline, but
-a phone that starts the app offline shows "Couldn't load" until it has a connection.
-
-Each list remembers the category an item name last had (`lists/{listId}/knownItems`), so adding
-"Äpple" again picks "Fruit & veg" by itself. Picking another category replaces what's remembered.
-
-Members can be notified when someone adds or removes items (checking items off is personal and
-notifies nobody). Each person's changes are bundled into one notification, sent 60 seconds after
-their last change. See [docs/notifications.md](docs/notifications.md).
-
-Deleting a group or list only deletes that document in the app; Cloud Functions delete what's
-under it (lists, items, remembered categories, invites, pending notifications).
-
-Security Rules and indexes live in `firestore.rules` and `firestore.indexes.json`. Besides
-membership, the rules validate what's written: allowed fields, text lengths for items, amounts,
-groups, lists and people's names (matching `constants/limits.ts`), allowed categories, and that items can only be checked or unchecked after
-they're added:
+Skapa en `.env.local` i projektets rot (den är git-ignorerad) med webbkonfigurationen från Firebase-konsolen, under Project settings › Your apps:
 
 ```bash
-firebase deploy --only firestore   # rules + indexes
-firebase emulators:start           # local backend, set EXPO_PUBLIC_FIREBASE_EMULATOR_HOST (development builds only)
-firebase deploy --only functions   # joining groups, push, cleanup (needs the Blaze plan)
+EXPO_PUBLIC_FIREBASE_API_KEY=ditt-värde
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=ditt-projekt.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=ditt-projekt
+EXPO_PUBLIC_FIREBASE_APP_ID=ditt-värde
 ```
 
-App Check runs on web when `EXPO_PUBLIC_FIREBASE_APPCHECK_SITE_KEY` holds a reCAPTCHA Enterprise site
-key registered in the Firebase console. Don't turn on enforcement yet: phones have no App Check
-provider (`api/appCheck.ts`), so enforcing it would lock them out.
-
-## Tests
+Alla variabler finns listade i `.env.example`, även de valfria för App Check och de lokala emulatorerna. Driftsätt sedan backend en gång:
 
 ```bash
-npm test                # helpers, components, and that limits match firestore.rules (Jest + jest-expo)
-npm run test:rules      # Security Rules, against the Firestore emulator
-npm run test:functions  # Cloud Functions (joinGroup, bundled push, cleanup), against the emulator
-npm run test:all        # all three
+firebase use ditt-projekt
+firebase deploy --only firestore,functions
 ```
 
-The emulator tests start the Firestore emulator themselves (`firebase emulators:exec`, with the
-`firebase-tools` dev dependency) under the `demo-vadfanskavihandla` project id, so they never touch
-the real project. The emulator needs Java 21 or newer. Cloud Tasks and Expo's push service are
-mocked in the function tests.
+Hela uppsättningen, med regioner, Android-byggen och GitHub Pages, finns i [docs/setup.md](docs/setup.md).
 
-| Folder                         | Tests                                         |
-| ------------------------------ | --------------------------------------------- |
-| `helpers/__tests__/`, `constants/__tests__/`, `components/__tests__/` | App unit and component tests |
-| `tests/rules/`                 | `firestore.rules`                             |
-| `functions/test/`              | Cloud Functions                               |
+### Kör projektet
 
-GitHub Actions (`.github/workflows/ci.yml`) runs all of this on every pull request and push to
-`main`: typecheck, lint and `npm test` for the app (including a test that `sv.json` has the same keys
-and placeholders as `en.json`), lint and build for `functions/`, the emulator tests, a web and
-Android export, and `expo-doctor` (advisory: it can fail without failing the run).
+```bash
+npm run web       # i webbläsaren
+npm run android   # i Android-emulatorn
+npm start         # QR-kod för Expo Go på telefonen
+```
 
-Every push to `main` also publishes the web app to GitHub Pages (`.github/workflows/deploy-web.yml`),
-at `https://<owner>.github.io/vadfanskavihandla/`. It needs Pages set to "GitHub Actions" and the
-`EXPO_PUBLIC_FIREBASE_*` values as repository variables, and the Pages domain listed under
-Authorized domains in Firebase Authentication. `app.config.ts` sets the `/vadfanskavihandla` base
-path only when `EXPO_BASE_URL` is set, so local development still runs at `/`.
+Tester:
 
-## Project structure
+```bash
+npm test                # appen: hjälpfunktioner, komponenter, skärmar och hooks
+npm run test:rules      # säkerhetsreglerna, mot Firestore-emulatorn
+npm run test:functions  # Cloud Functions, mot Firestore-emulatorn
+```
 
-| Folder        | Contents                                                             |
-| ------------- | -------------------------------------------------------------------- |
-| `app/`        | Screens and routes (Expo Router). `_layout.tsx` sets up providers.   |
-| `components/` | Reusable UI components                                               |
-| `context/`    | `AuthContext` (is someone logged in) and `ActiveListContext` (open list) |
-| `hooks/`      | Data hooks built on TanStack Query (`useItems`) and live updates (`useLiveUpdates`) |
-| `api/`        | The only code that talks to Firebase. `firebase.ts` sets up the client. |
-| `functions/`  | Cloud Functions (push notifications), a separate Node project        |
-| `types/`      | All interfaces and types                                             |
-| `helpers/`    | Plain functions with no UI                                           |
-| `i18n/`       | Translations. `locales/en.json` is the reference language.           |
+GitHub Actions kör allt detta på varje pull request, och varje push till `main` publicerar webbversionen på GitHub Pages.
 
-## Translations
+## Arkitektur
 
-All UI text goes through `t("...")` from `react-i18next`. Keys are type-checked against
-`i18n/locales/en.json`, and every other language file must contain the same keys.
+Appen är en Expo-app med en kodbas för Android, iOS och webb. Skärmarna i `app/` renderar bara och anropar hooks. Hooks i `hooks/` håller serverdata med TanStack Query och håller listorna levande med realtidslyssnare. Den enda koden som pratar med Firebase finns i `api/`, och den gör om alla Firebase-fel till översättningsnycklar. Säkerheten ligger i databasen: `firestore.rules` ser till att man bara når listorna i sina egna grupper, och validerar det som skrivs. Det som klienten inte får göra själv, som att gå med i en grupp, skicka samlade notiser, städa efter raderingar och radera konton, sköts av Cloud Functions i `functions/`.
 
-## Backend
+```
+vadfanskavihandla/
+├── app/                  # Skärmar och routes (Expo Router); _layout.tsx sätter upp providers
+├── components/           # Återanvändbara UI-komponenter
+├── hooks/                # Datahooks (TanStack Query) och realtidsuppdateringar (useLiveUpdates)
+├── context/              # Inloggning (AuthContext), öppen lista, synkstatus
+├── api/                  # Enda vägen till Firebase; firebase.ts sätter upp klienten
+├── helpers/              # Rena funktioner utan UI
+├── types/                # Alla typer och interface
+├── constants/            # Tema, textgränser och backend-inställningar
+├── i18n/                 # Översättningar (svenska och engelska)
+├── functions/            # Cloud Functions, ett eget Node-projekt
+├── tests/                # Regeltester och skärmtester
+├── docs/                 # Uppsättning (setup.md) och notiser (notifications.md)
+├── firestore.rules       # Säkerhetsregler och datavalidering
+└── firestore.indexes.json  # Index för Firestore-frågorna
+```
 
-[docs/setup.md](docs/setup.md) covers the Firebase setup, deploying, the emulators, EAS builds and
-hosting the web version on GitHub Pages; [docs/notifications.md](docs/notifications.md) how push
-works. `docs/backend-and-hosting-guide.pdf` is historical: it describes an earlier stage (lists
-shared per list, push one change at a time) and is kept only for reference.
+## Teknisk stack
+
+| Komponent | Val | Anledning |
+| --- | --- | --- |
+| App | Expo, React Native och TypeScript | En kodbas för Android, iOS och webb. Expo sköter byggen (EAS) och native-moduler. |
+| Navigering | Expo Router | Filbaserad routing som fungerar likadant på webb och mobil. |
+| Serverdata | TanStack Query | Cache, optimistiska uppdateringar och en plats där realtidsdata skrivs in. |
+| Backend | Firebase: Authentication, Cloud Firestore och Cloud Functions | Inloggning, databas med realtidslyssnare och serverlogik i ett projekt, utan egen server. JavaScript-SDK:n gör att Expo Go och webben fungerar. |
+| Notiser | Cloud Tasks, Expos push-tjänst och expo-notifications | Cloud Tasks väntar en minut och samlar ändringarna. Expo levererar till telefonerna, och på webben visas notiserna i appen. |
+| Översättning | i18next | Appen är på svenska och engelska från början. |
+| Hosting | GitHub Pages (webb) och EAS Build (Android) | Statisk export till Pages, och installerbara Android-byggen. |
+| Tester och CI | Jest, Firestore-emulatorn och GitHub Actions | Säkerhetsreglerna och funktionerna testas mot en riktig, lokal databas. |
+
+## Begränsningar
+
+- Push-notiser fungerar bara i installerade Android-byggen. iOS är inte byggt än (det kräver Apples utvecklarprogram). På webben och i Expo Go visas notiser bara medan appen är öppen; ändringar som görs när appen är stängd syns i listan men ger ingen notis.
+- Offline fungerar bäst på webben, där listorna sparas i webbläsaren. På telefonen finns bara det som har laddats sedan appen startade, så en telefon som startar appen utan täckning visar "Kunde inte laddas" tills den får nät.
+- En vara kan inte redigeras efter att den lagts till. Man kan bara bocka av den eller ta bort den.
+- "Ta bort avbockade" raderar för hela gruppen och kan inte ångras, även om det kräver två tryck.
+- Inloggning finns bara med e-post och lösenord, inte med Google eller Apple.
+- App Check skyddar bara webben. Det kan inte tvingas på än, eftersom telefonerna inte har något App Check-stöd.
+- Appen finns inte i Google Play eller App Store, utan installeras som APK.
+- Cloud Functions kräver Firebases Blaze-plan, även om ett hushålls användning ryms i gratiskvoterna.
+
+## Utvecklat med
+
+Claude Code (agentdriven utveckling) som del av kursen Next-Generation Software Development with AI.
