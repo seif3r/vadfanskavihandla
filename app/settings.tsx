@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
+import { ApiError } from "@/api/ApiError";
 import Button from "@/components/Button";
 import OptionPicker from "@/components/OptionPicker";
 import SettingSwitch from "@/components/SettingSwitch";
@@ -23,14 +24,20 @@ export default function Settings() {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  // Why the latest change wasn't saved. The switches and pickers show the saved value, so they
+  // already snap back; this says why.
+  const [error, setError] = useState<string | null>(null);
 
   if (!user) return null;
   const notifications = user.settings.notifications;
 
   const save = async (settings: Partial<UserSettings>) => {
     setIsSaving(true);
+    setError(null);
     try {
       await updateSettings(settings);
+    } catch (e) {
+      setError(t(e instanceof ApiError ? e.key : "errors.unknown"));
     } finally {
       setIsSaving(false);
     }
@@ -48,7 +55,8 @@ export default function Settings() {
 
   const handleNotificationChange = async (key: keyof NotificationSettings, value: boolean) => {
     // Turning one on asks the device/browser for permission; without it, the setting stays off.
-    if (value && !(await requestNotificationPermission())) {
+    // Asking can fail too (e.g. creating Android's notification channel), which counts as blocked.
+    if (value && !(await requestNotificationPermission().catch(() => false))) {
       setIsBlocked(true);
       return;
     }
@@ -86,6 +94,11 @@ export default function Settings() {
         />
       </View>
       {isBlocked && <Text style={styles.blocked}>{t("settings.notificationsBlocked")}</Text>}
+      {error && (
+        <Text style={styles.blocked} accessibilityLiveRegion="polite" role="alert">
+          {t("settings.saveFailed", { reason: error })}
+        </Text>
+      )}
 
       <Text style={[styles.sectionTitle, styles.section]}>{t("settings.account")}</Text>
       <Button

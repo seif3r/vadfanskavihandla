@@ -100,7 +100,8 @@
     "notificationsBlocked": "Notiser är blockerade. Tillåt dem i enhetens eller webbläsarens inställningar.",
     "account": "Konto",
     "changePassword": "Byt lösenord",
-    "deleteAccount": "Radera konto"
+    "deleteAccount": "Radera konto",
+    "saveFailed": "Kunde inte sparas. {{reason}}"
   },
   "changePassword": {
     "title": "Byt lösenord",
