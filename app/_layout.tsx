@@ -3,11 +3,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useTranslation } from "react-i18next";
+import { StyleSheet, View } from "react-native";
 
 // Initializes translations before anything renders.
 import "@/i18n";
 
+import Button from "@/components/Button";
+import LoadError from "@/components/LoadError";
 import UserMenu from "@/components/UserMenu";
+import { spacing } from "@/constants/theme";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ActiveListProvider } from "@/context/ActiveListContext";
 import { useLiveUpdates } from "@/hooks/useLiveUpdates";
@@ -18,13 +22,23 @@ const queryClient = new QueryClient();
 
 function RootStack() {
   const { t } = useTranslation();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, loadError, reload, logout } = useAuth();
   const colors = useColors();
   useLiveUpdates();
   usePushRegistration();
 
   // Wait until the saved session is checked, so the login screen doesn't flash.
   if (isLoading) return null;
+
+  // Logged in, but the user couldn't be loaded (no connection): offer a retry instead of the login screen.
+  if (loadError) {
+    return (
+      <View style={[styles.startupError, { backgroundColor: colors.background }]}>
+        <LoadError error={loadError} onRetry={reload} />
+        <Button value={t("userMenu.logout")} variant="secondary" onPress={logout} />
+      </View>
+    );
+  }
 
   return (
     <Stack
@@ -95,3 +109,13 @@ export default function RootLayout() {
     </QueryClientProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  startupError: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: spacing.lg,
+    padding: spacing.xl,
+  },
+});

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { ApiError } from "@/api/ApiError";
 import { loadCurrentUser } from "@/api/auth";
 import { updateSettings } from "@/api/settings";
 import { UpdateSettingsRequest } from "@/types/api";
@@ -12,13 +13,14 @@ export const userKey = ["user"];
 export function useCurrentUser(hasSession: boolean) {
   const queryClient = useQueryClient();
 
-  const userQuery = useQuery({
+  const userQuery = useQuery<User, ApiError>({
     queryKey: userKey,
     queryFn: loadCurrentUser,
     enabled: hasSession,
     // Only this device changes the user (login, settings), and both write to the cache.
     staleTime: Infinity,
-    // A failed restore means "not logged in"; retrying would only delay the login screen.
+    // AuthContext decides what a failure means (logged out, or offline and worth a retry), so it
+    // should know at once rather than after the default retries.
     retry: false,
   });
 
@@ -33,6 +35,7 @@ export function useCurrentUser(hasSession: boolean) {
     user,
     isLoading: hasSession && userQuery.isPending,
     error: userQuery.error,
+    reload: () => userQuery.refetch(),
     updateSettings: async (settings: Partial<UserSettings>) => {
       if (user) await settingsMutation.mutateAsync({ userId: user.id, settings });
     },
