@@ -12,6 +12,7 @@ import Input from "@/components/Input";
 import ItemSection from "@/components/ItemSection";
 import ListActions from "@/components/ListActions";
 import ListButton from "@/components/ListButton";
+import LoadError from "@/components/LoadError";
 import { spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { MAX_NAME_LENGTH } from "@/constants/limits";
@@ -27,7 +28,7 @@ export default function Index() {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
   const router = useRouter();
-  const { activeList, isLoading } = useActiveList();
+  const { activeList, isLoading, loadError, reload } = useActiveList();
   const { groups } = useGroups();
   const {
     items, isLoading: isLoadingItems, addItem, isAdding, toggleItem, checkAll, uncheckAll, removeChecked, error,
@@ -79,6 +80,14 @@ export default function Index() {
     );
   }
 
+  if (!activeList && loadError) {
+    return (
+      <View style={[styles.container, styles.empty]}>
+        <LoadError error={loadError} onRetry={reload} />
+      </View>
+    );
+  }
+
   if (!activeList) {
     return (
       <View style={[styles.container, styles.empty]}>
@@ -110,7 +119,7 @@ export default function Index() {
         {isLoadingItems ? (
           <ActivityIndicator />
         ) : (
-          <ItemSection items={sortedItems} onToggle={toggleItem} />
+          <ItemSection items={sortedItems} onToggle={toggleItem} emptyText={t("list.noItems")} />
         )}
       </ScrollView>
       {error && (

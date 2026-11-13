@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 
+import { ApiError } from "@/api/ApiError";
 import {
   acceptInvite, allowRemovedMember, createGroup, createInvite, deleteGroup, deleteInvite, getGroups, leaveGroup,
   removeMember, renameGroup,
@@ -14,7 +15,7 @@ import { Group, Member } from "@/types/models";
 // The mutations are async so screens can show the translated error if one fails.
 export function useGroups() {
   const { user } = useAuth();
-  const groupsQuery = useQuery({ queryKey: ["groups"], queryFn: getGroups, enabled: !!user });
+  const groupsQuery = useQuery<Group[], ApiError>({ queryKey: ["groups"], queryFn: getGroups, enabled: !!user });
   const usersQuery = useQuery({ queryKey: ["users"], queryFn: getUsers, enabled: !!user });
 
   const create = useMutation({ mutationFn: createGroup });
@@ -39,6 +40,9 @@ export function useGroups() {
   return {
     groups: groupsQuery.data ?? [],
     isLoading: groupsQuery.isLoading,
+    // Only while there's nothing to show; once the live listener has delivered groups, they're shown.
+    loadError: groupsQuery.data ? null : groupsQuery.error,
+    reload: () => groupsQuery.refetch(),
     membersOf: (group: Group) => withNames(group.memberIds),
     removedMembersOf: (group: Group) => withNames(group.removedMemberIds),
     createGroup: create.mutateAsync,

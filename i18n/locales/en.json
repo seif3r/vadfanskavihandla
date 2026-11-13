@@ -18,12 +18,14 @@
     "checkAll": "Check all",
     "uncheckAll": "Uncheck all",
     "removeChecked": "Remove",
+    "confirmRemoveChecked": "Remove checked?",
     "moreOptions": "More options",
     "amount": "Amount",
     "amountPlaceholder": "e.g. 2 l",
     "category": "Category",
     "empty": "You have no shopping lists yet.",
-    "createFirst": "Create a list"
+    "createFirst": "Create a list",
+    "noItems": "The list is empty. Type something below to add it."
   },
   "categories": {
     "produce": "Fruit & veg",
@@ -113,6 +115,10 @@
     "itemAddedMany": "{{user}} added {{count}} items: {{items}}",
     "itemRemovedMany": "{{user}} removed {{count}} items: {{items}}",
     "channelName": "List changes"
+  },
+  "loadError": {
+    "message": "Couldn't load. {{reason}}",
+    "retry": "Try again"
   },
   "errors": {
     "invalidSession": "Your account couldn't be loaded. Log in again",

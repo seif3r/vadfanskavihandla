@@ -1,5 +1,6 @@
 import { StyleProp, TextStyle } from "react-native";
 
+import { ApiError } from "@/api/ApiError";
 import { Category, Group, Item, Member, ShoppingList } from "@/types/models";
 
 export interface ButtonProps {
@@ -37,6 +38,8 @@ export interface ListButtonProps {
 export interface ItemSectionProps {
   items: Item[];
   onToggle: (itemId: string) => void;
+  // Shown when there are no items.
+  emptyText?: string;
 }
 
 export interface ListActionsProps {
@@ -92,11 +95,17 @@ export interface ListRowProps {
   isFirst?: boolean;
 }
 
+export interface LoadErrorProps {
+  error: ApiError;
+  onRetry: () => void;
+}
+
 export interface ConfirmButtonProps {
   label: string;
   // Shown after the first tap, e.g. "Delete?".
   confirmLabel: string;
   onConfirm: () => void;
+  disabled?: boolean;
 }
 
 export interface GroupListsProps {

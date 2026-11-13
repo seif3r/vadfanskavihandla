@@ -18,12 +18,14 @@
     "checkAll": "Markera alla",
     "uncheckAll": "Avmarkera alla",
     "removeChecked": "Ta bort",
+    "confirmRemoveChecked": "Ta bort avbockade?",
     "moreOptions": "Fler alternativ",
     "amount": "Mängd",
     "amountPlaceholder": "t.ex. 2 l",
     "category": "Kategori",
     "empty": "Ni har inga inköpslistor än.",
-    "createFirst": "Skapa en lista"
+    "createFirst": "Skapa en lista",
+    "noItems": "Listan är tom. Skriv något nedan för att lägga till det."
   },
   "categories": {
     "produce": "Frukt & grönt",
@@ -113,6 +115,10 @@
     "itemAddedMany": "{{user}} lade till {{count}} varor: {{items}}",
     "itemRemovedMany": "{{user}} tog bort {{count}} varor: {{items}}",
     "channelName": "Ändringar i listor"
+  },
+  "loadError": {
+    "message": "Kunde inte laddas. {{reason}}",
+    "retry": "Försök igen"
   },
   "errors": {
     "invalidSession": "Kontot kunde inte laddas. Logga in igen",
