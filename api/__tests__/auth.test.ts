@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 import { ApiError } from "@/api/ApiError";
-import { changePassword, login, register } from "@/api/auth";
+import { changePassword, login, register, resetPassword } from "@/api/auth";
 
 const mockUser: { email: string | null } = { email: "anna@example.com" };
 const mockReauthenticate = jest.fn<(...args: unknown[]) => Promise<void>>();
@@ -12,13 +12,14 @@ const mockSignIn = jest.fn<(...args: unknown[]) => Promise<{ user: typeof mockNe
 const mockDeleteUser = jest.fn<(...args: unknown[]) => Promise<void>>();
 const mockSignOut = jest.fn<(...args: unknown[]) => Promise<void>>();
 const mockCommit = jest.fn<() => Promise<void>>();
+const mockSendReset = jest.fn<(...args: unknown[]) => Promise<void>>();
 const mockGetDoc = jest.fn<(...args: unknown[]) => Promise<unknown>>();
 
 // Only the parts of Firebase changePassword touches; the real SDK would need a project.
 jest.mock("@/api/firebase", () => ({
   ...jest.requireActual<typeof import("@/api/errors")>("@/api/errors"),
   db: {},
-  auth: { authStateReady: () => Promise.resolve(), get currentUser() { return mockUser; } },
+  auth: { authStateReady: () => Promise.resolve(), get currentUser() { return mockUser; }, languageCode: null },
 }));
 jest.mock("firebase/auth", () => ({
   EmailAuthProvider: { credential: (email: string, password: string) => ({ email, password }) },
@@ -28,6 +29,7 @@ jest.mock("firebase/auth", () => ({
   signInWithEmailAndPassword: (...args: unknown[]) => mockSignIn(...args),
   deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
   signOut: (...args: unknown[]) => mockSignOut(...args),
+  sendPasswordResetEmail: (...args: unknown[]) => mockSendReset(...args),
 }));
 jest.mock("firebase/firestore", () => ({
   doc: (_db: unknown, ...path: string[]) => path.join("/"),
@@ -139,5 +141,21 @@ describe("login", () => {
     mockGetDoc.mockRejectedValue({ code: "unavailable" });
     expect(await errorKey(login("anna@example.com", "hemligt1"))).toBe("errors.offline");
     expect(mockDeleteUser).not.toHaveBeenCalled();
+  });
+});
+
+describe("resetPassword", () => {
+  beforeEach(() => {
+    mockSendReset.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("sends the email in the given language", async () => {
+    await resetPassword(" anna@example.com ", "sv");
+    expect(mockSendReset).toHaveBeenCalledWith(expect.objectContaining({ languageCode: "sv" }), "anna@example.com");
+  });
+
+  it("says when the address can't be one", async () => {
+    mockSendReset.mockRejectedValueOnce({ code: "auth/invalid-email" });
+    expect(await errorKey(resetPassword("anna", "sv"))).toBe("errors.invalidEmail");
   });
 });

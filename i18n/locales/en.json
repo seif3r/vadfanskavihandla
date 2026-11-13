@@ -9,7 +9,10 @@
     "register": "Create account",
     "switchToRegister": "No account? Create one",
     "switchToLogin": "Already have an account? Log in",
-    "nameRequired": "Enter your name"
+    "nameRequired": "Enter your name",
+    "forgotPassword": "Forgot your password?",
+    "emailRequired": "Type your email first",
+    "resetSent": "If {{email}} has an account, we've sent it a link for choosing a new password. Check your spam folder too."
   },
   "list": {
     "title": "Shopping list",

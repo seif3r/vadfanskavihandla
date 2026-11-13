@@ -9,7 +9,10 @@
     "register": "Skapa konto",
     "switchToRegister": "Inget konto? Skapa ett",
     "switchToLogin": "Har du redan ett konto? Logga in",
-    "nameRequired": "Skriv ditt namn"
+    "nameRequired": "Skriv ditt namn",
+    "forgotPassword": "Glömt lösenordet?",
+    "emailRequired": "Skriv din e-post först",
+    "resetSent": "Om {{email}} har ett konto har vi skickat en länk dit för att välja ett nytt lösenord. Titta även i skräpposten."
   },
   "list": {
     "title": "Inköpslista",

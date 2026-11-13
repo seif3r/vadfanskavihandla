@@ -7,6 +7,7 @@ import {
   deleteUser,
   EmailAuthProvider,
   reauthenticateWithCredential,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   updatePassword,
@@ -94,6 +95,13 @@ export async function changePassword(currentPassword: string, newPassword: strin
   } catch (error) {
     throw toApiError(error);
   }
+}
+
+// Emails a link for choosing a new password, in the given language. Firebase doesn't say whether
+// the address has an account (so nobody can find out who uses the app), so neither does this.
+export async function resetPassword(email: string, language: string): Promise<void> {
+  auth.languageCode = language;
+  await withApiError(() => sendPasswordResetEmail(auth, email.trim()));
 }
 
 // Ends the Firebase session, including the one it has stored on the device.
