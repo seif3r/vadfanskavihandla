@@ -35,8 +35,7 @@ jest.mock("@/api/items", () => ({
 }));
 jest.mock("@/helpers/notifications", () => ({ canReceivePush: false, showNotification: jest.fn() }));
 
-function setup() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: Infinity } } });
+function setup(queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: Infinity } } })) {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
@@ -146,6 +145,36 @@ describe("useLiveUpdates", () => {
       expect(showNotification).toHaveBeenCalledTimes(1);
       wait(1_000);
       expect(showNotification).toHaveBeenLastCalledWith("ICA", "Bob removed an item");
+    });
+  });
+
+  describe("category memory", () => {
+    const milk = { id: "i1", listId: "l1", name: "Mjölk", done: false, addedBy: "bob", category: "dairy" };
+    const client = () => new QueryClient({ defaultOptions: { queries: { gcTime: Infinity } } });
+
+    it("remembers a category someone else just chose", () => {
+      const queryClient = client();
+      queryClient.setQueryData(["knownItems", "l1"], [{ name: "mjölk", category: "drinks" }]);
+      setup(queryClient);
+      act(() => mockItemListeners[0].onChange([], []));
+      act(() => mockItemListeners[0].onChange([milk], []));
+      expect(queryClient.getQueryData(["knownItems", "l1"])).toEqual([{ name: "Mjölk", category: "dairy" }]);
+    });
+
+    it("doesn't let the items already on a list overwrite the memory", () => {
+      const queryClient = client();
+      queryClient.setQueryData(["knownItems", "l1"], [{ name: "Mjölk", category: "drinks" }]);
+      setup(queryClient);
+      act(() => mockItemListeners[0].onChange([milk], []));
+      expect(queryClient.getQueryData(["knownItems", "l1"])).toEqual([{ name: "Mjölk", category: "drinks" }]);
+    });
+
+    it("leaves a memory that isn't loaded yet alone", () => {
+      const queryClient = client();
+      setup(queryClient);
+      act(() => mockItemListeners[0].onChange([], []));
+      act(() => mockItemListeners[0].onChange([milk], []));
+      expect(queryClient.getQueryData(["knownItems", "l1"])).toBeUndefined();
     });
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import { cleanName, itemKey, sortItems } from "@/helpers/list";
+import { categoryChanges, cleanName, itemKey, rememberCategory, sortItems } from "@/helpers/list";
 import { Item } from "@/types/models";
 
 const item = (id: string, extra: Partial<Item> = {}): Item => ({
@@ -57,5 +57,40 @@ describe("sortItems", () => {
     const items = [item("a", { done: true }), item("b")];
     sortItems(items);
     expect(items.map((i) => i.id)).toEqual(["a", "b"]);
+  });
+});
+
+describe("rememberCategory", () => {
+  it("replaces what's remembered for the same name, in any case", () => {
+    const known = [{ name: "Mjölk", category: "dairy" as const }, { name: "Bröd", category: "bread" as const }];
+    expect(rememberCategory(known, "mjölk ", "drinks")).toEqual([
+      { name: "Bröd", category: "bread" },
+      { name: "mjölk ", category: "drinks" },
+    ]);
+  });
+  it("adds a name it hasn't seen", () => {
+    expect(rememberCategory([], "Ost", "dairy")).toEqual([{ name: "Ost", category: "dairy" }]);
+  });
+});
+
+describe("categoryChanges", () => {
+  const milk = item("i1", { name: "Mjölk", category: "dairy" });
+
+  it("finds new items with a category", () => {
+    expect(categoryChanges([], [milk])).toEqual([milk]);
+  });
+  it("finds items whose name or category changed", () => {
+    const renamed = { ...milk, name: "Filmjölk" };
+    const recategorized = { ...milk, category: "drinks" as const };
+    expect(categoryChanges([milk], [renamed])).toEqual([renamed]);
+    expect(categoryChanges([milk], [recategorized])).toEqual([recategorized]);
+  });
+  it("skips unchanged items, items without a category, and other changes", () => {
+    const bread = item("i2", { name: "Bröd" });
+    expect(categoryChanges([milk], [milk, bread])).toEqual([]);
+    expect(categoryChanges([milk], [{ ...milk, done: true }])).toEqual([]);
+  });
+  it("finds nothing on the first snapshot", () => {
+    expect(categoryChanges(undefined, [milk])).toEqual([]);
   });
 });

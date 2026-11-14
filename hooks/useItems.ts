@@ -5,7 +5,7 @@ import { ApiError } from "@/api/ApiError";
 import { addItem, getItems, removeDone, setAllDone, toggleItem, updateItem } from "@/api/items";
 import { useAuth } from "@/context/AuthContext";
 import { EditItemRequest, NewItem } from "@/types/api";
-import { itemKey } from "@/helpers/list";
+import { rememberCategory } from "@/helpers/list";
 import { Item, KnownItem } from "@/types/models";
 
 // Items for one list. No refetch after changes: useLiveUpdates writes every change
@@ -23,10 +23,7 @@ export function useItems(listId: string | undefined) {
   // Remember a category locally too, so the next add of the same name suggests it.
   const remember = (name: string, category: Item["category"]) => {
     if (!category) return;
-    queryClient.setQueryData<KnownItem[]>(["knownItems", listId], (old = []) => [
-      ...old.filter((known) => itemKey(known.name) !== itemKey(name)),
-      { name, category },
-    ]);
+    queryClient.setQueryData<KnownItem[]>(["knownItems", listId], (old = []) => rememberCategory(old, name, category));
   };
 
   const itemsQuery = useQuery({

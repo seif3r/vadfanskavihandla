@@ -12,7 +12,8 @@ import { NOTIFICATION_DELAY_SECONDS } from "@/constants/limits";
 import { useLists } from "@/hooks/useLists";
 import { memberKey } from "@/helpers/groups";
 import { canReceivePush, showNotification } from "@/helpers/notifications";
-import { Group, ItemChange, PendingNotification } from "@/types/models";
+import { categoryChanges, rememberCategory } from "@/helpers/list";
+import { Group, Item, ItemChange, KnownItem, PendingNotification } from "@/types/models";
 
 // Same as the server: a person's changes to a list are collected until they've been quiet for
 // NOTIFICATION_DELAY_SECONDS (per type), then shown as one notification.
@@ -129,7 +130,17 @@ export function useLiveUpdates(): ApiError | null {
     const stops = listIds.split(",").map((listId) =>
       subscribeToItems(listId, userId, (items, changes) => {
         delivered(`items:${listId}`);
+        const previous = queryClient.getQueryData<Item[]>(["items", listId]);
         queryClient.setQueryData(["items", listId], items);
+        // Categories others just chose (added or edited) go into the list's memory, so typing the
+        // same name here suggests them without loading the memory again. A memory that isn't
+        // loaded yet is left alone: it loads complete when the list is opened.
+        const chosen = categoryChanges(previous, items);
+        if (chosen.length > 0 && queryClient.getQueryData(["knownItems", listId])) {
+          queryClient.setQueryData<KnownItem[]>(["knownItems", listId], (known = []) =>
+            chosen.reduce((all, item) => rememberCategory(all, item.name, item.category), known),
+          );
+        }
         changes.forEach((change) => notify(change));
       }, failed(`items:${listId}`)),
     );
