@@ -55,9 +55,11 @@ describe("deleteAccount", () => {
   });
 
   it("deletes the user's documents and their login", async () => {
+    await db.doc(`users/${ALICE}/seen/list1`).set({listId: "list1"});
     await deleteAs(ALICE);
     expect(await exists(`users/${ALICE}`)).toBe(false);
     expect(await exists(`users/${ALICE}/pushTokens/t1`)).toBe(false);
+    expect(await exists(`users/${ALICE}/seen/list1`)).toBe(false);
     expect(await exists(`profiles/${ALICE}`)).toBe(false);
     expect(mockDeleteUser).toHaveBeenCalledWith(ALICE);
     // Other people are untouched.

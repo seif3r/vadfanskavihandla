@@ -10,7 +10,8 @@ import {
   serverTimestamp, updateDoc, where, WriteBatch, writeBatch,
 } from "firebase/firestore";
 export const toItem = (snap: DocumentSnapshot): Item => {
-  const data = snap.data()!;
+  // "estimate": a new item's createdAt until the server has set it.
+  const data = snap.data({ serverTimestamps: "estimate" })!;
   return {
     id: snap.id,
     listId: data.listId,
@@ -19,6 +20,7 @@ export const toItem = (snap: DocumentSnapshot): Item => {
     addedBy: data.addedBy,
     amount: data.amount,
     category: data.category,
+    createdAt: data.createdAt?.toMillis(),
   };
 };
 // Oldest first: sortItems keeps that order within each category.

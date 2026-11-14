@@ -26,6 +26,9 @@ beforeEach(async () => {
   await db.doc("lists/other").set({name: "Other", groupId: "elsewhere"});
   for (const listId of [LIST, "other"]) {
     await db.doc(`items/${listId}-item`).set({listId, name: "Mjölk"});
+    for (const uid of ["a", "b"]) {
+      await db.doc(`users/${uid}/seen/${listId}`).set({listId, itemIds: []});
+    }
     await db.doc(`lists/${listId}/knownItems/mjölk`).set(
       {name: "Mjölk", category: "dairy"});
     await db.doc(`pendingNotifications/${listId}_a_itemAdded`).set({listId});
@@ -44,6 +47,10 @@ describe("cleanUpList", () => {
     const batch = await db.doc(`pendingNotifications/${LIST}_a_itemAdded`)
       .get();
     expect(batch.exists).toBe(false);
+    // Every member's record of what they've seen on it.
+    expect(await count("users/a/seen")).toBe(1);
+    expect(await count("users/b/seen")).toBe(1);
+    expect((await db.doc(`users/a/seen/${LIST}`).get()).exists).toBe(false);
   });
 
   it("leaves other lists alone", async () => {

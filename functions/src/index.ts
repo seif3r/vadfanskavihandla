@@ -389,6 +389,9 @@ export const cleanUpList = onDocumentDeleted(
     await deleteWhere(db.collection("items").where("listId", "==", listId));
     await deleteWhere(
       db.collection("pendingNotifications").where("listId", "==", listId));
+    // Everyone's record of which items they've seen (users/{uid}/seen).
+    await deleteWhere(
+      db.collectionGroup("seen").where("listId", "==", listId));
   },
 );
 

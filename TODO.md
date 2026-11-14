@@ -2,7 +2,7 @@
 
 ## Mindre funktioner
 
-- [ ] Se hur många saker som ligger i de olika listorna, inklusive hur många av dem som är osedda
+- [x] Se hur många saker som ligger i de olika listorna, inklusive hur många av dem som är osedda
   - Var: antal (totalt + osedda) i listöversikten; bara en "uppdaterad"-markering på flikarna.
   - Antal = alla varor i listan, avbockade inräknade.
   - Osedd = tillagd av någon annan än jag. Blir sedd när den har scrollats fram på skärmen

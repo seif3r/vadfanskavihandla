@@ -2,7 +2,7 @@ import { ReactNode, Ref } from "react";
 import { StyleProp, TextInput, TextInputProps, TextStyle } from "react-native";
 
 import { ApiError } from "@/api/ApiError";
-import { Category, Group, Item, Member, ShoppingList } from "@/types/models";
+import { Category, Group, Item, ListCount, Member, ShoppingList } from "@/types/models";
 
 export interface ButtonProps {
   value: string;
@@ -43,6 +43,7 @@ export interface ItemRowProps {
   onEdit: () => void;
   // The item being edited in the input bar is highlighted.
   isEditing?: boolean;
+  onLayout?: (layout: RowLayout) => void;
   // The first row in a card has no divider line above it.
   isFirst?: boolean;
 }
@@ -50,6 +51,8 @@ export interface ItemRowProps {
 export interface ListButtonProps {
   list: ShoppingList;
   groupName?: string;
+  // Another of the user's lists has items that are new to them: shown as a dot.
+  hasNewElsewhere?: boolean;
   onPress: () => void;
 }
 
@@ -58,6 +61,8 @@ export interface ItemSectionProps {
   onToggle: (itemId: string) => void;
   onEdit: (item: Item) => void;
   editingId?: string;
+  // Where each row is, relative to whatever the section sits in (the scrolled content).
+  onRowsLayout?: (rows: Record<string, RowLayout>) => void;
   // Shown when there are no items.
   emptyText?: string;
 }
@@ -107,6 +112,8 @@ export interface SettingSwitchProps {
 
 export interface ListRowProps {
   list: ShoppingList;
+  // Left out until the list's items have loaded.
+  count?: ListCount;
   // The list that's open on the home screen.
   isActive?: boolean;
   onPress?: () => void;
@@ -152,6 +159,7 @@ export interface GroupListsProps {
   onCreate: (name: string) => void;
   onDelete: (list: ShoppingList) => void;
   isCreating: boolean;
+  counts: Record<string, ListCount>;
 }
 
 export interface GroupCardProps {
@@ -191,4 +199,10 @@ export interface InputDraft {
   category: Category | undefined;
   isCategoryPicked: boolean;
   showOptions: boolean;
+}
+
+// Where an item row is, in the scrolled content of the list screen.
+export interface RowLayout {
+  y: number;
+  height: number;
 }

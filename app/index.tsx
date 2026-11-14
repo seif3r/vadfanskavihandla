@@ -2,7 +2,8 @@ import { useHeaderHeight } from "expo-router/react-navigation";
 import { useRouter } from "expo-router";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import {
-  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, KeyboardAvoidingView, NativeScrollEvent, NativeSyntheticEvent, Platform, ScrollView, StyleSheet,
+  Text, TextInput, View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -26,9 +27,13 @@ import { useGroups } from "@/hooks/useGroups";
 import { useActiveList } from "@/hooks/useActiveList";
 import { useKnownItems } from "@/hooks/useKnownItems";
 import { useKeyboardVisible } from "@/hooks/useKeyboardVisible";
+import { useLists } from "@/hooks/useLists";
+import { useListCounts, useMarkSeen, useSeen } from "@/hooks/useSeen";
+import { useAuth } from "@/context/AuthContext";
+import { unseenItems, visibleItemIds } from "@/helpers/seen";
 import { useLiveStatus } from "@/context/LiveStatusContext";
 import { Category, Item } from "@/types/models";
-import { InputDraft } from "@/types/components";
+import { InputDraft, RowLayout } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
 
 export default function Index() {
@@ -53,6 +58,30 @@ export default function Index() {
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
   const isKeyboardVisible = useKeyboardVisible();
+  const { user } = useAuth();
+  const { lists } = useLists();
+  const counts = useListCounts(lists);
+  const hasNewElsewhere = lists.some((list) => list.id !== activeList?.id && (counts[list.id]?.unseen ?? 0) > 0);
+
+  // New items count as seen once their rows have been on screen. What's on screen depends on
+  // where the rows are, how far the list is scrolled and how tall it is; any of them changing
+  // checks again.
+  const markSeen = useMarkSeen(activeList?.id);
+  const view = useRef<{ rows: Record<string, RowLayout>; scrollY: number; height: number }>(
+    { rows: {}, scrollY: 0, height: 0 },
+  );
+  const checkVisible = () => markSeen(visibleItemIds(view.current.rows, view.current.scrollY, view.current.height));
+  const onScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    view.current.scrollY = event.nativeEvent.contentOffset.y;
+    checkVisible();
+  };
+  // Also when new items arrive or the seen state loads, for rows that are already on screen.
+  const seen = useSeen();
+  const unseenIds = unseenItems(items, activeList && seen?.[activeList.id], user?.id).map((item) => item.id).join(",");
+  const onUnseenChange = useEffectEvent(checkVisible);
+  useEffect(() => {
+    if (unseenIds) onUnseenChange();
+  }, [unseenIds]);
   const inputRef = useRef<TextInput>(null);
   // The item being edited in the input bar, and what was typed there before, which comes back
   // when the edit is saved or cancelled.
@@ -163,6 +192,7 @@ export default function Index() {
       <ListButton
         list={activeList}
         groupName={activeGroup && groupName(activeGroup, t)}
+        hasNewElsewhere={hasNewElsewhere}
         onPress={() => router.push("/lists")}
       />
       {liveError && (
@@ -176,7 +206,21 @@ export default function Index() {
       />
       {/* "handled": checking off or editing works with the keyboard open, without a first tap
           that only closes it. */}
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={200}
+        onScroll={onScroll}
+        // Scroll events are throttled, so the position where scrolling stops may not have been
+        // reported yet.
+        onScrollEndDrag={onScroll}
+        onMomentumScrollEnd={onScroll}
+        onLayout={(event) => {
+          view.current.height = event.nativeEvent.layout.height;
+          checkVisible();
+        }}
+      >
         {isLoadingItems ? (
           <ActivityIndicator />
         ) : (
@@ -186,6 +230,10 @@ export default function Index() {
             onEdit={startEdit}
             editingId={editingId}
             emptyText={t("list.noItems")}
+            onRowsLayout={(rows) => {
+              view.current.rows = rows;
+              checkVisible();
+            }}
           />
         )}
       </ScrollView>

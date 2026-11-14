@@ -54,6 +54,11 @@
     "confirmDelete": "Ta bort?",
     "noGroups": "Listor hör till en grupp: skapa eller gå med i en först.",
     "personal": "Mina listor",
+    "itemCount_one": "{{count}} vara",
+    "itemCount_other": "{{count}} varor",
+    "newCount_one": "{{count}} ny",
+    "newCount_other": "{{count}} nya",
+    "newElsewhere": "nya varor i andra listor",
     "manageGroups": "Grupper"
   },
   "join": {

@@ -18,6 +18,12 @@ jest.mock("@/hooks/useActiveList", () => ({
   useActiveList: () => ({ activeList: { id: "l1", name: "ICA", groupId: "g1", ownerId: "anna" }, isLoading: false }),
 }));
 jest.mock("@/hooks/useGroups", () => ({ useGroups: () => ({ groups: [] }) }));
+jest.mock("@/hooks/useLists", () => ({ useLists: () => ({ lists: [] }) }));
+jest.mock("@/hooks/useSeen", () => ({
+  useSeen: () => ({}),
+  useListCounts: () => ({}),
+  useMarkSeen: () => () => {},
+}));
 jest.mock("@/hooks/useKnownItems", () => ({ useKnownItems: () => ({ categoryFor: () => undefined }) }));
 jest.mock("@/hooks/useItems", () => ({
   useItems: () => ({

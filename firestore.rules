@@ -56,6 +56,9 @@ service cloud.firestore {
         && item.createdAt == request.time;
     }
 
+    // Pruned to the items still on the list when saved, so it never grows past the list.
+    function validSeenIds(ids) { return ids is list && ids.size() <= 1000; }
+
     // Settings match UserSettings in types/models.ts. Only the settings a write changes are
     // checked, so accounts saved with an older shape can still change the others.
     function validNotifications(n) {
@@ -86,6 +89,22 @@ service cloud.firestore {
         && validPersonName(request.resource.data.name)
         && (!('settings' in changes())
             || validSettings(request.resource.data.settings, resource.data.get('settings', {})));
+
+      // Which items on a list this user has seen (useSeen): the ones added by others after
+      // `since` and not in itemIds are "new". Their own; nobody else can read it. Deleted with the
+      // account (deleteAccount) and with the list (cleanUpList).
+      match /seen/{listId} {
+        allow read, delete: if signedIn() && uid() == userId;
+        allow create: if signedIn() && uid() == userId
+          && request.resource.data.keys().hasOnly(['listId', 'since', 'itemIds'])
+          && request.resource.data.listId == listId
+          && request.resource.data.since == request.time
+          && validSeenIds(request.resource.data.itemIds);
+        // Only the ids change: `since` is when tracking started, so moving it would hide items.
+        allow update: if signedIn() && uid() == userId
+          && changes().hasOnly(['itemIds'])
+          && validSeenIds(request.resource.data.itemIds);
+      }
 
       // One document per device, named by its Expo push token. Only installed Android/iOS
       // builds get push, so web never writes here.
