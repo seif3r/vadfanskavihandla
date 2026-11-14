@@ -51,9 +51,10 @@ describe("functions/ matches constants/limits.ts", () => {
     expect(Number(days)).toBe(INVITE_LIFETIME_DAYS);
   });
 
-  it("waits as long as the app before notifying", () => {
-    const seconds = functionsSource.match(/const DELAY_SECONDS = (\d+);/)?.[1];
-    expect(Number(seconds)).toBe(NOTIFICATION_DELAY_SECONDS);
+  it("waits as long as the app before notifying, per type", () => {
+    const block = functionsSource.match(/const DELAY_SECONDS[^{]*{([^}]*)}/)?.[1] ?? "";
+    const seconds = Object.fromEntries([...block.matchAll(/(\w+): (\d+)/g)].map((m) => [m[1], Number(m[2])]));
+    expect(seconds).toEqual(NOTIFICATION_DELAY_SECONDS);
   });
 
   it("runs in the region the app calls", () => {

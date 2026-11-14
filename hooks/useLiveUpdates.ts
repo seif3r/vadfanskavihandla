@@ -12,11 +12,11 @@ import { NOTIFICATION_DELAY_SECONDS } from "@/constants/limits";
 import { useLists } from "@/hooks/useLists";
 import { memberKey } from "@/helpers/groups";
 import { canReceivePush, showNotification } from "@/helpers/notifications";
-import { Group, ItemChange, PendingNotification } from "@/types/models";
+import { categoryChanges, rememberCategory } from "@/helpers/list";
+import { Group, Item, ItemChange, KnownItem, PendingNotification } from "@/types/models";
 
-// Same as the server: a person's changes to a list are collected until they've been quiet for a minute,
-// then shown as one notification.
-const DELAY_MS = NOTIFICATION_DELAY_SECONDS * 1000;
+// Same as the server: a person's changes to a list are collected until they've been quiet for
+// NOTIFICATION_DELAY_SECONDS (per type), then shown as one notification.
 // A listener that failed is stopped for good, so all of them are started again after this long.
 export const LIVE_RETRY_MS = 15 * 1000;
 
@@ -65,11 +65,11 @@ export function useLiveUpdates(): ApiError | null {
   const show = useEffectEvent((batch: PendingNotification) => {
     const who = members?.find((m) => m.id === batch.userId)?.name ?? "";
     const listName = lists.find((l) => l.id === batch.listId)?.name ?? "";
-    const names = [...batch.items.values()];
+    // Who and whether it was one item, never which, same as the push from the server.
     const body =
-      names.length === 1
-        ? t(`notifications.${batch.type}`, { user: who, item: names[0] })
-        : t(`notifications.${batch.type}Many`, { user: who, count: names.length, items: names.join(", ") });
+      batch.itemIds.size === 1
+        ? t(`notifications.${batch.type}`, { user: who })
+        : t(`notifications.${batch.type}Many`, { user: who });
     showNotification(listName, body);
   });
 
@@ -82,16 +82,16 @@ export function useLiveUpdates(): ApiError | null {
       listId: change.item.listId,
       userId: change.userId,
       type: change.type,
-      items: new Map(),
+      itemIds: new Set(),
       timer: undefined,
     };
-    batch.items.set(change.item.id, change.item.name);
-    // Every change restarts the minute.
+    batch.itemIds.add(change.item.id);
+    // Every change restarts the wait.
     clearTimeout(batch.timer);
     batch.timer = setTimeout(() => {
       pending.current.delete(key);
       show(batch);
-    }, DELAY_MS);
+    }, NOTIFICATION_DELAY_SECONDS[change.type] * 1000);
     pending.current.set(key, batch);
   });
 
@@ -130,7 +130,17 @@ export function useLiveUpdates(): ApiError | null {
     const stops = listIds.split(",").map((listId) =>
       subscribeToItems(listId, userId, (items, changes) => {
         delivered(`items:${listId}`);
+        const previous = queryClient.getQueryData<Item[]>(["items", listId]);
         queryClient.setQueryData(["items", listId], items);
+        // Categories others just chose (added or edited) go into the list's memory, so typing the
+        // same name here suggests them without loading the memory again. A memory that isn't
+        // loaded yet is left alone: it loads complete when the list is opened.
+        const chosen = categoryChanges(previous, items);
+        if (chosen.length > 0 && queryClient.getQueryData(["knownItems", listId])) {
+          queryClient.setQueryData<KnownItem[]>(["knownItems", listId], (known = []) =>
+            chosen.reduce((all, item) => rememberCategory(all, item.name, item.category), known),
+          );
+        }
         changes.forEach((change) => notify(change));
       }, failed(`items:${listId}`)),
     );

@@ -4,9 +4,9 @@
  * on. Checking items off is personal and sends nothing.
  *
  * Changes are not pushed one by one: a person's changes to a list are
- * collected until they've been quiet for a minute and sent as one
- * notification ("Anna added 3 items: ..."), so a shopping trip doesn't
- * buzz everyone's phone per item.
+ * collected until they've been quiet for a while (2 minutes for adds, 5 for
+ * removals) and sent as one notification ("Anna added items"), so a
+ * shopping trip doesn't buzz everyone's phone per item.
  *
  * Also cleans up after deletes: the app only deletes a group or list
  * document, and everything under it is deleted here, with no limit on how
@@ -41,16 +41,20 @@ initializeApp();
 // reacts to a household's taps.
 const region = "europe-north1";
 // Cloud Tasks isn't offered in either Nordic region, so the queue and the
-// function it calls live in Belgium. A push that waits a minute anyway
+// function it calls live in Belgium. A push that waits minutes anyway
 // doesn't notice the extra distance.
 const tasksRegion = "europe-west1";
 const MAX_INSTANCES = 5;
 setGlobalOptions({region, maxInstances: MAX_INSTANCES});
 const db = getFirestore();
 
-// Same number as NOTIFICATION_DELAY_SECONDS in the app's constants/limits.ts,
-// which shows notifications in-app on web and in Expo Go.
-const DELAY_SECONDS = 60;
+// Same numbers as NOTIFICATION_DELAY_SECONDS in the app's constants/limits.ts,
+// which shows notifications in-app on web and in Expo Go. Removals wait
+// longer: they're mostly someone clearing what they bought.
+const DELAY_SECONDS: Record<ChangeType, number> = {
+  itemAdded: 120,
+  itemRemoved: 300,
+};
 // How often Cloud Tasks tries a send that failed, and how long it waits.
 const SEND_ATTEMPTS = 3;
 const SEND_MIN_BACKOFF_SECONDS = 30;
@@ -80,7 +84,7 @@ const texts: Record<Language, Texts> = {
 
 /**
  * Fills in a notification text. One pass over the template, with a function
- * as the replacement: a name containing "{{item}}" or "$&" stays as written.
+ * as the replacement: a name containing "{{user}}" or "$&" stays as written.
  * @param {string} template The text with {{placeholders}}.
  * @param {Record<string, string>} values What each placeholder becomes.
  * @return {string} The finished text.
@@ -218,17 +222,22 @@ export const notifyOnItemChange = onDocumentWrittenWithAuthContext(
         listId: item.listId,
         actorId,
         type,
-        items: {[event.params.itemId]: item.name},
+        // Only the id: the notification doesn't name items, so names
+        // aren't kept here either.
+        items: {[event.params.itemId]: true},
         seq: next,
       }, {merge: true});
       return next;
     });
 
-    // Every change schedules a send a minute out. Earlier tasks see a newer
-    // seq and do nothing, so it goes out a minute after the last change.
+    // Every change schedules a send DELAY_SECONDS out. Earlier tasks see a
+    // newer seq and do nothing, so it goes out that long after the last
+    // change.
     const queue = getFunctions().taskQueue<BatchTask>(
       `locations/${tasksRegion}/functions/sendBatchedNotification`);
-    await queue.enqueue({batchId, seq}, {scheduleDelaySeconds: DELAY_SECONDS});
+    await queue.enqueue({batchId, seq}, {
+      scheduleDelaySeconds: DELAY_SECONDS[type],
+    });
   },
 );
 
@@ -275,8 +284,8 @@ export const sendBatchedNotification = onTaskDispatched<BatchTask>(
  */
 async function sendPush(batch: PendingBatch): Promise<void> {
   const {listId, actorId, type} = batch;
-  const names = Object.values(batch.items ?? {});
-  if (names.length === 0) return;
+  const count = Object.keys(batch.items ?? {}).length;
+  if (count === 0) return;
 
   const list = await db.doc(`lists/${listId}`).get();
   if (!list.exists) return;
@@ -293,15 +302,12 @@ async function sendPush(batch: PendingBatch): Promise<void> {
     if (!user.get(`settings.notifications.${type}`)) continue;
     const language: Language =
       user.get("settings.language") === "en" ? "en" : "sv";
-    const template = names.length === 1 ?
+    // Says who and whether it was one item, never which: what's on the list
+    // is for the list itself.
+    const template = count === 1 ?
       texts[language].notifications[type] :
       texts[language].notifications[`${type}Many`];
-    const body = fillTemplate(template, {
-      user: actor.get("name") ?? "",
-      item: names[0],
-      count: String(names.length),
-      items: names.join(", "),
-    });
+    const body = fillTemplate(template, {user: actor.get("name") ?? ""});
     const tokens = await db.collection(`users/${userId}/pushTokens`).get();
     tokens.forEach((token) => sends.push({
       userId,

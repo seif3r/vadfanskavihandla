@@ -64,17 +64,29 @@ beforeEach(async () => {
 describe("notifyOnItemChange", () => {
   const batchId = `${LIST}_${ALICE}_itemAdded`;
 
-  it("collects adds and schedules a send a minute later", async () => {
+  it("collects adds and schedules a send two minutes later", async () => {
     await itemChanged("i1", {after: item("Mjölk")});
     await itemChanged("i2", {after: item("Bröd")});
 
     expect(await pending(batchId)).toMatchObject({
       listId: LIST, actorId: ALICE, type: "itemAdded", seq: 2,
-      items: {i1: "Mjölk", i2: "Bröd"},
+      items: {i1: true, i2: true},
     });
     expect(mockEnqueue).toHaveBeenCalledTimes(2);
     expect(mockEnqueue).toHaveBeenLastCalledWith(
-      {batchId, seq: 2}, {scheduleDelaySeconds: 60});
+      {batchId, seq: 2}, {scheduleDelaySeconds: 120});
+  });
+
+  it("waits five minutes before sending removals", async () => {
+    await itemChanged("i1", {before: item("Mjölk"), authId: ALICE});
+    expect(mockEnqueue).toHaveBeenCalledWith(
+      {batchId: `${LIST}_${ALICE}_itemRemoved`, seq: 1},
+      {scheduleDelaySeconds: 300});
+  });
+
+  it("doesn't keep item names", async () => {
+    await itemChanged("i1", {after: item("Mjölk")});
+    expect(JSON.stringify(await pending(batchId))).not.toContain("Mjölk");
   });
 
   it("ignores checking items off", async () => {
@@ -88,7 +100,7 @@ describe("notifyOnItemChange", () => {
   it("credits deletes to whoever was signed in", async () => {
     await itemChanged("i1", {before: item("Mjölk"), authId: BOB});
     expect(await pending(`${LIST}_${BOB}_itemRemoved`)).toMatchObject(
-      {actorId: BOB, items: {i1: "Mjölk"}});
+      {actorId: BOB, items: {i1: true}});
   });
 
   it("stays quiet about deletes made by the cleanup", async () => {
@@ -116,7 +128,7 @@ describe("sendBatchedNotification", () => {
     await db.doc(`users/${BOB}/pushTokens/${token}`).set({platform: "android"});
     await db.doc(`pendingNotifications/${batchId}`).set({
       listId: LIST, actorId: ALICE, type: "itemAdded", seq: 2,
-      items: {i1: "Mjölk", i2: "Bröd"},
+      items: {i1: true, i2: true},
     });
     fetchMock.mockResolvedValue({
       ok: true, json: async () => ({data: [{status: "ok"}]}),
@@ -129,7 +141,7 @@ describe("sendBatchedNotification", () => {
     await send(batchId, 2);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(sentMessages()).toEqual([expect.objectContaining({
-      to: token, title: "ICA", body: "Alice added 2 items: Mjölk, Bröd",
+      to: token, title: "ICA", body: "Alice added items",
     })]);
     // Emptied, so later changes start a new batch.
     expect((await pending(batchId))?.items).toBeUndefined();
@@ -142,13 +154,13 @@ describe("sendBatchedNotification", () => {
     });
     await expect(send(batchId, 2)).rejects.toThrow("503");
     expect((await pending(batchId))?.sending).toEqual(
-      {i1: "Mjölk", i2: "Bröd"});
+      {i1: true, i2: true});
 
     // Cloud Tasks runs the same task again.
     await send(batchId, 2);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)[0].body)
-      .toBe("Alice added 2 items: Mjölk, Bröd");
+      .toBe("Alice added items");
     expect((await pending(batchId))?.sending).toEqual({});
   });
 
@@ -157,7 +169,7 @@ describe("sendBatchedNotification", () => {
     await expect(send(batchId, 2)).rejects.toThrow("fetch failed");
     await send(batchId, 2);
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)[0].body)
-      .toBe("Alice added 2 items: Mjölk, Bröd");
+      .toBe("Alice added items");
   });
 
   it("lets the next batch send what a failed one didn't", async () => {
@@ -165,13 +177,13 @@ describe("sendBatchedNotification", () => {
     await expect(send(batchId, 2)).rejects.toThrow();
     // A new change arrives before the retry, so the old task stands down.
     await db.doc(`pendingNotifications/${batchId}`).update(
-      {seq: 3, items: {i3: "Ost"}});
+      {seq: 3, items: {i3: true}});
     await send(batchId, 2);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     await send(batchId, 3);
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)[0].body)
-      .toBe("Alice added 3 items: Mjölk, Bröd, Ost");
+      .toBe("Alice added items");
     expect((await pending(batchId))?.sending).toEqual({});
   });
 
@@ -183,9 +195,24 @@ describe("sendBatchedNotification", () => {
   it("writes in the recipient's language", async () => {
     await db.doc(`users/${BOB}`).update({"settings.language": "sv"});
     await db.doc(`pendingNotifications/${batchId}`).update(
-      {items: {i1: "Mjölk"}});
+      {items: {i1: true}});
     await send(batchId, 2);
-    expect(sentMessages()[0].body).toBe("Alice lade till Mjölk");
+    expect(sentMessages()[0].body).toBe("Alice lade till en vara");
+  });
+
+  it("says one item without naming it", async () => {
+    await db.doc(`pendingNotifications/${batchId}`).update(
+      {items: {i1: true}});
+    await send(batchId, 2);
+    expect(sentMessages()[0].body).toBe("Alice added an item");
+  });
+
+  it("sends batches stored with names without the names", async () => {
+    // Written by the version that kept names, still pending at deploy.
+    await db.doc(`pendingNotifications/${batchId}`).update(
+      {items: {i1: "Mjölk", i2: "Bröd"}});
+    await send(batchId, 2);
+    expect(sentMessages()[0].body).toBe("Alice added items");
   });
 
   it("does nothing when a newer change has its own task coming", async () => {

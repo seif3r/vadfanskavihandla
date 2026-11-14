@@ -7,14 +7,21 @@ import { ItemSectionProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
 
 // The items as one rounded card, with thin dividers between rows.
-export default function ItemSection({ items, onToggle, emptyText }: ItemSectionProps) {
+export default function ItemSection({ items, onToggle, onEdit, editingId, emptyText }: ItemSectionProps) {
   const styles = useThemedStyles(createStyles);
   if (items.length === 0) return emptyText ? <Text style={styles.empty}>{emptyText}</Text> : null;
 
   return (
     <View style={styles.card}>
       {items.map((item, index) => (
-        <ItemRow key={item.id} item={item} onToggle={() => onToggle(item.id)} isFirst={index === 0} />
+        <ItemRow
+          key={item.id}
+          item={item}
+          onToggle={() => onToggle(item.id)}
+          onEdit={() => onEdit(item)}
+          isEditing={item.id === editingId}
+          isFirst={index === 0}
+        />
       ))}
     </View>
   );

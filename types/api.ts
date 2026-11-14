@@ -10,6 +10,15 @@ export interface AddItemRequest {
 // What the add form sends; the list id is filled in by useItems.
 export type NewItem = Omit<AddItemRequest, "listId">;
 
+// An edit replaces all three: leaving out amount or category removes it from the item.
+export interface EditItemRequest {
+  itemId: string;
+  listId: string;
+  name: string;
+  amount?: string;
+  category?: Category;
+}
+
 // Arguments of the mutations in hooks/, which take a single object.
 export interface CreateListRequest {
   groupId: string;

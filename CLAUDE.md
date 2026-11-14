@@ -5,7 +5,7 @@
 A shared shopping list for a household. Two or more people share the same lists, see each
 other's changes live, and get a notification when someone adds or removes items. Checking an item
 off is personal and notifies nobody. A person's changes are bundled into one notification, sent
-60 seconds after their last change ("Anna added 3 items: …").
+2 minutes after their last add or 5 minutes after their last removal ("Anna added items"). Notifications never name the items.
 
 **The problem it solves:** "What do we need from the store?" lives in text messages, in someone's
 head, or on a note on the fridge. Whoever is in the store doesn't know what the other person just
@@ -77,8 +77,8 @@ new that belongs to a user must be added there.
 - **The rules also validate data.** Text lengths (item names 100, amounts 30, list and group names 50,
   person names 50; all non-empty), allowed fields, and categories (the `Category` values) are checked in
   `firestore.rules`; the same limits live in `constants/limits.ts` for the inputs' `maxLength`. Changing a limit or adding a category means changing both.
-  Items can only have `done`/`updatedBy` updated after creation, so a feature that edits items
-  (rename, change category) needs a rule change first. A list can't move to another group.
+  After creation, an item's `done`, `name`, `amount`, `category` and `updatedBy` may change (with
+  the same checks as a new item); `listId`, `addedBy` and `createdAt` never do. A list can't move to another group.
 - **Expo Go must keep working.** Native-only modules (like `expo-notifications`) are loaded through
   a helper that falls back gracefully, never imported at the top level of a screen or hook.
 - **Notifications have two paths that must behave the same.** Installed builds get push from the

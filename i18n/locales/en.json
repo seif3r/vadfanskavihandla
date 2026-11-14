@@ -29,7 +29,11 @@
     "empty": "You have no shopping lists yet.",
     "createFirst": "Create a list",
     "noItems": "The list is empty. Type something below to add it.",
-    "notLive": "Not updating right now, trying again soon. {{reason}}"
+    "notLive": "Not updating right now, trying again soon. {{reason}}",
+    "editItem": "Edit {{name}}",
+    "editing": "Editing {{name}}",
+    "save": "Save",
+    "cancelEdit": "Cancel"
   },
   "categories": {
     "produce": "Fruit & veg",
@@ -132,10 +136,10 @@
     "confirm": "Delete for good?"
   },
   "notifications": {
-    "itemAdded": "{{user}} added {{item}}",
-    "itemRemoved": "{{user}} removed {{item}}",
-    "itemAddedMany": "{{user}} added {{count}} items: {{items}}",
-    "itemRemovedMany": "{{user}} removed {{count}} items: {{items}}",
+    "itemAdded": "{{user}} added an item",
+    "itemRemoved": "{{user}} removed an item",
+    "itemAddedMany": "{{user}} added items",
+    "itemRemovedMany": "{{user}} removed items",
     "channelName": "List changes"
   },
   "loadError": {

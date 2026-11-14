@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, it } from "@jest/globals";
 import { assertFails, assertSucceeds, RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { deleteDoc, deleteField, doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 
 import { ALICE, as, BOB, createEnv, EVE, ITEM, LIST, seed } from "./setup";
 
@@ -49,15 +49,46 @@ describe("changing items", () => {
     await assertSucceeds(updateDoc(item(ALICE), { done: true, updatedBy: ALICE }));
   });
 
-  it("doesn't allow other edits", async () => {
-    await assertFails(updateDoc(item(ALICE), { name: "Fil", updatedBy: ALICE }));
+  it("lets members edit name, amount and category", async () => {
+    await assertSucceeds(updateDoc(item(ALICE), {
+      name: "Fil", amount: "2 l", category: "dairy", updatedBy: ALICE,
+    }));
+    // Taking the amount and category away again, as someone else.
+    await assertSucceeds(updateDoc(item(BOB), {
+      amount: deleteField(), category: deleteField(), updatedBy: BOB,
+    }));
+  });
+
+  it("lets checked-off items be edited", async () => {
+    await updateDoc(item(ALICE), { done: true, updatedBy: ALICE });
+    await assertSucceeds(updateDoc(item(BOB), { name: "Fil", updatedBy: BOB }));
+  });
+
+  it("checks an edit like a new item", async () => {
+    await assertFails(updateDoc(item(ALICE), { name: "", updatedBy: ALICE }));
+    await assertFails(updateDoc(item(ALICE), { name: "x".repeat(101), updatedBy: ALICE }));
+    await assertSucceeds(updateDoc(item(ALICE), { name: "x".repeat(100), updatedBy: ALICE }));
+    await assertFails(updateDoc(item(ALICE), { amount: "x".repeat(31), updatedBy: ALICE }));
+    await assertFails(updateDoc(item(ALICE), { category: "candy", updatedBy: ALICE }));
+    await assertFails(updateDoc(item(ALICE), { name: deleteField(), updatedBy: ALICE }));
+  });
+
+  it("keeps what an item was created with", async () => {
     await assertFails(updateDoc(item(ALICE), { addedBy: ALICE, updatedBy: ALICE }));
+    await assertFails(updateDoc(item(ALICE), { listId: "other", updatedBy: ALICE }));
+    await assertFails(updateDoc(item(ALICE), { createdAt: serverTimestamp(), updatedBy: ALICE }));
+    await assertFails(updateDoc(item(ALICE), { price: 10, updatedBy: ALICE }));
+  });
+
+  it("can't be done in someone else's name", async () => {
     await assertFails(updateDoc(item(ALICE), { done: true, updatedBy: BOB }));
+    await assertFails(updateDoc(item(ALICE), { name: "Fil", updatedBy: BOB }));
   });
 
   it("is denied outside the group", async () => {
     await assertFails(getDoc(item(EVE)));
     await assertFails(updateDoc(item(EVE), { done: true, updatedBy: EVE }));
+    await assertFails(updateDoc(item(EVE), { name: "Fil", updatedBy: EVE }));
     await assertFails(deleteDoc(item(EVE)));
   });
 

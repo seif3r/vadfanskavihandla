@@ -10,10 +10,13 @@ import { Item } from "@/types/models";
 const mockAddItem = jest.fn<(...args: unknown[]) => Promise<Item>>();
 const mockToggleItem = jest.fn<(...args: unknown[]) => Promise<Item>>();
 const mockRemoveDone = jest.fn<(...args: unknown[]) => Promise<void>>();
+const mockUpdateItem = jest.fn<(...args: unknown[]) => Promise<void>>();
+let mockItems: Item[] = [];
 
 jest.mock("@/context/AuthContext", () => ({ useAuth: () => ({ user: { id: "anna" } }) }));
 jest.mock("@/api/items", () => ({
-  getItems: () => Promise.resolve([]),
+  getItems: () => Promise.resolve(mockItems),
+  updateItem: (...args: unknown[]) => mockUpdateItem(...args),
   addItem: (...args: unknown[]) => mockAddItem(...args),
   toggleItem: (...args: unknown[]) => mockToggleItem(...args),
   setAllDone: () => Promise.resolve([]),
@@ -40,6 +43,41 @@ describe("useItems", () => {
     mockAddItem.mockReset().mockResolvedValue(milk);
     mockToggleItem.mockReset().mockResolvedValue(milk);
     mockRemoveDone.mockReset().mockResolvedValue(undefined);
+    mockUpdateItem.mockReset().mockResolvedValue(undefined);
+    mockItems = [];
+  });
+
+  describe("editing", () => {
+    const edit = { itemId: "i1", name: "Fil", amount: "2 l", category: "dairy" as const };
+
+    beforeEach(() => {
+      mockItems = [{ ...milk, amount: "1 l", category: "dairy" }];
+    });
+
+    it("shows the edit right away and saves it for the list", async () => {
+      let finish = () => {};
+      mockUpdateItem.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
+      const { result } = await setup();
+      act(() => result.current.editItem(edit));
+      await waitFor(() => expect(result.current.items[0]).toMatchObject({ name: "Fil", amount: "2 l" }));
+      expect(mockUpdateItem).toHaveBeenCalledWith({ ...edit, listId: "l1" }, "anna");
+      await act(async () => finish());
+    });
+
+    it("can take the amount away", async () => {
+      const { result } = await setup();
+      act(() => result.current.editItem({ itemId: "i1", name: "mjölk" }));
+      await waitFor(() => expect(result.current.items[0].amount).toBeUndefined());
+      expect(result.current.items[0].category).toBeUndefined();
+    });
+
+    it("puts the item back and reports the error when the save fails", async () => {
+      mockUpdateItem.mockRejectedValueOnce(new ApiError("errors.notAllowed"));
+      const { result } = await setup();
+      act(() => result.current.editItem(edit));
+      await waitFor(() => expect(result.current.error?.key).toBe("errors.notAllowed"));
+      expect(result.current.items[0]).toMatchObject({ name: "mjölk", amount: "1 l" });
+    });
   });
 
   it("reports a failed add and calls back so the screen can restore the text", async () => {

@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { ApiError } from "@/api/ApiError";
-import { addItem, getItems, removeDone, setAllDone, toggleItem } from "@/api/items";
+import { addItem, getItems, removeDone, setAllDone, toggleItem, updateItem } from "@/api/items";
 import { useAuth } from "@/context/AuthContext";
-import { NewItem } from "@/types/api";
-import { itemKey } from "@/helpers/list";
+import { EditItemRequest, NewItem } from "@/types/api";
+import { rememberCategory } from "@/helpers/list";
 import { Item, KnownItem } from "@/types/models";
 
 // Items for one list. No refetch after changes: useLiveUpdates writes every change
@@ -20,6 +20,12 @@ export function useItems(listId: string | undefined) {
   const onMutate = () => setFailed(null);
   const onError = (error: ApiError) => setFailed({ listId, error });
 
+  // Remember a category locally too, so the next add of the same name suggests it.
+  const remember = (name: string, category: Item["category"]) => {
+    if (!category) return;
+    queryClient.setQueryData<KnownItem[]>(["knownItems", listId], (old = []) => rememberCategory(old, name, category));
+  };
+
   const itemsQuery = useQuery({
     queryKey,
     queryFn: () => getItems(listId!),
@@ -31,14 +37,7 @@ export function useItems(listId: string | undefined) {
     mutationFn: (newItem) => addItem({ ...newItem, listId: listId! }, user!.id),
     onMutate,
     onError,
-    // Remember the category locally too, so the next add of the same name suggests it.
-    onSuccess: ({ name, category }) => {
-      if (!category) return;
-      queryClient.setQueryData<KnownItem[]>(["knownItems", listId], (old = []) => [
-        ...old.filter((known) => itemKey(known.name) !== itemKey(name)),
-        { name, category },
-      ]);
-    },
+    onSuccess: ({ name, category }) => remember(name, category),
   });
 
   // Optimistic: flips the checkbox on screen right away instead of waiting for the server,
@@ -61,6 +60,25 @@ export function useItems(listId: string | undefined) {
     },
   });
 
+  // Optimistic like toggling: the edit shows right away and is undone if the save fails.
+  const editMutation = useMutation<void, ApiError, Omit<EditItemRequest, "listId">, { previous: Item[] | undefined }>({
+    mutationFn: (edit) => updateItem({ ...edit, listId: listId! }, user!.id),
+    onMutate: async ({ itemId, name, amount, category }) => {
+      onMutate();
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Item[]>(queryKey);
+      queryClient.setQueryData<Item[]>(queryKey, (old) =>
+        old?.map((item) => (item.id === itemId ? { ...item, name, amount, category } : item)),
+      );
+      return { previous };
+    },
+    onError: (error, _edit, context) => {
+      queryClient.setQueryData(queryKey, context?.previous);
+      onError(error);
+    },
+    onSuccess: (_result, { name, category }) => remember(name, category),
+  });
+
   const setAllDoneMutation = useMutation<Item[], ApiError, boolean>({
     mutationFn: (done) => setAllDone(listId!, done, user!.id),
     onMutate,
@@ -80,6 +98,7 @@ export function useItems(listId: string | undefined) {
     addItem: (newItem: NewItem, onFailed?: () => void) => addMutation.mutate(newItem, { onError: onFailed }),
     isAdding: addMutation.isPending,
     toggleItem: toggleMutation.mutate,
+    editItem: editMutation.mutate,
     checkAll: () => setAllDoneMutation.mutate(true),
     uncheckAll: () => setAllDoneMutation.mutate(false),
     removeChecked: () => removeDoneMutation.mutate(),
