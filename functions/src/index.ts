@@ -80,7 +80,7 @@ const texts: Record<Language, Texts> = {
 
 /**
  * Fills in a notification text. One pass over the template, with a function
- * as the replacement: a name containing "{{item}}" or "$&" stays as written.
+ * as the replacement: a name containing "{{user}}" or "$&" stays as written.
  * @param {string} template The text with {{placeholders}}.
  * @param {Record<string, string>} values What each placeholder becomes.
  * @return {string} The finished text.
@@ -218,7 +218,9 @@ export const notifyOnItemChange = onDocumentWrittenWithAuthContext(
         listId: item.listId,
         actorId,
         type,
-        items: {[event.params.itemId]: item.name},
+        // Only the id: the notification doesn't name items, so names
+        // aren't kept here either.
+        items: {[event.params.itemId]: true},
         seq: next,
       }, {merge: true});
       return next;
@@ -275,8 +277,8 @@ export const sendBatchedNotification = onTaskDispatched<BatchTask>(
  */
 async function sendPush(batch: PendingBatch): Promise<void> {
   const {listId, actorId, type} = batch;
-  const names = Object.values(batch.items ?? {});
-  if (names.length === 0) return;
+  const count = Object.keys(batch.items ?? {}).length;
+  if (count === 0) return;
 
   const list = await db.doc(`lists/${listId}`).get();
   if (!list.exists) return;
@@ -293,15 +295,12 @@ async function sendPush(batch: PendingBatch): Promise<void> {
     if (!user.get(`settings.notifications.${type}`)) continue;
     const language: Language =
       user.get("settings.language") === "en" ? "en" : "sv";
-    const template = names.length === 1 ?
+    // Says who and whether it was one item, never which: what's on the list
+    // is for the list itself.
+    const template = count === 1 ?
       texts[language].notifications[type] :
       texts[language].notifications[`${type}Many`];
-    const body = fillTemplate(template, {
-      user: actor.get("name") ?? "",
-      item: names[0],
-      count: String(names.length),
-      items: names.join(", "),
-    });
+    const body = fillTemplate(template, {user: actor.get("name") ?? ""});
     const tokens = await db.collection(`users/${userId}/pushTokens`).get();
     tokens.forEach((token) => sends.push({
       userId,

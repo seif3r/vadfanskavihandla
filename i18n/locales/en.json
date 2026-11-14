@@ -132,10 +132,10 @@
     "confirm": "Delete for good?"
   },
   "notifications": {
-    "itemAdded": "{{user}} added {{item}}",
-    "itemRemoved": "{{user}} removed {{item}}",
-    "itemAddedMany": "{{user}} added {{count}} items: {{items}}",
-    "itemRemovedMany": "{{user}} removed {{count}} items: {{items}}",
+    "itemAdded": "{{user}} added an item",
+    "itemRemoved": "{{user}} removed an item",
+    "itemAddedMany": "{{user}} added items",
+    "itemRemovedMany": "{{user}} removed items",
     "channelName": "List changes"
   },
   "loadError": {

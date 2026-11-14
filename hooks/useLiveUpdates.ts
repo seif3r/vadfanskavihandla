@@ -65,11 +65,11 @@ export function useLiveUpdates(): ApiError | null {
   const show = useEffectEvent((batch: PendingNotification) => {
     const who = members?.find((m) => m.id === batch.userId)?.name ?? "";
     const listName = lists.find((l) => l.id === batch.listId)?.name ?? "";
-    const names = [...batch.items.values()];
+    // Who and whether it was one item, never which, same as the push from the server.
     const body =
-      names.length === 1
-        ? t(`notifications.${batch.type}`, { user: who, item: names[0] })
-        : t(`notifications.${batch.type}Many`, { user: who, count: names.length, items: names.join(", ") });
+      batch.itemIds.size === 1
+        ? t(`notifications.${batch.type}`, { user: who })
+        : t(`notifications.${batch.type}Many`, { user: who });
     showNotification(listName, body);
   });
 
@@ -82,10 +82,10 @@ export function useLiveUpdates(): ApiError | null {
       listId: change.item.listId,
       userId: change.userId,
       type: change.type,
-      items: new Map(),
+      itemIds: new Set(),
       timer: undefined,
     };
-    batch.items.set(change.item.id, change.item.name);
+    batch.itemIds.add(change.item.id);
     // Every change restarts the minute.
     clearTimeout(batch.timer);
     batch.timer = setTimeout(() => {

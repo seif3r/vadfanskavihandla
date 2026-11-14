@@ -96,7 +96,7 @@ export interface PendingNotification {
   listId: string;
   userId: string;
   type: ActivityType;
-  // Item id to name, so the same item changed twice counts once.
-  items: Map<string, string>;
+  // A set, so the same item changed twice counts once.
+  itemIds: Set<string>;
   timer: ReturnType<typeof setTimeout> | undefined;
 }

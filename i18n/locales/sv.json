@@ -132,10 +132,10 @@
     "confirm": "Radera för alltid?"
   },
   "notifications": {
-    "itemAdded": "{{user}} lade till {{item}}",
-    "itemRemoved": "{{user}} tog bort {{item}}",
-    "itemAddedMany": "{{user}} lade till {{count}} varor: {{items}}",
-    "itemRemovedMany": "{{user}} tog bort {{count}} varor: {{items}}",
+    "itemAdded": "{{user}} lade till en vara",
+    "itemRemoved": "{{user}} tog bort en vara",
+    "itemAddedMany": "{{user}} lade till varor",
+    "itemRemovedMany": "{{user}} tog bort varor",
     "channelName": "Ändringar i listor"
   },
   "loadError": {
