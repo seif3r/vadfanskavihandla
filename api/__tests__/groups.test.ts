@@ -31,7 +31,7 @@ jest.mock("firebase/functions", () => ({}));
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const group = (ownerId: string, memberIds: string[]): Group => ({
-  id: "g", name: "Home", ownerId, memberIds, removedMemberIds: [],
+  id: "g", name: "Home", isPersonal: false, ownerId, memberIds, removedMemberIds: [],
 });
 
 describe("leaveGroup", () => {
