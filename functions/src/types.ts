@@ -26,11 +26,12 @@ export interface PendingBatch {
   listId: string;
   actorId: string;
   type: ChangeType;
-  // Keyed by item id, so the same item changed twice counts once.
-  items: Record<string, string>;
+  // Keyed by item id, so the same item changed twice counts once. Batches
+  // written before names were dropped hold names; only the keys are read.
+  items: Record<string, true | string>;
   // Taken from items by the send, and removed once Expo has them. Left
   // behind by a send that failed, for its retry or the next batch's send.
-  sending?: Record<string, string>;
+  sending?: Record<string, true | string>;
   // Bumped by every change; only the task for the latest change sends.
   seq: number;
 }

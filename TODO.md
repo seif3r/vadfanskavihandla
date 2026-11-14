@@ -11,9 +11,9 @@
     Förslag: spara sedda varu-id:n lokalt och skriv dem till Firestore (ett dokument per
     användare och lista) med fördröjning, så det blir en skrivning per listbesök, inte per vara.
     I så fall måste dokumentet in i `cleanUpList` och `deleteAccount`.
-- [ ] Ändra notiser så att man inte ser vad som är avbockat
-  - Notiser nämner inga varor, bara person och lista:
-    "Anna tog bort varor från listan X", "Anna lade till varor i listan X".
+- [x] Ändra notiser så att man inte ser vad som är avbockat
+  - Notiser nämner inga varor. Listans namn är rubriken, texten säger vem och om det var en
+    eller flera: "Anna lade till en vara", "Anna tog bort varor".
   - Aldrig notis vid avbockning eller när en bock tas bort (så är det redan idag).
   - Ändras på båda ställena: `functions/` (push) och `hooks/useLiveUpdates.ts` (webb/Expo Go),
     plus texterna i `en.json` och `sv.json`.
