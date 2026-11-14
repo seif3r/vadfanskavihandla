@@ -82,6 +82,13 @@ describe("deleteAccount", () => {
     expect(await group(SOLO_GROUP)).toBeUndefined();
   });
 
+  it("deletes their personal group", async () => {
+    await db.doc(`groups/personal_${ALICE}`).set(
+      {personal: true, ownerId: ALICE, members: [ALICE]});
+    await deleteAs(ALICE);
+    expect(await group(`personal_${ALICE}`)).toBeUndefined();
+  });
+
   it("forgets the user in groups they were removed from", async () => {
     await db.doc(`groups/${GROUP}`).update({removedMembers: [EVE]});
     await deleteAs(EVE);

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
-import { findInviteCode, memberKey } from "@/helpers/groups";
+import { findInviteCode, groupName, memberKey, personalFirst, personalGroupId } from "@/helpers/groups";
 import { Group } from "@/types/models";
 
 const group = (memberIds: string[]): Group => ({
-  id: "g", name: "Home", ownerId: memberIds[0], memberIds, removedMemberIds: [],
+  id: "g", name: "Home", isPersonal: false, ownerId: memberIds[0], memberIds, removedMemberIds: [],
 });
 
 describe("memberKey", () => {
@@ -34,5 +34,23 @@ describe("findInviteCode", () => {
     expect(findInviteCode("abc123")).toBeNull();
     expect(findInviteCode(`${code}X`)).toBeNull();
     expect(findInviteCode("")).toBeNull();
+  });
+});
+
+describe("personal groups", () => {
+  const mine: Group = { ...group(["anna"]), id: "personal_anna", name: "", isPersonal: true };
+  const t = () => "My lists";
+
+  it("have an id made from the user's", () => {
+    expect(personalGroupId("anna")).toBe("personal_anna");
+  });
+  it("are called by the translated name, other groups by their own", () => {
+    expect(groupName(mine, t)).toBe("My lists");
+    expect(groupName(group(["anna"]), t)).toBe("Home");
+  });
+  it("come first, the rest in the order they came", () => {
+    const a = { ...group(["anna"]), id: "a" };
+    const b = { ...group(["anna"]), id: "b" };
+    expect(personalFirst([a, mine, b]).map((g) => g.id)).toEqual(["personal_anna", "a", "b"]);
   });
 });

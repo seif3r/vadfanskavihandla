@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { subscribeToLists } from "@/api/lists";
 import { ShoppingList } from "@/types/models";
 
-type Snapshot = { docs: { id: string; data: () => Record<string, unknown> }[] };
+type Snapshot = {
+  docs: { id: string; data: () => Record<string, unknown>; metadata?: { hasPendingWrites: boolean } }[];
+};
 type Listener = { query: string; onNext: (snap: Snapshot) => void; onError: (error: unknown) => void };
 const mockListeners: Listener[] = [];
 
@@ -17,14 +19,21 @@ jest.mock("@/api/queries", () => ({
   groupListsQuery: (groupId: string) => `lists of ${groupId}`,
 }));
 jest.mock("firebase/firestore", () => ({
-  onSnapshot: (query: string, onNext: Listener["onNext"], onError: Listener["onError"]) => {
+  // The options argument (includeMetadataChanges) is optional, as in Firestore.
+  onSnapshot: (query: string, ...args: unknown[]) => {
+    const [onNext, onError] = (typeof args[0] === "object" ? args.slice(1) : args) as [
+      Listener["onNext"], Listener["onError"],
+    ];
     mockListeners.push({ query, onNext, onError });
     return () => {};
   },
 }));
 
 const listener = (query: string) => mockListeners.filter((l) => l.query === query).at(-1)!;
-const groups = (...ids: string[]): Snapshot => ({ docs: ids.map((id) => ({ id, data: () => ({}) })) });
+const groups = (...ids: string[]): Snapshot => ({
+  docs: ids.map((id) => ({ id, data: () => ({}), metadata: { hasPendingWrites: id.endsWith("*") } }))
+    .map((doc) => ({ ...doc, id: doc.id.replace("*", "") })),
+});
 const lists = (groupId: string, ...names: string[]): Snapshot => ({
   docs: names.map((name) => ({ id: name, data: () => ({ name, groupId, ownerId: "anna" }) })),
 });
@@ -63,6 +72,19 @@ describe("subscribeToLists", () => {
     listener("lists of g2").onError({ code: "permission-denied" });
     expect(received.at(-1)!.map((l) => l.name)).toEqual(["ICA"]);
     expect(errors).toEqual([]);
+  });
+
+  it("waits for a group I just created to be saved before asking for its lists", () => {
+    listener("lists of g1").onNext(lists("g1", "ICA"));
+    listener("lists of g2").onNext(lists("g2"));
+    // g3 is still only on this device (written by "*"): asking the server now would be denied.
+    listener("groups of anna").onNext(groups("g1", "g2", "g3*"));
+    expect(mockListeners.some((l) => l.query === "lists of g3")).toBe(false);
+    expect(received.at(-1)!.map((l) => l.name)).toEqual(["ICA"]);
+
+    listener("groups of anna").onNext(groups("g1", "g2", "g3"));
+    listener("lists of g3").onNext(lists("g3", "Apotek"));
+    expect(received.at(-1)!.map((l) => l.name)).toEqual(["ICA", "Apotek"]);
   });
 
   it("reports a failed groups listener", () => {

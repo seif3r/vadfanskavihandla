@@ -53,6 +53,7 @@
     "delete": "Ta bort",
     "confirmDelete": "Ta bort?",
     "noGroups": "Listor hör till en grupp: skapa eller gå med i en först.",
+    "personal": "Mina listor",
     "manageGroups": "Grupper"
   },
   "join": {
@@ -86,7 +87,8 @@
     "removedMembers": "Borttagna medlemmar",
     "allowRemovedMember": "Tillåt igen",
     "join": "Gå med i en grupp",
-    "nameLabel": "Gruppens namn"
+    "nameLabel": "Gruppens namn",
+    "personalNote": "Bara du ser listorna här. De kan inte delas."
   },
   "userMenu": {
     "settings": "Inställningar",

@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useState } from "react";
 
 import * as authApi from "@/api/auth";
+import { ensurePersonalGroup } from "@/api/groups";
 import { removePushToken } from "@/api/push";
 import { userKey, useCurrentUser } from "@/hooks/useCurrentUser";
 import { ApiError } from "@/api/ApiError";
@@ -54,6 +55,14 @@ export function AuthProvider({ children }: ProviderProps) {
   const user = hasSession ? current.user : null;
   const isLoading = hasSession === null || current.isLoading;
   const loadError = hasSession && canRetry ? error : null;
+
+  // Everyone has a personal group ("My lists"). Made here, at every login and app start, so
+  // accounts from before it existed get one too. If it fails (offline, rules not deployed yet),
+  // the next start tries again; the groups listener shows it once it's there.
+  const userId = user?.id;
+  useEffect(() => {
+    if (userId) ensurePersonalGroup().catch(() => {});
+  }, [userId]);
 
   // Shows the app in the logged-in user's language, and follows changes to it. Logged out, the
   // device's. Set after the first render (i18n starts in English), so the web page's static HTML,

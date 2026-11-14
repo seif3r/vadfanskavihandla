@@ -19,6 +19,7 @@ import LoadError from "@/components/LoadError";
 import { spacing } from "@/constants/theme";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { MAX_NAME_LENGTH } from "@/constants/limits";
+import { groupName } from "@/helpers/groups";
 import { cleanName, sortItems } from "@/helpers/list";
 import { useItems } from "@/hooks/useItems";
 import { useGroups } from "@/hooks/useGroups";
@@ -124,6 +125,8 @@ export default function Index() {
     setIsCategoryPicked(true);
   };
 
+  const activeGroup = groups.find((group) => group.id === activeList?.groupId);
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -159,7 +162,7 @@ export default function Index() {
     >
       <ListButton
         list={activeList}
-        groupName={groups.find((group) => group.id === activeList.groupId)?.name}
+        groupName={activeGroup && groupName(activeGroup, t)}
         onPress={() => router.push("/lists")}
       />
       {liveError && (

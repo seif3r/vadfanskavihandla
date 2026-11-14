@@ -40,6 +40,18 @@ beforeEach(async () => {
 });
 
 describe("joinGroup", () => {
+  it("never adds anyone to a personal group", async () => {
+    await db.doc(`groups/personal_${BOB}`).set(
+      {personal: true, ownerId: BOB, members: [BOB]});
+    await db.doc(`invites/${CODE}`).set({
+      groupId: `personal_${BOB}`, groupName: "x", createdBy: BOB,
+      createdAt: Timestamp.now(),
+    });
+    await expect(join(EVE)).rejects.toMatchObject({code: "invalid-argument"});
+    expect((await db.doc(`groups/personal_${BOB}`).get()).get("members"))
+      .toEqual([BOB]);
+  });
+
   it("adds the caller to the group", async () => {
     await invite();
     await join(EVE);

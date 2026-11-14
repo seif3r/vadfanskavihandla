@@ -9,6 +9,7 @@ import { User } from "@/types/models";
 
 const mockLoadCurrentUser = jest.fn<() => Promise<User>>();
 const mockLogout = jest.fn<() => Promise<void>>();
+const mockEnsurePersonalGroup = jest.fn<() => Promise<void>>();
 let mockSessionListener: ((isSignedIn: boolean) => void) | null = null;
 
 jest.mock("@/api/auth", () => ({
@@ -21,6 +22,7 @@ jest.mock("@/api/auth", () => ({
   },
 }));
 jest.mock("@/api/settings", () => ({ updateSettings: jest.fn() }));
+jest.mock("@/api/groups", () => ({ ensurePersonalGroup: () => mockEnsurePersonalGroup() }));
 jest.mock("@/api/push", () => ({ removePushToken: jest.fn() }));
 jest.mock("@/helpers/notifications", () => ({ getPushToken: () => Promise.resolve(null) }));
 
@@ -45,6 +47,23 @@ describe("AuthProvider", () => {
   beforeEach(() => {
     mockLoadCurrentUser.mockReset();
     mockLogout.mockReset().mockResolvedValue(undefined);
+    mockEnsurePersonalGroup.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("makes sure the user has a personal group, once logged in", async () => {
+    mockLoadCurrentUser.mockResolvedValue(anna);
+    const { result } = setup();
+    await waitFor(() => expect(result.current.user?.id).toBe("anna"));
+    expect(mockEnsurePersonalGroup).toHaveBeenCalledTimes(1);
+  });
+
+  it("carries on if the personal group can't be made right now", async () => {
+    mockLoadCurrentUser.mockResolvedValue(anna);
+    mockEnsurePersonalGroup.mockRejectedValue(new ApiError("errors.offline"));
+    const { result } = setup();
+    await waitFor(() => expect(mockEnsurePersonalGroup).toHaveBeenCalled());
+    expect(result.current.user?.id).toBe("anna");
+    expect(result.current.loadError).toBeNull();
   });
 
   it("restores the logged-in user", async () => {

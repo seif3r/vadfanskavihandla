@@ -113,7 +113,9 @@ export const joinGroup = onCall<JoinGroupRequest>(async (request) => {
     if (!groupId) throw invalid;
     const groupRef = db.doc(`groups/${groupId}`);
     const group = await tx.get(groupRef);
-    if (!group.exists) throw invalid;
+    // A personal group ("My lists") is never shared. The rules don't let
+    // anyone make a code for one; this is in case one exists anyway.
+    if (!group.exists || group.get("personal") === true) throw invalid;
 
     const members: string[] = group.get("members") ?? [];
     if (members.includes(uid)) return;

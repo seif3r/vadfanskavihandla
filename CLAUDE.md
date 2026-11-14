@@ -28,7 +28,11 @@ shared per list, unbundled push); don't follow it.
 
 **Data model:** `groups/{groupId}` (`name`, `ownerId`, `members`) is the one place membership lives.
 `lists/{listId}` has a `groupId` and an `ownerId` (its creator); items point to their list with
-`listId`. Rules, `api/` and the Cloud Function all go list → group → members. Invite codes
+`listId`. Rules, `api/` and the Cloud Function all go list → group → members. Every user also has
+a personal group, "My lists" (`groups/personal_{uid}`, `personal: true`, no `name`; the app shows
+`t("lists.personal")`): `ensurePersonalGroup` creates it at every login, only that user is in it, and
+the rules allow no invites, updates or deletes on it (`deleteAccount` removes it). Ordinary groups
+can't use `personal_` ids. Invite codes
 (`invites/{code}`) point to a group, and only the `joinGroup` Cloud Function adds members: a code
 works for 7 days (`createdAt` + `INVITE_LIFETIME_DAYS`, also set in `functions/`) while its creator is a
 member, and not for anyone in the group's `removedMembers`. The group's owner can rename it, remove
