@@ -14,9 +14,8 @@ import { memberKey } from "@/helpers/groups";
 import { canReceivePush, showNotification } from "@/helpers/notifications";
 import { Group, ItemChange, PendingNotification } from "@/types/models";
 
-// Same as the server: a person's changes to a list are collected until they've been quiet for a minute,
-// then shown as one notification.
-const DELAY_MS = NOTIFICATION_DELAY_SECONDS * 1000;
+// Same as the server: a person's changes to a list are collected until they've been quiet for
+// NOTIFICATION_DELAY_SECONDS (per type), then shown as one notification.
 // A listener that failed is stopped for good, so all of them are started again after this long.
 export const LIVE_RETRY_MS = 15 * 1000;
 
@@ -86,12 +85,12 @@ export function useLiveUpdates(): ApiError | null {
       timer: undefined,
     };
     batch.itemIds.add(change.item.id);
-    // Every change restarts the minute.
+    // Every change restarts the wait.
     clearTimeout(batch.timer);
     batch.timer = setTimeout(() => {
       pending.current.delete(key);
       show(batch);
-    }, DELAY_MS);
+    }, NOTIFICATION_DELAY_SECONDS[change.type] * 1000);
     pending.current.set(key, batch);
   });
 

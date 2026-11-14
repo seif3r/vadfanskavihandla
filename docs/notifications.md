@@ -17,11 +17,19 @@ Everyone in the list's group is a recipient, except the person who made the chan
 name is the notification title. Both
 settings are off for new accounts; turning one on asks for permission.
 
-## Bundling and the 60-second delay
+## Bundling and the delay
 
-Changes are grouped per **list + person + type** (added or removed). Every change restarts a
-60-second timer, and the notification goes out once that person has been quiet on that list for
-60 seconds. One item uses the single text (`notifications.itemAdded`); more than one uses the
+Changes are grouped per **list + person + type** (added or removed). Every change restarts that
+group's timer, and the notification goes out once that person has been quiet on that list for:
+
+| Type | Wait | Why |
+| --- | --- | --- |
+| Added | 2 minutes | Someone in the store should hear about it soon. |
+| Removed | 5 minutes | Usually someone clearing what they bought, which is less urgent, and a shopping trip spreads over minutes. |
+
+The times are `NOTIFICATION_DELAY_SECONDS` in `constants/limits.ts` and `DELAY_SECONDS` in
+`functions/src/index.ts`; a test in `constants/__tests__/limits.test.ts` checks they match. Since
+the types are grouped separately, a removal never holds up a notification about an add. One item uses the single text (`notifications.itemAdded`); more than one uses the
 `…Many` text. The same item changed twice in a batch counts once.
 
 Notifications never say which items, or how many beyond "one" or "more": they show up on lock
@@ -41,7 +49,7 @@ files (copied into `functions/locales/` at build time), so there is one place to
    are `cleanUpList` removing the items of a deleted list, and there's no one to tell.
 2. It adds the item's id to `pendingNotifications/{listId}_{personId}_{type}` in a transaction and bumps
    that doc's `seq`. No Security Rule matches this collection, so only the server can touch it.
-3. It enqueues a Cloud Task for `sendBatchedNotification` with `{batchId, seq}`, 60 s out. The
+3. It enqueues a Cloud Task for `sendBatchedNotification` with `{batchId, seq}`, 2 or 5 minutes out by type. The
    trigger has `retry: true`, so a failed enqueue doesn't leave a batch with no task to send it.
 4. When a task runs, it only sends if its `seq` is still the latest. Otherwise a newer change has
    its own task coming. The sender moves the batch's `items` to `sending` in the same transaction
