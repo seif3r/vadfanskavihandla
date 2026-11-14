@@ -5,7 +5,7 @@
 A shared shopping list for a household. Two or more people share the same lists, see each
 other's changes live, and get a notification when someone adds or removes items. Checking an item
 off is personal and notifies nobody. A person's changes are bundled into one notification, sent
-60 seconds after their last change ("Anna added items"). Notifications never name the items.
+2 minutes after their last add or 5 minutes after their last removal ("Anna added items"). Notifications never name the items.
 
 **The problem it solves:** "What do we need from the store?" lives in text messages, in someone's
 head, or on a note on the fridge. Whoever is in the store doesn't know what the other person just

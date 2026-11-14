@@ -17,7 +17,7 @@
   - Aldrig notis vid avbockning eller när en bock tas bort (så är det redan idag).
   - Ändras på båda ställena: `functions/` (push) och `hooks/useLiveUpdates.ts` (webb/Expo Go),
     plus texterna i `en.json` och `sv.json`.
-- [ ] Notis på avbockad eller borttagen? 1 min för avbockad är för kort
+- [x] Notis på avbockad eller borttagen? 1 min för avbockad är för kort
   - Väntetid efter personens senaste ändring: 2 min för tillagda varor, 5 min för borttagna.
   - Tillagt och borttaget får alltså varsin timer/bunt. Ändras i `functions/`
     (`DELAY_SECONDS`) och i appen (`NOTIFICATION_DELAY_SECONDS` i `constants/limits.ts`,

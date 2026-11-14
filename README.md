@@ -6,7 +6,7 @@ Live: https://seif3r.github.io/vadfanskavihandla/
 
 ## Vad det gör
 
-Du skapar ett konto och en grupp, till exempel "Hemma", och bjuder in dem du handlar med via en kod. Alla i gruppen ser gruppens listor och varandras ändringar direkt. Du kan lägga till varor med mängd och kategori, bocka av dem och rensa det avbockade. När någon lägger till eller tar bort varor kan de andra få en notis, och en persons ändringar samlas till en enda notis en minut efter den sista ändringen ("Anna lade till varor"). Notisen säger inte vilka varor det gäller. Att bocka av en vara är personligt och skickar ingen notis.
+Du skapar ett konto och en grupp, till exempel "Hemma", och bjuder in dem du handlar med via en kod. Alla i gruppen ser gruppens listor och varandras ändringar direkt. Du kan lägga till varor med mängd och kategori, bocka av dem och rensa det avbockade. När någon lägger till eller tar bort varor kan de andra få en notis, och en persons ändringar samlas till en enda notis när hen har varit stilla en stund: två minuter efter den sista tillagda varan, fem minuter efter den sista borttagna ("Anna lade till varor"). Notisen säger inte vilka varor det gäller. Att bocka av en vara är personligt och skickar ingen notis.
 
 ## Kom igång
 
@@ -94,7 +94,7 @@ vadfanskavihandla/
 | Navigering | Expo Router | Filbaserad routing som fungerar likadant på webb och mobil. |
 | Serverdata | TanStack Query | Cache, optimistiska uppdateringar och en plats där realtidsdata skrivs in. |
 | Backend | Firebase: Authentication, Cloud Firestore och Cloud Functions | Inloggning, databas med realtidslyssnare och serverlogik i ett projekt, utan egen server. JavaScript-SDK:n gör att Expo Go och webben fungerar. |
-| Notiser | Cloud Tasks, Expos push-tjänst och expo-notifications | Cloud Tasks väntar en minut och samlar ändringarna. Expo levererar till telefonerna, och på webben visas notiserna i appen. |
+| Notiser | Cloud Tasks, Expos push-tjänst och expo-notifications | Cloud Tasks väntar två minuter (tillagt) eller fem (borttaget) och samlar ändringarna. Expo levererar till telefonerna, och på webben visas notiserna i appen. |
 | Översättning | i18next | Appen är på svenska och engelska från början. |
 | Hosting | GitHub Pages (webb) och EAS Build (Android) | Statisk export till Pages, och installerbara Android-byggen. |
 | Tester och CI | Jest, Firestore-emulatorn och GitHub Actions | Säkerhetsreglerna och funktionerna testas mot en riktig, lokal databas. |

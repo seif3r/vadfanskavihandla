@@ -4,9 +4,9 @@
  * on. Checking items off is personal and sends nothing.
  *
  * Changes are not pushed one by one: a person's changes to a list are
- * collected until they've been quiet for a minute and sent as one
- * notification ("Anna added 3 items: ..."), so a shopping trip doesn't
- * buzz everyone's phone per item.
+ * collected until they've been quiet for a while (2 minutes for adds, 5 for
+ * removals) and sent as one notification ("Anna added items"), so a
+ * shopping trip doesn't buzz everyone's phone per item.
  *
  * Also cleans up after deletes: the app only deletes a group or list
  * document, and everything under it is deleted here, with no limit on how
@@ -41,16 +41,20 @@ initializeApp();
 // reacts to a household's taps.
 const region = "europe-north1";
 // Cloud Tasks isn't offered in either Nordic region, so the queue and the
-// function it calls live in Belgium. A push that waits a minute anyway
+// function it calls live in Belgium. A push that waits minutes anyway
 // doesn't notice the extra distance.
 const tasksRegion = "europe-west1";
 const MAX_INSTANCES = 5;
 setGlobalOptions({region, maxInstances: MAX_INSTANCES});
 const db = getFirestore();
 
-// Same number as NOTIFICATION_DELAY_SECONDS in the app's constants/limits.ts,
-// which shows notifications in-app on web and in Expo Go.
-const DELAY_SECONDS = 60;
+// Same numbers as NOTIFICATION_DELAY_SECONDS in the app's constants/limits.ts,
+// which shows notifications in-app on web and in Expo Go. Removals wait
+// longer: they're mostly someone clearing what they bought.
+const DELAY_SECONDS: Record<ChangeType, number> = {
+  itemAdded: 120,
+  itemRemoved: 300,
+};
 // How often Cloud Tasks tries a send that failed, and how long it waits.
 const SEND_ATTEMPTS = 3;
 const SEND_MIN_BACKOFF_SECONDS = 30;
@@ -226,11 +230,14 @@ export const notifyOnItemChange = onDocumentWrittenWithAuthContext(
       return next;
     });
 
-    // Every change schedules a send a minute out. Earlier tasks see a newer
-    // seq and do nothing, so it goes out a minute after the last change.
+    // Every change schedules a send DELAY_SECONDS out. Earlier tasks see a
+    // newer seq and do nothing, so it goes out that long after the last
+    // change.
     const queue = getFunctions().taskQueue<BatchTask>(
       `locations/${tasksRegion}/functions/sendBatchedNotification`);
-    await queue.enqueue({batchId, seq}, {scheduleDelaySeconds: DELAY_SECONDS});
+    await queue.enqueue({batchId, seq}, {
+      scheduleDelaySeconds: DELAY_SECONDS[type],
+    });
   },
 );
 

@@ -64,7 +64,7 @@ beforeEach(async () => {
 describe("notifyOnItemChange", () => {
   const batchId = `${LIST}_${ALICE}_itemAdded`;
 
-  it("collects adds and schedules a send a minute later", async () => {
+  it("collects adds and schedules a send two minutes later", async () => {
     await itemChanged("i1", {after: item("Mjölk")});
     await itemChanged("i2", {after: item("Bröd")});
 
@@ -74,7 +74,14 @@ describe("notifyOnItemChange", () => {
     });
     expect(mockEnqueue).toHaveBeenCalledTimes(2);
     expect(mockEnqueue).toHaveBeenLastCalledWith(
-      {batchId, seq: 2}, {scheduleDelaySeconds: 60});
+      {batchId, seq: 2}, {scheduleDelaySeconds: 120});
+  });
+
+  it("waits five minutes before sending removals", async () => {
+    await itemChanged("i1", {before: item("Mjölk"), authId: ALICE});
+    expect(mockEnqueue).toHaveBeenCalledWith(
+      {batchId: `${LIST}_${ALICE}_itemRemoved`, seq: 1},
+      {scheduleDelaySeconds: 300});
   });
 
   it("doesn't keep item names", async () => {

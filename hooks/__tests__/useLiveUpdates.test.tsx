@@ -49,6 +49,7 @@ describe("useLiveUpdates", () => {
     mockGroupListeners.length = 0;
     mockItemListeners.length = 0;
     mockNotifications.itemAdded = false;
+    mockNotifications.itemRemoved = false;
     jest.mocked(showNotification).mockClear();
   });
   afterEach(() => {
@@ -88,12 +89,16 @@ describe("useLiveUpdates", () => {
   });
 
   describe("notifications", () => {
-    const added = (id: string, name: string) =>
-      ({ type: "itemAdded", item: { id, name, listId: "l1", done: false }, userId: "bob" });
-    const delay = NOTIFICATION_DELAY_SECONDS * 1000;
+    const change = (type: string, id: string, name: string) =>
+      ({ type, item: { id, name, listId: "l1", done: false }, userId: "bob" });
+    const added = (id: string, name: string) => change("itemAdded", id, name);
+    const removed = (id: string, name: string) => change("itemRemoved", id, name);
+    const delay = NOTIFICATION_DELAY_SECONDS.itemAdded * 1000;
+    const wait = (ms: number) => act(() => { jest.advanceTimersByTime(ms); });
 
     beforeEach(async () => {
       mockNotifications.itemAdded = true;
+      mockNotifications.itemRemoved = true;
       await i18n.changeLanguage("en");
     });
 
@@ -115,6 +120,32 @@ describe("useLiveUpdates", () => {
       act(() => { jest.advanceTimersByTime(delay); });
 
       expect(showNotification).toHaveBeenCalledWith("ICA", "Bob added an item");
+    });
+
+    it("waits two minutes after the last add", async () => {
+      setup();
+      await act(async () => {});
+      act(() => mockItemListeners[0].onChange([], [added("i1", "Mjölk")]));
+      wait(119_000);
+      // Another add restarts the wait.
+      act(() => mockItemListeners[0].onChange([], [added("i2", "Bröd")]));
+      wait(119_000);
+      expect(showNotification).not.toHaveBeenCalled();
+      wait(1_000);
+      expect(showNotification).toHaveBeenCalledWith("ICA", "Bob added items");
+    });
+
+    it("waits five minutes for removals, without holding up adds", async () => {
+      setup();
+      await act(async () => {});
+      act(() => mockItemListeners[0].onChange([], [removed("i1", "Mjölk"), added("i2", "Bröd")]));
+      wait(120_000);
+      expect(showNotification).toHaveBeenCalledTimes(1);
+      expect(showNotification).toHaveBeenLastCalledWith("ICA", "Bob added an item");
+      wait(179_000);
+      expect(showNotification).toHaveBeenCalledTimes(1);
+      wait(1_000);
+      expect(showNotification).toHaveBeenLastCalledWith("ICA", "Bob removed an item");
     });
   });
 });
