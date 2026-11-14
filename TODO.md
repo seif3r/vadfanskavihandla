@@ -34,7 +34,7 @@
   - Kräver regeländring först (idag får bara `done`/`updatedBy` ändras), med samma
     längd- och kategorikontroller som när varan skapas. Ny kategori bör även uppdatera
     listans kategoriminne (`knownItems`).
-- [ ] Kategoriminnet ska inte vara per användare utan hellre per lista
+- [x] Kategoriminnet ska inte vara per användare utan hellre per lista
   - Minnet är redan per lista (`lists/{listId}/knownItems`), men laddas bara en gång per
     enhet och uppdateras bara med egna tillägg, så andras val syns först efter omstart.
   - Lösning: när liveuppdateringen av varorna ser en ny vara med kategori från någon annan,
