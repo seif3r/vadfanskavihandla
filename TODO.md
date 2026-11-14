@@ -39,7 +39,7 @@
     enhet och uppdateras bara med egna tillägg, så andras val syns först efter omstart.
   - Lösning: när liveuppdateringen av varorna ser en ny vara med kategori från någon annan,
     uppdatera den lokala `knownItems`-cachen från den. Inga extra läsningar mot servern.
-- [ ] Skapa lista till sig själv
+- [x] Skapa lista till sig själv
   - Varje användare får en egen privat grupp, "Mina listor", med bara sig själv som medlem.
   - Gruppen kan inte döpas om och ingen kan bjudas in. Listor i den delas aldrig senare.
   - Egen sektion högst upp i listöversikten.

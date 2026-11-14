@@ -23,7 +23,10 @@ export interface User {
 // People who shop together. Every member sees all of the group's lists.
 export interface Group {
   id: string;
+  // Empty for a personal group, which shows the translated "My lists" instead (groupName).
   name: string;
+  // The user's own "My lists": only them in it, never shared, renamed or deleted.
+  isPersonal: boolean;
   // Can rename the group, remove members and delete it.
   ownerId: string;
   memberIds: string[];

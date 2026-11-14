@@ -7,6 +7,7 @@ import Input from "@/components/Input";
 import ListRow from "@/components/ListRow";
 import { MAX_LIST_NAME_LENGTH } from "@/constants/limits";
 import { radius, spacing, textSize } from "@/constants/theme";
+import { groupName } from "@/helpers/groups";
 import { cleanName } from "@/helpers/list";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { GroupListsProps } from "@/types/components";
@@ -29,7 +30,7 @@ export default function GroupLists({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.title}>{group.name}</Text>
+      <Text style={styles.title}>{groupName(group, t)}</Text>
       {lists.length > 0 && (
         <View style={styles.card}>
           {lists.map((list, index) => (

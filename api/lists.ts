@@ -57,8 +57,14 @@ export function subscribeToLists(
   };
   const stopGroups = onSnapshot(
     myGroupsQuery(userId),
+    // Also called when a group I just created is saved (hasPendingWrites turns false).
+    { includeMetadataChanges: true },
     (snap) => {
       groupIds = snap.docs.map((group) => group.id);
+      // A group I just created shows up here before the server has it. Asking the server for its
+      // lists then is denied (the rules can't find the group yet), which would stop that listener
+      // for good. So its lists count as empty until the group is saved, and are listened to then.
+      const pending = new Set(snap.docs.filter((group) => group.metadata.hasPendingWrites).map((group) => group.id));
       stops.forEach((stop, id) => {
         if (groupIds.includes(id)) return;
         stop();
@@ -67,6 +73,10 @@ export function subscribeToLists(
       });
       groupIds.forEach((id) => {
         if (stops.has(id)) return;
+        if (pending.has(id)) {
+          if (!listsByGroup.has(id)) listsByGroup.set(id, []);
+          return;
+        }
         stops.set(id, onSnapshot(
           groupListsQuery(id),
           (lists) => {

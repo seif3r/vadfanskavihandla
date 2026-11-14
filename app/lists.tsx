@@ -11,6 +11,7 @@ import { useActiveList } from "@/hooks/useActiveList";
 import { useGroups } from "@/hooks/useGroups";
 import { useLists } from "@/hooks/useLists";
 import { spacing } from "@/constants/theme";
+import { personalFirst } from "@/helpers/groups";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { Group, ShoppingList } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
@@ -42,7 +43,7 @@ export default function Lists() {
       {!groupsError && loadError && <LoadError error={loadError} onRetry={reload} />}
       {groups.length === 0 && !groupsError && <Text style={styles.empty}>{t("lists.noGroups")}</Text>}
 
-      {groups.map((group) => (
+      {personalFirst(groups).map((group) => (
         <GroupLists
           key={group.id}
           group={group}

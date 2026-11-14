@@ -53,7 +53,8 @@
     "delete": "Delete",
     "confirmDelete": "Delete?",
     "noGroups": "Lists belong to a group: create or join one first.",
-    "manageGroups": "Groups"
+    "manageGroups": "Groups",
+    "personal": "My lists"
   },
   "join": {
     "title": "Join a group",
@@ -86,7 +87,8 @@
     "removedMembers": "Removed members",
     "allowRemovedMember": "Allow again",
     "join": "Join a group",
-    "nameLabel": "Group name"
+    "nameLabel": "Group name",
+    "personalNote": "Only you see the lists here. They can't be shared."
   },
   "userMenu": {
     "settings": "Settings",

@@ -17,6 +17,10 @@ service cloud.firestore {
     function isGroupOwner(groupId) {
       return signedIn() && group(groupId).data.ownerId == uid();
     }
+    // A user's own "My lists": groups/personal_{their uid}, only them in it, and nothing about it
+    // can change.
+    function isPersonal(data) { return data.get('personal', false) == true; }
+    function personalGroupId() { return 'personal_' + uid(); }
     function isMember(listId) {
       return isGroupMember(list(listId).data.groupId);
     }
@@ -106,14 +110,24 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
-      allow read: if signedIn() && uid() in resource.data.members;
+      // Your own personal group's id can be read before it exists, to see whether it does.
+      allow read: if signedIn() && (groupId == personalGroupId() || uid() in resource.data.members);
       allow create: if signedIn()
-        && request.resource.data.keys().hasOnly(['name', 'ownerId', 'members', 'createdAt'])
-        && validGroupName(request.resource.data.name)
         && request.resource.data.createdAt == request.time
         && request.resource.data.ownerId == uid()
-        && request.resource.data.members == [uid()];
-      allow update: if signedIn() && (
+        && request.resource.data.members == [uid()]
+        && (
+          // personal_ ids are kept free, so nobody can take someone else's personal group id.
+          (request.resource.data.keys().hasOnly(['name', 'ownerId', 'members', 'createdAt'])
+            && validGroupName(request.resource.data.name)
+            && !groupId.matches('personal_.*'))
+          // The personal group (ensurePersonalGroup): its id comes from the user's, so there is one
+          // per user and nobody can make one for someone else. No name: the app shows a translated one.
+          || (groupId == personalGroupId() && request.resource.data.personal == true
+            && request.resource.data.keys().hasOnly(['personal', 'ownerId', 'members', 'createdAt']))
+        );
+      // A personal group can't be renamed, shared, left or handed over.
+      allow update: if signedIn() && !isPersonal(resource.data) && (
         // The owner may rename the group (renameGroup in api/groups.ts).
         (resource.data.ownerId == uid() && changes().hasOnly(['name'])
             && validGroupName(request.resource.data.name))
@@ -137,8 +151,9 @@ service cloud.firestore {
             && request.resource.data.removedMembers.size() == resource.data.removedMembers.size() - 1
             && resource.data.removedMembers.hasAll(request.resource.data.removedMembers))
       );
-      // Its lists and invites are deleted by a Cloud Function (cleanUpGroup).
-      allow delete: if signedIn() && resource.data.ownerId == uid();
+      // Its lists and invites are deleted by a Cloud Function (cleanUpGroup). A personal group
+      // goes only with the account (deleteAccount).
+      allow delete: if signedIn() && resource.data.ownerId == uid() && !isPersonal(resource.data);
     }
 
     match /lists/{listId} {
@@ -191,6 +206,7 @@ service cloud.firestore {
     match /invites/{code} {
       allow read: if isGroupOwner(resource.data.groupId);
       allow create: if isGroupMember(request.resource.data.groupId)
+        && !isPersonal(group(request.resource.data.groupId).data)
         && code.matches('^[A-Za-z0-9]{20}$')
         && request.resource.data.keys().hasOnly(['groupId', 'groupName', 'createdBy', 'createdAt'])
         && validGroupName(request.resource.data.groupName)

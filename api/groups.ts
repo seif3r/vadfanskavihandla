@@ -2,11 +2,12 @@
 import { ApiError } from "@/api/ApiError";
 import { currentUid, db, functions, isListenerFailure, toApiError, withApiError } from "@/api/firebase";
 import { myGroupsQuery } from "@/api/queries";
+import { personalGroupId } from "@/helpers/groups";
 import { INVITE_LIFETIME_DAYS } from "@/constants/limits";
 import { JoinGroupRequest } from "@/types/api";
 import { Group, Invite } from "@/types/models";
 import {
-  addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, DocumentData, getDocs,
+  addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, DocumentData, getDoc, getDocs, setDoc,
   onSnapshot, query, QueryDocumentSnapshot, QuerySnapshot, serverTimestamp, updateDoc, where,
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
@@ -17,7 +18,8 @@ function toGroup(snap: QueryDocumentSnapshot<DocumentData>): Group {
   const data = snap.data();
   return {
     id: snap.id,
-    name: data.name,
+    name: data.name ?? "",
+    isPersonal: data.personal === true,
     ownerId: data.ownerId,
     memberIds: data.members,
     removedMemberIds: data.removedMembers ?? [],
@@ -43,6 +45,17 @@ export async function getGroups(): Promise<Group[]> {
   const snap = await withApiError(() => getDocs(myGroupsQuery(currentUid())));
   return snap.docs.map(toGroup);
 }
+// Creates the user's personal group ("My lists") if it isn't there yet. Called at every login and
+// app start, so accounts made before personal groups existed get one too. Its id comes from the
+// user's, so two devices doing this at once can't make two: the rules turn the second one down.
+export async function ensurePersonalGroup(): Promise<void> {
+  const uid = currentUid();
+  const ref = doc(db, "groups", personalGroupId(uid));
+  await withApiError(async () => {
+    if ((await getDoc(ref)).exists()) return;
+    await setDoc(ref, { personal: true, ownerId: uid, members: [uid], createdAt: serverTimestamp() });
+  });
+}
 export async function createGroup(name: string): Promise<Group> {
   const uid = currentUid();
   const ref = await withApiError(() => addDoc(collection(db, "groups"), {
@@ -51,7 +64,7 @@ export async function createGroup(name: string): Promise<Group> {
     members: [uid],
     createdAt: serverTimestamp(),
   }));
-  return { id: ref.id, name, ownerId: uid, memberIds: [uid], removedMemberIds: [] };
+  return { id: ref.id, name, isPersonal: false, ownerId: uid, memberIds: [uid], removedMemberIds: [] };
 }
 // Owner only.
 export async function renameGroup(groupId: string, name: string): Promise<void> {

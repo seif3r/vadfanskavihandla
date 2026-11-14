@@ -31,6 +31,20 @@ export default function GroupCard({
     setName(null);
   };
 
+  // "My lists" has nothing to manage: only its owner is in it, and it can't be shared or deleted.
+  if (group.isPersonal) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <Text style={styles.name}>{t("lists.personal")}</Text>
+        </View>
+        <View style={[styles.row, styles.divider]}>
+          <Text style={styles.note}>{t("groups.personalNote")}</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.card}>
       {name === null ? (
@@ -114,6 +128,10 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: spacing.xl,
       paddingVertical: spacing.md,
       minHeight: 50,
+    },
+    note: {
+      flex: 1,
+      color: colors.textMuted,
     },
     name: {
       flex: 1,

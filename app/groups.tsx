@@ -15,6 +15,7 @@ import { cleanName } from "@/helpers/list";
 import { shareText } from "@/helpers/share";
 import { useGroups } from "@/hooks/useGroups";
 import { spacing } from "@/constants/theme";
+import { personalFirst } from "@/helpers/groups";
 import { useThemedStyles } from "@/hooks/useTheme";
 import { Group } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
@@ -83,9 +84,11 @@ export default function Groups() {
       </View>
 
       {loadError && <LoadError error={loadError} onRetry={reload} />}
-      {groups.length === 0 && !loadError && <Text style={styles.muted}>{t("groups.empty")}</Text>}
+      {!groups.some((group) => !group.isPersonal) && !loadError && (
+        <Text style={styles.muted}>{t("groups.empty")}</Text>
+      )}
 
-      {groups.map((group) => (
+      {personalFirst(groups).map((group) => (
         <GroupCard
           key={group.id}
           group={group}
