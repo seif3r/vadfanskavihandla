@@ -58,6 +58,7 @@ export type Category =
   | "bread"
   | "pantry"
   | "frozen"
+  | "baby"
   | "drinks"
   | "household"
   | "other";

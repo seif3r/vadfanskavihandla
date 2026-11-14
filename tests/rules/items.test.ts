@@ -36,6 +36,7 @@ describe("adding items", () => {
     await assertSucceeds(setDoc(item(ALICE, "c"), newItem(ALICE, { name: "x".repeat(100) })));
     await assertFails(setDoc(item(ALICE, "d"), newItem(ALICE, { amount: "x".repeat(31) })));
     await assertFails(setDoc(item(ALICE, "e"), newItem(ALICE, { category: "candy" })));
+    await assertSucceeds(setDoc(item(ALICE, "f"), newItem(ALICE, { category: "baby" })));
   });
 
   it("can't start out checked or carry extra fields", async () => {

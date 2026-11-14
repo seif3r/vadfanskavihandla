@@ -40,7 +40,7 @@ service cloud.firestore {
     function validAmount(amount) { return amount is string && amount.size() <= 30; }
     function validCategory(category) {
       return category in ['produce', 'dairy', 'meat', 'bread', 'pantry',
-                          'frozen', 'drinks', 'household', 'other'];
+                          'frozen', 'baby', 'drinks', 'household', 'other'];
     }
     // What an item may hold, whether it's new or edited. Amount and category are optional.
     function validItemFields(item) {
