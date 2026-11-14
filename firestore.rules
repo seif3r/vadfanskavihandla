@@ -38,14 +38,18 @@ service cloud.firestore {
       return category in ['produce', 'dairy', 'meat', 'bread', 'pantry',
                           'frozen', 'drinks', 'household', 'other'];
     }
+    // What an item may hold, whether it's new or edited. Amount and category are optional.
+    function validItemFields(item) {
+      return validName(item.name)
+        && (!('amount' in item) || validAmount(item.amount))
+        && (!('category' in item) || validCategory(item.category));
+    }
     function validNewItem(item) {
       return item.keys().hasOnly(['listId', 'name', 'amount', 'category', 'done',
                                   'addedBy', 'updatedBy', 'createdAt'])
-        && validName(item.name)
+        && validItemFields(item)
         && item.done == false
-        && item.createdAt == request.time
-        && (!('amount' in item) || validAmount(item.amount))
-        && (!('category' in item) || validCategory(item.category));
+        && item.createdAt == request.time;
     }
 
     // Settings match UserSettings in types/models.ts. Only the settings a write changes are
@@ -170,10 +174,13 @@ service cloud.firestore {
         && validNewItem(request.resource.data)
         && request.resource.data.addedBy == uid()
         && request.resource.data.updatedBy == uid();
-      // The app only checks and unchecks items, so nothing else may change: not the
-      // name, and not addedBy (no making it look like someone else added it).
+      // Any member may check items off and edit name, amount and category, with the same
+      // checks as when an item is added. The rest stays as it was created: the list
+      // (no moving items), addedBy (no making it look like someone else added it) and
+      // createdAt (the order items were added in).
       allow update: if isMember(resource.data.listId)
-        && changes().hasOnly(['done', 'updatedBy'])
+        && changes().hasOnly(['done', 'name', 'amount', 'category', 'updatedBy'])
+        && validItemFields(request.resource.data)
         && request.resource.data.done is bool
         && request.resource.data.updatedBy == uid();
     }

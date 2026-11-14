@@ -26,7 +26,7 @@
   - Android-appen: tangentbordet täcker inmatningsfältet, varje gång.
   - Inmatningen måste flytta upp ovanför tangentbordet (t.ex. `KeyboardAvoidingView` /
     `softwareKeyboardLayoutMode` i `app.json`). Testas i emulatorn.
-- [ ] Jag vill kunna ändra tillagda varor
+- [x] Jag vill kunna ändra tillagda varor
   - Ändra namn, mängd och kategori.
   - Alla i gruppen får ändra, även avbockade varor.
   - Penna-ikon längst till höger på varje rad öppnar redigeringen.

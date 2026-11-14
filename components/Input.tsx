@@ -8,13 +8,14 @@ import { ThemeColors } from "@/types/theme";
 // The placeholder doubles as the label screen readers read, unless a label is given (a field without
 // a placeholder, like renaming a group, needs one).
 export default function Input({
-  value, onChangeText, onSubmit, placeholder, secureTextEntry, maxLength, style, accessibilityLabel,
+  ref, value, onChangeText, onSubmit, placeholder, secureTextEntry, maxLength, style, accessibilityLabel,
   keyboardType, autoComplete, textContentType, autoCapitalize = "none",
 }: InputProps) {
   const styles = useThemedStyles(createStyles);
   const colors = useColors();
   return (
     <TextInput
+      ref={ref}
       value={value}
       onChangeText={onChangeText}
       onSubmitEditing={onSubmit}

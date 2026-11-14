@@ -3,10 +3,10 @@ import { ApiError } from "@/api/ApiError";
 import { currentUid, db, isListenerFailure, toApiError, withApiError } from "@/api/firebase";
 import { chunk } from "@/helpers/batches";
 import { itemKey } from "@/helpers/list";
-import { AddItemRequest } from "@/types/api";
+import { AddItemRequest, EditItemRequest } from "@/types/api";
 import { Item, ItemChange, KnownItem } from "@/types/models";
 import {
-  collection, doc, DocumentSnapshot, getDoc, getDocs, onSnapshot, orderBy, query, QueryDocumentSnapshot,
+  collection, deleteField, doc, DocumentSnapshot, getDoc, getDocs, onSnapshot, orderBy, query, QueryDocumentSnapshot,
   serverTimestamp, updateDoc, where, WriteBatch, writeBatch,
 } from "firebase/firestore";
 export const toItem = (snap: DocumentSnapshot): Item => {
@@ -46,6 +46,24 @@ export async function addItem(request: AddItemRequest, userId: string): Promise<
   }
   await withApiError(() => batch.commit());
   return { ...request, id: ref.id, done: false, addedBy: userId };
+}
+// Name, amount and category; amount and category are removed when left out. Like addItem, a
+// category is remembered for the (new) name in the same batch, and removing it leaves what's
+// remembered.
+export async function updateItem(request: EditItemRequest, userId: string): Promise<void> {
+  const { itemId, listId, name, amount, category } = request;
+  const batch = writeBatch(db);
+  batch.update(doc(db, "items", itemId), {
+    name,
+    amount: amount ?? deleteField(),
+    category: category ?? deleteField(),
+    updatedBy: userId,
+  });
+  if (category) {
+    const known: KnownItem = { name, category };
+    batch.set(doc(db, "lists", listId, "knownItems", itemKey(name)), known);
+  }
+  await withApiError(() => batch.commit());
 }
 // Every item name the list has a remembered category for.
 export async function getKnownItems(listId: string): Promise<KnownItem[]> {

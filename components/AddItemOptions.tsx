@@ -28,7 +28,14 @@ export default function AddItemOptions({ amount, onAmountChange, category, onCat
       </View>
       <View style={styles.field}>
         <Text style={styles.label}>{t("list.category")}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        {/* "handled": a tap on a chip picks it even while the keyboard is open, instead of only
+            closing the keyboard. */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.chips}
+        >
           {categories.map((c) => {
             const isSelected = c === category;
             return (

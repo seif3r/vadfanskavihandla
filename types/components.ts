@@ -1,5 +1,5 @@
-import { ReactNode } from "react";
-import { StyleProp, TextInputProps, TextStyle } from "react-native";
+import { ReactNode, Ref } from "react";
+import { StyleProp, TextInput, TextInputProps, TextStyle } from "react-native";
 
 import { ApiError } from "@/api/ApiError";
 import { Category, Group, Item, Member, ShoppingList } from "@/types/models";
@@ -14,6 +14,8 @@ export interface ButtonProps {
 }
 
 export interface InputProps {
+  // To focus the field from outside, e.g. when editing an item fills it in.
+  ref?: Ref<TextInput>;
   value: string;
   onChangeText: (text: string) => void;
   onSubmit?: () => void;
@@ -38,6 +40,9 @@ export interface ErrorTextProps {
 export interface ItemRowProps {
   item: Item;
   onToggle: () => void;
+  onEdit: () => void;
+  // The item being edited in the input bar is highlighted.
+  isEditing?: boolean;
   // The first row in a card has no divider line above it.
   isFirst?: boolean;
 }
@@ -51,6 +56,8 @@ export interface ListButtonProps {
 export interface ItemSectionProps {
   items: Item[];
   onToggle: (itemId: string) => void;
+  onEdit: (item: Item) => void;
+  editingId?: string;
   // Shown when there are no items.
   emptyText?: string;
 }
@@ -175,4 +182,13 @@ export interface IconProps {
   size?: number;
   // Line thickness. 2 is the normal weight; higher is bolder.
   strokeWidth?: number;
+}
+
+// What the list screen's input bar holds, so it can be put back after an item is edited there.
+export interface InputDraft {
+  text: string;
+  amount: string;
+  category: Category | undefined;
+  isCategoryPicked: boolean;
+  showOptions: boolean;
 }
