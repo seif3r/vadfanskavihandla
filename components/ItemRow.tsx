@@ -9,13 +9,14 @@ import { ThemeColors } from "@/types/theme";
 
 // Two tap targets side by side, not one inside the other: a button inside a checkbox can't be
 // reached by screen readers. The row checks the item off; the pen on the right edits it.
-export default function ItemRow({ item, onToggle, onEdit, isEditing, isFirst }: ItemRowProps) {
+export default function ItemRow({ item, onToggle, onEdit, isEditing, isFirst, onLayout }: ItemRowProps) {
   const styles = useThemedStyles(createStyles);
   const colors = useColors();
   const { t } = useTranslation();
 
   return (
     <View
+      onLayout={onLayout && ((event) => onLayout(event.nativeEvent.layout))}
       style={[styles.row, !isFirst && styles.divider, item.done && styles.doneRow, isEditing && styles.editingRow]}
     >
       <Pressable

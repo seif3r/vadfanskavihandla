@@ -32,7 +32,9 @@ shared per list, unbundled push); don't follow it.
 a personal group, "My lists" (`groups/personal_{uid}`, `personal: true`, no `name`; the app shows
 `t("lists.personal")`): `ensurePersonalGroup` creates it at every login, only that user is in it, and
 the rules allow no invites, updates or deletes on it (`deleteAccount` removes it). Ordinary groups
-can't use `personal_` ids. Invite codes
+can't use `personal_` ids. What each user has seen lives in `users/{uid}/seen/{listId}` (`listId`,
+`since`, `itemIds`): items others added after `since` and not in `itemIds` count as new. Only its
+owner can read or write it. Invite codes
 (`invites/{code}`) point to a group, and only the `joinGroup` Cloud Function adds members: a code
 works for 7 days (`createdAt` + `INVITE_LIFETIME_DAYS`, also set in `functions/`) while its creator is a
 member, and not for anyone in the group's `removedMembers`. The group's owner can rename it, remove
@@ -43,7 +45,7 @@ per group, since Firestore can't join.
 
 **Deleting:** the app deletes only the group or list document. Cloud Functions (`cleanUpGroup`,
 `cleanUpList` in `functions/`) delete everything under it: a group's lists and invites, a list's
-items, `knownItems` and `pendingNotifications`. Until they've run, the rules already hide the
+items, `knownItems`, `pendingNotifications` and everyone's `seen` documents for it. Until they've run, the rules already hide the
 leftovers, since they look up the parent. Anything new that hangs off a group or list must be
 added to that cleanup. Deleting an account goes through the `deleteAccount` Cloud Function (it leaves
 shared groups, deletes groups only that user is in, and deletes their documents and login); anything

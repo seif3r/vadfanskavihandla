@@ -8,7 +8,8 @@ import { ListButtonProps } from "@/types/components";
 import { ThemeColors } from "@/types/theme";
 
 // The open list's name and group. Tapping it opens all lists, where another one can be picked.
-export default function ListButton({ list, groupName, onPress }: ListButtonProps) {
+// A dot on the icon when another list has items that are new to the user.
+export default function ListButton({ list, groupName, hasNewElsewhere, onPress }: ListButtonProps) {
   const styles = useThemedStyles(createStyles);
   const colors = useColors();
   const { t } = useTranslation();
@@ -17,10 +18,13 @@ export default function ListButton({ list, groupName, onPress }: ListButtonProps
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={t("lists.title")}
+      accessibilityLabel={hasNewElsewhere ? `${t("lists.title")}, ${t("lists.newElsewhere")}` : t("lists.title")}
       style={({ pressed }) => [styles.bar, pressed && styles.pressed]}
     >
-      <Icon name="list" size={22} strokeWidth={2.5} color={colors.primary} />
+      <View>
+        <Icon name="list" size={22} strokeWidth={2.5} color={colors.primary} />
+        {hasNewElsewhere && <View style={styles.dot} testID="new-elsewhere" />}
+      </View>
       <View style={styles.text}>
         <Text numberOfLines={1} style={styles.name}>{list.name}</Text>
         {groupName && <Text numberOfLines={1} style={styles.group}>{groupName}</Text>}
@@ -44,6 +48,18 @@ const createStyles = (colors: ThemeColors) =>
     },
     pressed: {
       opacity: 0.7,
+    },
+    // Over the icon's top right corner, ringed in the bar's colour so it stands out.
+    dot: {
+      position: "absolute",
+      top: -3,
+      right: -4,
+      width: 11,
+      height: 11,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: colors.surface,
+      backgroundColor: colors.danger,
     },
     // Takes the width between the icons; long names are cut off instead of pushing them out.
     text: {

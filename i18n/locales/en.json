@@ -54,7 +54,12 @@
     "confirmDelete": "Delete?",
     "noGroups": "Lists belong to a group: create or join one first.",
     "manageGroups": "Groups",
-    "personal": "My lists"
+    "personal": "My lists",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} items",
+    "newCount_one": "{{count}} new",
+    "newCount_other": "{{count}} new",
+    "newElsewhere": "new items in other lists"
   },
   "join": {
     "title": "Join a group",

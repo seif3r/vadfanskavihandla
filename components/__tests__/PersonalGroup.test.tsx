@@ -34,7 +34,7 @@ describe("the personal group", () => {
     render(
       <GroupLists
         group={mine} lists={[]} activeListId={undefined} onSelect={noop} canDelete={() => true}
-        onCreate={noop} onDelete={noop} isCreating={false}
+        onCreate={noop} onDelete={noop} isCreating={false} counts={{}}
       />,
     );
     expect(screen.getByText("My lists")).toBeTruthy();

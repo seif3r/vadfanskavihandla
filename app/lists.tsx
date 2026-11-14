@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useActiveList } from "@/hooks/useActiveList";
 import { useGroups } from "@/hooks/useGroups";
 import { useLists } from "@/hooks/useLists";
+import { useListCounts } from "@/hooks/useSeen";
 import { spacing } from "@/constants/theme";
 import { personalFirst } from "@/helpers/groups";
 import { useThemedStyles } from "@/hooks/useTheme";
@@ -26,6 +27,7 @@ export default function Lists() {
   const { lists, createList, isCreatingList, deleteList, error, loadError, reload } = useLists();
   const { activeList, setActiveListId } = useActiveList();
   const { groups, loadError: groupsError, reload: reloadGroups } = useGroups();
+  const counts = useListCounts(lists);
 
   // The list's creator and the group's owner may delete it; the rules check the same.
   const canDelete = (group: Group) => (list: ShoppingList) => list.ownerId === user?.id || group.ownerId === user?.id;
@@ -54,6 +56,7 @@ export default function Lists() {
           onCreate={(name) => createList(group.id, name)}
           onDelete={(list) => deleteList(list.id)}
           isCreating={isCreatingList}
+          counts={counts}
         />
       ))}
 

@@ -15,7 +15,7 @@ import { ThemeColors } from "@/types/theme";
 
 // One group's lists under its name, with a field for adding a list to the group.
 export default function GroupLists({
-  group, lists, activeListId, onSelect, canDelete, onCreate, onDelete, isCreating,
+  group, lists, activeListId, onSelect, canDelete, onCreate, onDelete, isCreating, counts,
 }: GroupListsProps) {
   const styles = useThemedStyles(createStyles);
   const { t } = useTranslation();
@@ -37,6 +37,7 @@ export default function GroupLists({
             <ListRow
               key={list.id}
               list={list}
+              count={counts[list.id]}
               isActive={list.id === activeListId}
               onPress={() => onSelect(list)}
               onDelete={canDelete(list) ? () => onDelete(list) : undefined}

@@ -27,6 +27,16 @@ jest.mock("@/api/groups", () => ({
   },
 }));
 jest.mock("@/api/lists", () => ({ subscribeToLists: () => () => {} }));
+type SeenListener = (seen: Record<string, unknown>, isFromServer: boolean) => void;
+const mockSeenListeners: SeenListener[] = [];
+const mockStartSeen = jest.fn<(userId: string, listId: string) => Promise<void>>();
+jest.mock("@/api/seen", () => ({
+  subscribeToSeen: (_userId: string, onChange: SeenListener) => {
+    mockSeenListeners.push(onChange);
+    return () => {};
+  },
+  startSeen: (userId: string, listId: string) => mockStartSeen(userId, listId),
+}));
 jest.mock("@/api/items", () => ({
   subscribeToItems: (_listId: string, _userId: string, onChange: Listener["onChange"], onError: Listener["onError"]) => {
     mockItemListeners.push({ onChange, onError });
@@ -47,6 +57,8 @@ describe("useLiveUpdates", () => {
     jest.useFakeTimers();
     mockGroupListeners.length = 0;
     mockItemListeners.length = 0;
+    mockSeenListeners.length = 0;
+    mockStartSeen.mockReset().mockResolvedValue(undefined);
     mockNotifications.itemAdded = false;
     mockNotifications.itemRemoved = false;
     jest.mocked(showNotification).mockClear();
@@ -175,6 +187,28 @@ describe("useLiveUpdates", () => {
       act(() => mockItemListeners[0].onChange([], []));
       act(() => mockItemListeners[0].onChange([milk], []));
       expect(queryClient.getQueryData(["knownItems", "l1"])).toBeUndefined();
+    });
+  });
+
+  describe("seen items", () => {
+    it("starts tracking a list nothing is known about, once the server has answered", () => {
+      const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: Infinity } } });
+      setup(queryClient);
+      // Only the device's cache: the server may well track the list already.
+      act(() => mockSeenListeners[0]({}, false));
+      expect(mockStartSeen).not.toHaveBeenCalled();
+      act(() => mockSeenListeners[0]({}, true));
+      expect(mockStartSeen).toHaveBeenCalledWith("anna", "l1");
+      expect(queryClient.getQueryData(["seen"])).toEqual({});
+      // Not again while the server's answer still lacks it.
+      act(() => mockSeenListeners[0]({}, true));
+      expect(mockStartSeen).toHaveBeenCalledTimes(1);
+    });
+
+    it("leaves a list that's already tracked alone", () => {
+      setup();
+      act(() => mockSeenListeners[0]({ l1: { listId: "l1", since: 1, itemIds: [] } }, true));
+      expect(mockStartSeen).not.toHaveBeenCalled();
     });
   });
 });

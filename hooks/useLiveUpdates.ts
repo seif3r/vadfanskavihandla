@@ -6,6 +6,7 @@ import { ApiError } from "@/api/ApiError";
 import { subscribeToGroups } from "@/api/groups";
 import { subscribeToItems } from "@/api/items";
 import { subscribeToLists } from "@/api/lists";
+import { startSeen, subscribeToSeen } from "@/api/seen";
 import { getUsers } from "@/api/users";
 import { useAuth } from "@/context/AuthContext";
 import { NOTIFICATION_DELAY_SECONDS } from "@/constants/limits";
@@ -122,6 +123,35 @@ export function useLiveUpdates(): ApiError | null {
       queryClient.setQueryData(["lists"], fresh);
     }, failed("lists"));
   }, [userId, queryClient, attempt]);
+
+  // What the user has seen, for all lists in one listener. A list with nothing yet starts being
+  // tracked now (once per session), so only what others add from now on counts as new. Only once
+  // the server has answered: the device's cache alone may lack lists the server tracks.
+  const started = useRef(new Set<string>());
+  const [seenListIds, setSeenListIds] = useState<string[] | null>(null);
+  useEffect(() => {
+    if (!userId) return;
+    return subscribeToSeen(userId, (fresh, isFromServer) => {
+      delivered("seen");
+      queryClient.setQueryData(["seen"], fresh);
+      if (isFromServer) setSeenListIds(Object.keys(fresh));
+    }, failed("seen"));
+  }, [userId, queryClient, attempt]);
+  useEffect(() => {
+    if (!userId || !seenListIds) return;
+    lists
+      .filter((list) => !seenListIds.includes(list.id) && !started.current.has(list.id))
+      .forEach((list) => {
+        started.current.add(list.id);
+        // If it fails, the next session tries again; until then nothing on the list counts as new.
+        startSeen(userId, list.id).catch(() => started.current.delete(list.id));
+      });
+  }, [userId, lists, seenListIds]);
+  // A new session starts over.
+  useEffect(() => {
+    started.current.clear();
+    setSeenListIds(null);
+  }, [userId]);
 
   // One listener per list. A string key, so a new array with the same lists doesn't re-subscribe.
   const listIds = lists.map((l) => l.id).join(",");

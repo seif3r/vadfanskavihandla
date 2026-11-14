@@ -77,6 +77,25 @@ export interface Item {
   // Free text, so it can carry a unit: "2 l", "500 g", "3 st".
   amount?: string;
   category?: Category;
+  // Milliseconds. Estimated by the device until the server has saved a new item.
+  createdAt?: number;
+}
+
+// Which of a list's items the user has seen (users/{uid}/seen/{listId}). Items added by others
+// after `since` that aren't in itemIds are new to them.
+export interface SeenState {
+  listId: string;
+  // Milliseconds: when the app started keeping track for this list.
+  since: number;
+  itemIds: string[];
+}
+
+// What the list overview shows for a list.
+export interface ListCount {
+  // All items, checked off or not.
+  total: number;
+  // Added by others and not seen yet (unseenItems).
+  unseen: number;
 }
 
 // Someone in at least one of the user's groups. Only the name is visible to others.

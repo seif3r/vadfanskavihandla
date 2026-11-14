@@ -6,7 +6,7 @@ Live: https://seif3r.github.io/vadfanskavihandla/
 
 ## Vad det gör
 
-Alla får en egen grupp, "Mina listor", för listor som bara du ser. För att handla tillsammans skapar du en grupp, till exempel "Hemma", och bjuder in dem du handlar med via en kod. Alla i gruppen ser gruppens listor och varandras ändringar direkt. Du kan lägga till varor med mängd och kategori, ändra dem med pennan på raden, bocka av dem och rensa det avbockade. När någon lägger till eller tar bort varor kan de andra få en notis, och en persons ändringar samlas till en enda notis när hen har varit stilla en stund: två minuter efter den sista tillagda varan, fem minuter efter den sista borttagna ("Anna lade till varor"). Notisen säger inte vilka varor det gäller. Att bocka av en vara är personligt och skickar ingen notis.
+Alla får en egen grupp, "Mina listor", för listor som bara du ser. För att handla tillsammans skapar du en grupp, till exempel "Hemma", och bjuder in dem du handlar med via en kod. Alla i gruppen ser gruppens listor och varandras ändringar direkt. Du kan lägga till varor med mängd och kategori, ändra dem med pennan på raden, bocka av dem och rensa det avbockade. När någon lägger till eller tar bort varor kan de andra få en notis, och en persons ändringar samlas till en enda notis när hen har varit stilla en stund: två minuter efter den sista tillagda varan, fem minuter efter den sista borttagna ("Anna lade till varor"). Notisen säger inte vilka varor det gäller. Att bocka av en vara är personligt och skickar ingen notis. I listöversikten ser du hur många varor varje lista har och hur många som är nya för dig, och en prick på listknappen visar när en annan lista har något nytt.
 
 ## Kom igång
 
