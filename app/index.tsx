@@ -22,6 +22,7 @@ import { useItems } from "@/hooks/useItems";
 import { useGroups } from "@/hooks/useGroups";
 import { useActiveList } from "@/hooks/useActiveList";
 import { useKnownItems } from "@/hooks/useKnownItems";
+import { useKeyboardVisible } from "@/hooks/useKeyboardVisible";
 import { useLiveStatus } from "@/context/LiveStatusContext";
 import { Category } from "@/types/models";
 import { ThemeColors } from "@/types/theme";
@@ -46,6 +47,7 @@ export default function Index() {
   const sortedItems = sortItems(items);
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+  const isKeyboardVisible = useKeyboardVisible();
 
   const handleAdd = () => {
     const name = cleanName(text);
@@ -101,10 +103,11 @@ export default function Index() {
   }
 
   return (
-    // Lifts the input bar above the keyboard on iOS; Android does this by itself.
+    // Lifts the input bar above the keyboard. Android needs it too: with edge-to-edge the window
+    // no longer shrinks for the keyboard. The browser handles it on web.
     <KeyboardAvoidingView
       style={styles.screen}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "web" ? undefined : "padding"}
       keyboardVerticalOffset={headerHeight}
     >
       <ListButton
@@ -139,8 +142,15 @@ export default function Index() {
           onCategoryChange={handleCategoryChange}
         />
       )}
-      {/* Bottom inset keeps the bar clear of the home indicator / navigation bar. */}
-      <View style={[styles.inputBar, !showOptions && styles.inputBarBorder, { paddingBottom: spacing.lg + insets.bottom }]}>
+      {/* Bottom inset keeps the bar clear of the home indicator / navigation bar, which the
+          keyboard covers while it's open. */}
+      <View
+        style={[
+          styles.inputBar,
+          !showOptions && styles.inputBarBorder,
+          { paddingBottom: spacing.lg + (isKeyboardVisible ? 0 : insets.bottom) },
+        ]}
+      >
         <Input
           value={text}
           onChangeText={handleTextChange}
